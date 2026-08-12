@@ -1,0 +1,40 @@
+name: CI
+
+# Gate ringan per PR + push ke main — tanpa build (hemat waktu CI).
+# Build berat hanya di workflow deploy.yml.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  lint-typecheck:
+    name: Lint, typecheck & validate Prisma
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Placeholder — cek sintaks schema tanpa .env di CI.
+      - name: Validate Prisma schema
+        run: npx prisma validate
+        env:
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit

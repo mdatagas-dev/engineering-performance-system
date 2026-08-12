@@ -1,5 +1,48 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Backup otomatis (Monitoring & Backup)
+
+Scheduler backup = **system cron / PM2**, bukan job in-process (Next.js standalone
+tidak menjalankan cron sendiri). Satu run mencatat `BackupRun` lengkap
+(RUNNING → SUCCESS/FAILED, size, path, error) — lihat `lib/backup/backupService.ts`.
+
+Jalankan manual:
+
+```bash
+BACKUP_PG_DUMP_CMD="pg_dump --dbname=$DATABASE_URL -Fc -f /backups/eps_$(date +%F).dump" \
+BACKUP_PG_DUMP_PATH="/backups/eps_$(date +%F).dump" \
+npm run backup:run
+# BACKUP_TYPE=incremental untuk tipe INCREMENTAL (default FULL)
+```
+
+Tanpa `BACKUP_PG_DUMP_CMD`, run tercatat FAILED dengan alasan (executor pg_dump
+tidak tersedia). Cron harian 02:00:
+
+```cron
+0 2 * * * cd /path/ke/proyek && BACKUP_PG_DUMP_CMD="..." npm run backup:run >> /var/log/eps-backup.log 2>&1
+```
+
+Pemantauan: `GET /api/backups` (permission `backup.view`, pagination + filter
+status/type). Riwayat dipertahankan; retensi backup lama di luar scope fase ini.
+
+## Slow query monitoring (Monitoring & Backup)
+
+Deteksi: hook `prisma.$on("query")` di `lib/prisma.ts` mencatat query dengan
+durasi >= `SLOW_QUERY_THRESHOLD_MS` (1000 ms) ke tabel `slow_query_logs`
+(query text, durationMs, metadata params/target). Self-insert di-skip; kegagalan
+pencatatan di-swallow agar tidak mengganggu query utama.
+
+Lihat & analisis: `GET /api/slow-queries` (permission `backup.view`) —
+pagination `page`/`perPage`, filter `minDurationMs`/`from`/`to`, urut
+`durationMs` desc. `summary` = top-10 pola query (group by text SQL, params
+terpisah) dengan count/avg/max duration — prioritas optimasi.
+
+Cara baca: query berulang dengan duration tinggi di `summary` = kandidat
+optimasi. Index untuk query umum sudah ada di skema (records, audit,
+notification, backup); jalankan `EXPLAIN ANALYZE` sebelum menambah index baru.
+Retensi log & auto-vacuum di luar scope fase ini.
+
+
 ## Getting Started
 
 First, run the development server:

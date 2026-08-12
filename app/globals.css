@@ -1,8 +1,17 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #eef1f5;
+  --foreground: #131a21;
+  color-scheme: light;
+}
+
+.dark {
+  --background: #0a0f15;
+  --foreground: #dfe6ee;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -12,15 +21,220 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+body {
+  background:
+    radial-gradient(1100px 520px at 82% -12%, rgb(34 211 238 / 0.09), transparent 60%),
+    radial-gradient(900px 480px at -12% 112%, rgb(100 116 139 / 0.12), transparent 60%),
+    var(--background);
+  color: var(--foreground);
+}
+
+.glass-card {
+  border-radius: 1rem;
+  border: 1px solid rgb(2 6 23 / 0.1);
+  background: rgb(255 255 255 / 0.72);
+  box-shadow: 0 8px 30px rgb(2 6 23 / 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.dark .glass-card {
+  border-color: rgb(255 255 255 / 0.1);
+  background: rgb(255 255 255 / 0.04);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.5);
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes anim-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes anim-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.anim-fade-in {
+  animation: anim-fade-in 0.6s ease-out;
+}
+
+.anim-fade-up {
+  animation: anim-fade-up 0.5s ease-out;
+}
+
+/* Transisi antar halaman (components/page-transition.tsx): fade + slide halus
+   tiap navigasi (konten di-remount dgn key = pathname). Dinonaktifkan utk
+   pengguna prefers-reduced-motion. */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 0.28s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+}
+
+/* ===== Mikro-interaksi global (tanpa JS; dinonaktifkan saat reduced-motion) ===== */
+@media (prefers-reduced-motion: no-preference) {
+  button {
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      border-color 0.15s ease,
+      background-color 0.15s ease,
+      opacity 0.15s ease;
+  }
+  button:active {
+    transform: scale(0.97);
+  }
+  a {
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  /* Kartu glass-card: angkat halus + glow cyan saat hover — berlaku semua halaman. */
+  .glass-card {
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease,
+      border-color 0.25s ease;
+  }
+  .glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 38px rgb(2 6 23 / 0.14);
+    border-color: rgb(34 211 238 / 0.28);
+  }
+  .dark .glass-card:hover {
+    border-color: rgb(34 211 238 / 0.25);
+    box-shadow: 0 14px 38px rgb(0 0 0 / 0.55);
+  }
+}
+
+/* Skeleton/shimmer — utk area "memeriksa sesi" & placeholder. */
+@keyframes shimmer {
+  100% {
+    background-position: -200% 0;
+  }
+}
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.12), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+.dark .shimmer {
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.08), transparent);
+  background-size: 200% 100%;
+}
+
+/* Entrance bertahap (stagger) utk kumpulan kartu — beri class "stagger" pada grid. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.stagger > * {
+  animation: rise-in 0.45s ease-out both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
+.stagger > *:nth-child(7) { animation-delay: 360ms; }
+.stagger > *:nth-child(8) { animation-delay: 420ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger > *,
+  .shimmer {
+    animation: none;
+  }
+}
+
+/* ===== Latar belakang aplikasi: aurora lembut bergerak realtime =====
+   Lapisan fixed di belakang konten (z -10, pointer-events none) — 3 blob
+   radial bergeser pelan (26s, alternate). Repaint ringan; dinonaktifkan saat
+   prefers-reduced-motion. */
+.animated-bg {
+  background:
+    radial-gradient(620px 420px at 18% 12%, rgb(34 211 238 / 0.13), transparent 62%),
+    radial-gradient(720px 520px at 84% 18%, rgb(59 130 246 / 0.12), transparent 62%),
+    radial-gradient(680px 460px at 55% 96%, rgb(139 92 246 / 0.11), transparent 62%);
+  background-size: 170% 170%, 180% 180%, 175% 175%;
+  animation: bg-drift 26s ease-in-out infinite alternate;
+}
+
+.dark .animated-bg {
+  background:
+    radial-gradient(620px 420px at 18% 12%, rgb(34 211 238 / 0.16), transparent 62%),
+    radial-gradient(720px 520px at 84% 18%, rgb(59 130 246 / 0.15), transparent 62%),
+    radial-gradient(680px 460px at 55% 96%, rgb(139 92 246 / 0.13), transparent 62%);
+  background-size: 170% 170%, 180% 180%, 175% 175%;
+}
+
+@keyframes bg-drift {
+  0% {
+    background-position:
+      0% 0%,
+      100% 0%,
+      0% 100%;
+  }
+  50% {
+    background-position:
+      70% 40%,
+      20% 70%,
+      100% 30%;
+  }
+  100% {
+    background-position:
+      100% 100%,
+      0% 100%,
+      100% 0%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-bg {
+    animation: none;
+  }
 }

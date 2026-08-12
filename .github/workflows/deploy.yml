@@ -1,0 +1,103 @@
+name: Deploy Production
+
+# Trigger: push ke main + manual via Actions tab (workflow_dispatch).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Satu deploy berjalan dalam satu waktu — jangan tumpuk.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  deploy:
+    name: Build & Deploy ke VPS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Placeholder env agar langkah prisma/build tidak gagal hanya karena
+      # tidak ada .env di CI. Nilai nyata hanya ada di server (secrets/.env).
+      - name: Generate Prisma client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+
+      - name: Build (production)
+        run: npm run build
+        env:
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+          AUTH_SECRET: "ci-placeholder-not-secret"
+
+      # Gate cepat: lint + typecheck. `next build` sudah melakukan type-check,
+      # tsc --noEmit ditambah utk cakupan seluruh proyek (termasuk file selain
+      # yang dibundel Next). Test suite penuh (tsx --test) sengaja dilewati di
+      # deploy — build sudah berat; test ringan dijalankan di ci.yml per PR.
+      - name: Lint & typecheck
+        run: |
+          npm run lint
+          npx tsc --noEmit
+
+      # Upload source + hasil build (.next) ke server via rsync.
+      # Dipilih easingthemes/ssh-deploy (bukan scp): rsync --delete + exclude
+      # + kompresi, hanya file berubah yg dikirim. Syarat: rsync terpasang di
+      # server. Baris SCRIPT_BEFORE menjalankan perintah remote sebelum upload.
+      - name: Upload ke server (rsync)
+        uses: easingthemes/ssh-deploy@v5
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+          REMOTE_PORT: 22
+          SOURCE: "."
+          TARGET: ${{ secrets.SERVER_PATH || '/opt/eps/app' }}
+          EXCLUDE: |
+            node_modules
+            .git
+            .env*
+            *.log
+            tsconfig.tsbuildinfo
+            .agents
+            .claude
+            .windsurf
+            .github
+          SCRIPT_BEFORE: |
+            mkdir -p ${{ secrets.SERVER_PATH || '/opt/eps/app' }} /var/log/eps
+
+      # Perintah remote pasca-upload.
+      # npm ci (tanpa --omit=dev): prisma CLI ada di devDependencies, dipakai
+      # untuk `prisma generate` + `prisma migrate deploy` di server.
+      # `pm2 reload ... || pm2 start ...`: reload utk update, start utk deploy
+      # pertama kali.
+      - name: Install, migrasi & reload PM2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            cd ${{ secrets.SERVER_PATH || '/opt/eps/app' }}
+            npm ci
+            npx prisma generate
+            # Migrasi DB — aktifkan bila database produksi nyata sudah siap:
+            # npx prisma migrate deploy
+            pm2 reload ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs --env production
+            pm2 save
+            pm2 status

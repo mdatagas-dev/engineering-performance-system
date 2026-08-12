@@ -1,0 +1,26 @@
+# Opsi deploy container (default produksi: PM2 native di VPS + deploy.yml).
+#
+# Cara pakai:
+#   cp .env.example .env        # lalu isi nilai nyata (secret dibaca via env_file)
+#   docker compose up -d --build
+#
+# Catatan:
+#   - Image runtime = Next standalone (lihat Dockerfile), non-root, port 3030.
+#   - .env TIDAK masuk image (.dockerignore) — environment di-inject saat run.
+#   - Log app mengalir ke stdout (docker logs eps-v2); volume eps-logs cadangan
+#     untuk file log bila kelak ada (mis. cron backup menulis ke /app/logs).
+
+services:
+  eps:
+    build: .
+    container_name: eps-v2
+    ports:
+      - "3030:3030"
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - eps-logs:/app/logs
+
+volumes:
+  eps-logs:
