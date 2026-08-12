@@ -461,6 +461,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
         "Latar belakang aplikasi dengan animasi aurora bergerak ringan (realtime)",
         "Audit log: aksi \"Pengaturan Keamanan Diubah\" terdaftar dan tampil di halaman Audit",
         "Keamanan database: sslmode=require di produksi, nilai parameter query lambat diredaksi, log query hanya non-produksi",
+        "Bersihkan repo: hapus artefak template, README lengkap (panduan setup & deploy)",
       ],
       en: [
         "Left sidebar with main menu; can be hidden with smooth animation",
@@ -474,6 +475,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
         "App background with a light realtime-moving aurora animation",
         "Audit log: \"Security settings changed\" action registered and shown on the Audit page",
         "Database security: sslmode=require in production, slow-query parameter values redacted, query logs limited to non-production",
+        "Repo cleanup: removed template artifacts, full README (setup & deploy guide)",
       ],
       zh: [
         "左侧边栏包含主菜单；可通过流畅动画隐藏",
@@ -487,6 +489,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
         "应用背景带有轻柔的实时极光动画",
         "审计日志：已注册并显示 \"安全设置已更改\" 操作",
         "数据库安全：生产环境强制 sslmode=require，慢查询参数值脱敏，查询日志仅限非生产环境",
+        "仓库清理：删除模板文件，完善 README（安装与部署指南）",
       ],
       ko: [
         "주 메뉴가 있는 왼쪽 사이드바; 부드러운 애니메이션으로 숨길 수 있음",
@@ -500,6 +503,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
         "가볍게 실시간으로 움직이는 오로라 배경 애니메이션",
         "감사 로그: \"보안 설정 변경\" 작업 등록 및 감사 페이지에 표시",
         "데이터베이스 보안: 프로덕션에서 sslmode=require, 느린 쿼리 매개변수 값 마스킹, 쿼리 로그는 비프로덕션 전용",
+        "저장소 정리: 템플릿 파일 제거, README 완성(설정 및 배포 가이드)",
       ],
       ja: [
         "メインメニュー付きの左サイドバー。滑らかなアニメーションで非表示にできます",
@@ -513,6 +517,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
         "軽やかにリアルタイムで動くオーロラ背景アニメーション",
         "監査ログ：「セキュリティ設定変更」アクションを登録し、監査ページに表示",
         "データベースセキュリティ：本番で sslmode=require、低速クエリのパラメータ値をマスク、クエリログは非本番のみ",
+        "リポジトリ整理：テンプレートファイル削除、README 整備（セットアップ＆デプロイガイド）",
       ],
     },
   },

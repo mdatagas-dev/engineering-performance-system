@@ -1,4 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EPS — Engineering Production System
+
+Digitalisasi Excel Engineering menjadi aplikasi dashboard: input manual produksi, kalkulasi otomatis (GAP & UPPH 1:1 Excel), analisis tren, ekspor/impor data, dan keamanan berlapis.
+
+## Fitur
+- **Autentikasi & RBAC**: login Argon2id, sesi JWT + cookie HttpOnly, lockout & rate limit, proteksi CSRF, security headers
+- **Data Produksi**: input manual & input cepat multi-baris, kalkulasi GAP UPH/HC/OP + UPPH (formula Excel), persetujuan & lock record, KPI
+- **Dashboard**: 5 tabel ringkas (Daily Production, Plan vs Output, UPH, HC, Setup & UPPH), filter tanggal/model/area
+- **Analisis Tren**: grafik tren + perbandingan periode
+- **Ekspor/Impor**: CSV (anti CSV-injection), template, riwayat & rollback
+- **Audit Trail**: append-only (trigger DB), peta aksi per route
+- **Pengaturan**: keamanan, 5 bahasa (EN/ID/ZH/KO/JA), info aplikasi & changelog
+- **UI**: sidebar hide, fit-to-screen, responsif HP/tablet/PC, transisi halus
+
+## Teknologi
+Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 (+ PostgreSQL) · PM2 · Docker · GitHub Actions
+
+## Menjalankan lokal
+```bash
+npm ci
+cp .env.example .env   # isi DATABASE_URL & AUTH_SECRET
+npm run dev            # http://localhost:3030
+```
+
+Tanpa DB nyata, aplikasi berjalan frontend-first (data mock di localStorage) — akun demo: `staff@eps.local / Staff123!`, `admin@eps.local / Admin123!`.
+
+## Uji
+```bash
+npx tsc --noEmit && npm run lint
+npx tsx --test "lib/**/*.test.ts"   # 800+ test
+npx prisma validate
+npm run build
+```
+
+## Deployment
+- **PM2 (VPS)**: `pm2 start ecosystem.config.cjs --env production`
+- **Docker**: `docker compose up -d --build`
+- **CI/CD**: GitHub Actions (`.github/workflows/ci.yml`, `deploy.yml` — deploy ke VPS via SSH/rsync, butuh secrets `SSH_HOST`, `SSH_USER`, `SSH_KEY`)
+- Prasyarat server: `npm i -g pm2 rsync`, `mkdir -p /opt/eps/app /var/log/eps`, salin `.env`, lalu `npm ci && npx prisma generate && npx prisma migrate deploy`
 
 ## Backup otomatis (Monitoring & Backup)
 
@@ -9,71 +47,7 @@ tidak menjalankan cron sendiri). Satu run mencatat `BackupRun` lengkap
 Jalankan manual:
 
 ```bash
-BACKUP_PG_DUMP_CMD="pg_dump --dbname=$DATABASE_URL -Fc -f /backups/eps_$(date +%F).dump" \
-BACKUP_PG_DUMP_PATH="/backups/eps_$(date +%F).dump" \
 npm run backup:run
-# BACKUP_TYPE=incremental untuk tipe INCREMENTAL (default FULL)
 ```
 
-Tanpa `BACKUP_PG_DUMP_CMD`, run tercatat FAILED dengan alasan (executor pg_dump
-tidak tersedia). Cron harian 02:00:
-
-```cron
-0 2 * * * cd /path/ke/proyek && BACKUP_PG_DUMP_CMD="..." npm run backup:run >> /var/log/eps-backup.log 2>&1
-```
-
-Pemantauan: `GET /api/backups` (permission `backup.view`, pagination + filter
-status/type). Riwayat dipertahankan; retensi backup lama di luar scope fase ini.
-
-## Slow query monitoring (Monitoring & Backup)
-
-Deteksi: hook `prisma.$on("query")` di `lib/prisma.ts` mencatat query dengan
-durasi >= `SLOW_QUERY_THRESHOLD_MS` (1000 ms) ke tabel `slow_query_logs`
-(query text, durationMs, metadata params/target). Self-insert di-skip; kegagalan
-pencatatan di-swallow agar tidak mengganggu query utama.
-
-Lihat & analisis: `GET /api/slow-queries` (permission `backup.view`) —
-pagination `page`/`perPage`, filter `minDurationMs`/`from`/`to`, urut
-`durationMs` desc. `summary` = top-10 pola query (group by text SQL, params
-terpisah) dengan count/avg/max duration — prioritas optimasi.
-
-Cara baca: query berulang dengan duration tinggi di `summary` = kandidat
-optimasi. Index untuk query umum sudah ada di skema (records, audit,
-notification, backup); jalankan `EXPLAIN ANALYZE` sebelum menambah index baru.
-Retensi log & auto-vacuum di luar scope fase ini.
-
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Lihat detail selengkapnya di source `lib/backup/*` & endpoint `/api/backups`.
