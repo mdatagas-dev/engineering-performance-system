@@ -89,24 +89,15 @@
 }
 
 .win95-icon__glyph {
-  width: 44px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
-  font-size: 24px;
-  line-height: 1;
-  color: #000;
-  background: #c0c0c0;
-  border-top: 2px solid #fff;
-  border-left: 2px solid #fff;
-  border-right: 2px solid #404040;
-  border-bottom: 2px solid #404040;
+  background: transparent;
 }
 
 .win95-icon--accent .win95-icon__glyph {
-  background: linear-gradient(135deg, #ffe066, #ffb300);
-  color: #202020;
-  border-color: #ffd75e #8a5a00 #8a5a00 #ffd75e;
+  filter: drop-shadow(0 0 2px #ffd75e);
 }
 
 .win95-icon__label {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import WindowShell from "./window-shell";
+import Win95Icon, { type Win95IconName } from "./win95-icons";
 import { MyComputerApp } from "./apps/my-computer";
 import { DocumentsApp } from "./apps/documents";
 import { NotepadApp } from "./apps/notepad";
@@ -40,31 +41,31 @@ type WinState = {
 
 type ToastItem = { id: number; msg: string };
 
-type WinMeta = { title: string; icon: string; w: number; h: number };
+type WinMeta = { title: string; icon: Win95IconName; w: number; h: number };
 
 const APP_META: Record<WinId, WinMeta> = {
-  "my-computer": { title: "My Computer", icon: "▦", w: 560, h: 400 },
-  "my-documents": { title: "My Documents", icon: "▥", w: 540, h: 400 },
-  notepad: { title: "Notepad", icon: "▤", w: 480, h: 420 },
-  calculator: { title: "Calculator", icon: "▣", w: 300, h: 340 },
-  minesweeper: { title: "Minesweeper", icon: "◉", w: 280, h: 400 },
-  "command-prompt": { title: "Command Prompt", icon: ">_", w: 620, h: 420 },
-  "system-info": { title: "System Info", icon: "ⓘ", w: 460, h: 440 },
-  "recycle-bin": { title: "Recycle Bin", icon: "♺", w: 520, h: 400 },
-  about: { title: "About", icon: "◈", w: 430, h: 330 },
-  "access-terminal": { title: "ACCESS TERMINAL", icon: "⌘", w: 460, h: 380 },
+  "my-computer": { title: "My Computer", icon: "my-computer", w: 560, h: 400 },
+  "my-documents": { title: "My Documents", icon: "my-documents", w: 540, h: 400 },
+  notepad: { title: "Notepad", icon: "notepad", w: 480, h: 420 },
+  calculator: { title: "Calculator", icon: "calculator", w: 300, h: 340 },
+  minesweeper: { title: "Minesweeper", icon: "minesweeper", w: 280, h: 400 },
+  "command-prompt": { title: "Command Prompt", icon: "command-prompt", w: 620, h: 420 },
+  "system-info": { title: "System Info", icon: "system-info", w: 460, h: 440 },
+  "recycle-bin": { title: "Recycle Bin", icon: "recycle-bin", w: 520, h: 400 },
+  about: { title: "About", icon: "about", w: 430, h: 330 },
+  "access-terminal": { title: "ACCESS TERMINAL", icon: "access-terminal", w: 460, h: 380 },
 };
 
-const DESKTOP_ICONS: { id: WinId; label: string; glyph: string; accent?: boolean }[] = [
-  { id: "my-computer", label: "My Computer", glyph: "▦" },
-  { id: "my-documents", label: "My Documents", glyph: "▥" },
-  { id: "notepad", label: "Notepad", glyph: "▤" },
-  { id: "calculator", label: "Calculator", glyph: "▣" },
-  { id: "minesweeper", label: "Minesweeper", glyph: "◉" },
-  { id: "command-prompt", label: "Command Prompt", glyph: ">_" },
-  { id: "system-info", label: "System Info", glyph: "ⓘ" },
-  { id: "recycle-bin", label: "Recycle Bin", glyph: "♺" },
-  { id: "access-terminal", label: "ACCESS TERMINAL", glyph: "⌘", accent: true },
+const DESKTOP_ICONS: { id: WinId; label: string; icon: Win95IconName; accent?: boolean }[] = [
+  { id: "my-computer", label: "My Computer", icon: "my-computer" },
+  { id: "my-documents", label: "My Documents", icon: "my-documents" },
+  { id: "notepad", label: "Notepad", icon: "notepad" },
+  { id: "calculator", label: "Calculator", icon: "calculator" },
+  { id: "minesweeper", label: "Minesweeper", icon: "minesweeper" },
+  { id: "command-prompt", label: "Command Prompt", icon: "command-prompt" },
+  { id: "system-info", label: "System Info", icon: "system-info" },
+  { id: "recycle-bin", label: "Recycle Bin", icon: "recycle-bin" },
+  { id: "access-terminal", label: "ACCESS TERMINAL", icon: "access-terminal", accent: true },
 ];
 
 const SUB_PROGRAMS: { label: string; id: WinId }[] = [
@@ -340,7 +341,7 @@ export default function Desktop(): ReactNode {
               key={win.id}
               id={win.id}
               title={APP_META[win.id].title}
-              icon={APP_META[win.id].icon}
+              icon={<Win95Icon name={APP_META[win.id].icon} size={16} />}
               focused={focused}
               minimized={win.minimized}
               maximized={win.maximized}
@@ -377,7 +378,7 @@ export default function Desktop(): ReactNode {
             }}
           >
             <span className="win95-icon__glyph" aria-hidden>
-              {ic.glyph}
+              <Win95Icon name={ic.icon} size={32} />
             </span>
             <span className="win95-icon__label">{ic.label}</span>
           </button>
@@ -392,7 +393,9 @@ export default function Desktop(): ReactNode {
           </div>
           <div className="win95-startmenu__list">
             <div className="win95-menu-item" role="menuitem" aria-haspopup="menu">
-              <span aria-hidden>{APP_META["my-computer"].icon}</span>
+              <span aria-hidden>
+                <Win95Icon name={APP_META["my-computer"].icon} size={16} />
+              </span>
               Program
               <span className="win95-menu-item__arrow" aria-hidden>
                 ▸
@@ -406,18 +409,24 @@ export default function Desktop(): ReactNode {
                     className="win95-menu-item"
                     onClick={() => startGo(p.id)}
                   >
-                    <span aria-hidden>{APP_META[p.id].icon}</span>
+                    <span aria-hidden>
+                      <Win95Icon name={APP_META[p.id].icon} size={16} />
+                    </span>
                     {p.label}
                   </button>
                 ))}
               </div>
             </div>
             <button type="button" role="menuitem" className="win95-menu-item" onClick={() => startGo("my-documents")}>
-              <span aria-hidden>{APP_META["my-documents"].icon}</span>
+              <span aria-hidden>
+                <Win95Icon name={APP_META["my-documents"].icon} size={16} />
+              </span>
               Documents
             </button>
             <button type="button" role="menuitem" className="win95-menu-item" onClick={() => startGo("system-info")}>
-              <span aria-hidden>{APP_META["system-info"].icon}</span>
+              <span aria-hidden>
+                <Win95Icon name={APP_META["system-info"].icon} size={16} />
+              </span>
               Settings
             </button>
             <button type="button" role="menuitem" className="win95-menu-item" onClick={() => startToast("Find: pencarian lokal tidak tersedia di GE-OS.")}>
@@ -425,7 +434,9 @@ export default function Desktop(): ReactNode {
               Find…
             </button>
             <button type="button" role="menuitem" className="win95-menu-item" onClick={() => startGo("about")}>
-              <span aria-hidden>{APP_META.about.icon}</span>
+              <span aria-hidden>
+                <Win95Icon name={APP_META.about.icon} size={16} />
+              </span>
               Help
             </button>
             <button type="button" role="menuitem" className="win95-menu-item" onClick={() => { setStartOpen(false); setRunOpen(true); }}>
@@ -434,7 +445,9 @@ export default function Desktop(): ReactNode {
             </button>
             <div className="win95-menu-sep" aria-hidden />
             <button type="button" role="menuitem" className="win95-menu-item" onClick={() => startGo("access-terminal")}>
-              <span aria-hidden>{APP_META["access-terminal"].icon}</span>
+              <span aria-hidden>
+                <Win95Icon name={APP_META["access-terminal"].icon} size={16} />
+              </span>
               Log On GAS ELECTRONIC…
             </button>
             <button type="button" role="menuitem" className="win95-menu-item" onClick={() => { setStartOpen(false); showBsod(); }}>
@@ -471,7 +484,9 @@ export default function Desktop(): ReactNode {
           </button>
           <div className="win95-menu-sep" aria-hidden />
           <button type="button" role="menuitem" className="win95-menu-item" onClick={() => ctxAction("props")}>
-            <span aria-hidden>{APP_META["system-info"].icon}</span>
+            <span aria-hidden>
+              <Win95Icon name={APP_META["system-info"].icon} size={16} />
+            </span>
             Properties
           </button>
         </div>
@@ -547,7 +562,9 @@ export default function Desktop(): ReactNode {
                     else minimizeWin(win.id);
                   }}
                 >
-                  <span aria-hidden>{APP_META[win.id].icon}</span>
+                  <span aria-hidden>
+                    <Win95Icon name={APP_META[win.id].icon} size={16} />
+                  </span>
                   <span>{APP_META[win.id].title}</span>
                 </button>
               );

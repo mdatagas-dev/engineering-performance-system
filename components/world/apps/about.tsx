@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Win95Icon from "../win95-icons";
 
 type Props = { onClose: () => void };
 
@@ -9,7 +10,7 @@ export function AboutApp({ onClose }: Props): ReactNode {
     <div className="win95-app win95-about">
       <div className="win95-about__main">
         <div className="win95-about__icon" aria-hidden>
-          GE
+          <Win95Icon name="about" size={48} />
         </div>
         <div className="win95-about__text">
           <p className="win95-about__name">GAS ELECTRONIC OS</p>

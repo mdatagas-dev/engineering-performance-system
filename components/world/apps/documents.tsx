@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Win95Icon from "../win95-icons";
 
 type Props = { onOpenNotepad: (name: string, content: string) => void };
 
@@ -65,7 +66,9 @@ export function DocumentsApp({ onOpenNotepad }: Props): ReactNode {
               onClick={(e) => { e.stopPropagation(); setSelected(f.name); }}
               onDoubleClick={(e) => { e.stopPropagation(); onOpenNotepad(f.name, f.content); }}
             >
-              <span className="win95-listview__icon">📄</span>
+              <span className="win95-listview__icon">
+                <Win95Icon name="notepad" size={20} />
+              </span>
               <span className="win95-listview__name">{f.name}</span>
             </div>
           ))}

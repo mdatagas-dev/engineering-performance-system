@@ -587,24 +587,6 @@
   padding-top: 4px;
 }
 
-.win95-sysprops__screen {
-  width: 64px;
-  height: 46px;
-  background: #c0c0c0;
-  border: 2px solid;
-  border-top-color: #fff;
-  border-left-color: #fff;
-  border-bottom-color: #404040;
-  border-right-color: #404040;
-}
-
-.win95-sysprops__stand {
-  width: 8px;
-  height: 12px;
-  background: #808080;
-  border: 1px solid #404040;
-}
-
 .win95-sysprops__text {
   font-size: 12px;
   line-height: 1.5;

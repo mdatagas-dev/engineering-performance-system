@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Win95Icon from "../win95-icons";
 
 const BIN_ITEMS = [
   { name: "LAPORAN_LAMA.txt", tip: "Laporan 1997. Sepertinya penting, tapi di-recycle karena 'basi'." },
@@ -31,7 +32,9 @@ export function RecycleBinApp(): ReactNode {
           <div className="win95-listview">
             {items.map((it) => (
               <div key={it.name} className="win95-listview__item" title={it.tip}>
-                <span className="win95-listview__icon">🗑</span>
+                <span className="win95-listview__icon">
+                  <Win95Icon name="recycle-bin" size={16} />
+                </span>
                 <span className="win95-listview__name">{it.name}</span>
               </div>
             ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import Win95Icon from "../win95-icons";
 
 const TABS = ["General", "Performance", "Device Manager"] as const;
 type Tab = (typeof TABS)[number];
@@ -37,8 +38,7 @@ export function SystemPropertiesApp(): ReactNode {
         {tab === "General" && (
           <div className="win95-sysprops__general">
             <div className="win95-sysprops__icon" aria-hidden>
-              <div className="win95-sysprops__screen" />
-              <div className="win95-sysprops__stand" />
+              <Win95Icon name="computer" size={48} />
             </div>
             <div className="win95-sysprops__text">
               <p className="win95-sysprops__name">GAS ELECTRONIC OS</p>
@@ -80,7 +80,9 @@ export function SystemPropertiesApp(): ReactNode {
             <div className="win95-listview win95-listview--compact">
               {DEVICES.map((d) => (
                 <div key={d} className="win95-listview__item">
-                  <span className="win95-listview__icon">🖥</span>
+                  <span className="win95-listview__icon">
+                    <Win95Icon name="computer" size={16} />
+                  </span>
                   <span className="win95-listview__name">{d}</span>
                 </div>
               ))}

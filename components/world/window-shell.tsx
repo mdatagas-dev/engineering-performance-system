@@ -16,7 +16,7 @@ export type WinPos = { x: number; y: number };
 export type WindowShellProps = {
   id: string;
   title: string;
-  icon: string;
+  icon: ReactNode;
   focused: boolean;
   minimized: boolean;
   maximized: boolean;

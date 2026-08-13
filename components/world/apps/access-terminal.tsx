@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
+import Win95Icon from "../win95-icons";
 
 type Props = { onLogin: () => void };
 
@@ -24,7 +25,7 @@ export function AccessTerminalApp({ onLogin }: Props): ReactNode {
   return (
     <div className="win95-app win95-login">
       <div className="win95-login__icon" aria-hidden>
-        🌐
+        <Win95Icon name="access-terminal" size={48} />
       </div>
       <div className="win95-login__title">
         <p className="win95-login__name">Welcome to THE WORLD</p>
