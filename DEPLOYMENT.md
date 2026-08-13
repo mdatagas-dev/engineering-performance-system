@@ -106,6 +106,19 @@ pm2 stop eps-v2         # stop
 pm2 save                # simpan daftar proses
 ```
 
+### 1.7 Rollback ke checkpoint (tag rilis)
+Tiap rilis ditandai tag `release-<versi>` (mis. `release-1.4.3`) sebagai
+checkpoint rollback. Bila deploy gagal / versi baru bermasalah, kembalikan ke
+tag terakhir yang dikenal baik:
+```powershell
+# ke tag release-* terbaru (default), atau tentukan:
+powershell -ExecutionPolicy Bypass -File scripts\rollback-windows.ps1
+powershell -ExecutionPolicy Bypass -File scripts\rollback-windows.ps1 -Tag release-1.4.3
+```
+Script checkout tag, `npm ci`, `prisma generate`, build, lalu restart PM2.
+`.env` (secret) tidak disentuh. EPERM pipe PM2 saat restart → bersihkan daemon
+akun lain di RDP (`pm2 kill` / `taskkill /F /IM node.exe`), lihat §1.4.
+
 ---
 
 ## 2. Deploy di VPS Linux (PM2 + GitHub Actions SSH)
