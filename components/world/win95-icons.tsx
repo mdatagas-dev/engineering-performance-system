@@ -20,7 +20,8 @@ export type Win95IconName =
   | "computer"
   | "key"
   | "login"
-  | "wrench";
+  | "wrench"
+  | "windows-flag";
 
 const C = {
   face: "#c0c0c0",
@@ -37,6 +38,18 @@ const C = {
   grn: "#008000",
   red: "#ff0000",
   gold: "#ffcc00",
+  fl_r: "#ff0000",
+  fl_rl: "#ff8080",
+  fl_rd: "#c00000",
+  fl_g: "#00b000",
+  fl_gl: "#40d040",
+  fl_gd: "#008000",
+  fl_b: "#0000a8",
+  fl_bl: "#4040ff",
+  fl_bd: "#000070",
+  fl_y: "#ffcc00",
+  fl_yl: "#ffe080",
+  fl_yd: "#c99000",
 } as const;
 
 const R = ({ x, y, w, h, c }: { x: number; y: number; w: number; h: number; c: string }) => (
@@ -473,6 +486,44 @@ function Icon({ name }: { name: Win95IconName }) {
           <R x={23} y={23} w={2} h={4} c={C.k} />
         </g>
       );
+    case "windows-flag": {
+      const bands: [number, number, number][] = [
+        [2, 15, 26],
+        [4, 14, 28],
+        [6, 13, 29],
+        [8, 12, 27],
+        [10, 11, 25],
+        [14, 12, 27],
+        [16, 13, 29],
+        [18, 14, 28],
+        [20, 15, 26],
+        [22, 14, 25],
+      ];
+      return (
+        <g>
+          <R x={3} y={1} w={23} h={1} c={C.k} />
+          {bands.map(([y, mid, right], i) => (
+            <g key={y}>
+              <R x={3} y={y} w={right - 3} h={2} c={C.k} />
+              <R x={4} y={y} w={mid - 4} h={2} c={i < 5 ? C.fl_r : C.fl_b} />
+              <R x={mid} y={y} w={1} h={2} c={C.k} />
+              <R x={mid + 1} y={y} w={right - mid - 2} h={2} c={i < 5 ? C.fl_g : C.fl_y} />
+            </g>
+          ))}
+          <R x={3} y={12} w={22} h={1} c={C.k} />
+          <R x={3} y={13} w={24} h={1} c={C.k} />
+          <R x={3} y={24} w={22} h={1} c={C.k} />
+          <R x={4} y={2} w={11} h={1} c={C.fl_rl} />
+          <R x={4} y={10} w={7} h={1} c={C.fl_rd} />
+          <R x={16} y={2} w={9} h={1} c={C.fl_gl} />
+          <R x={12} y={10} w={12} h={1} c={C.fl_gd} />
+          <R x={4} y={14} w={8} h={1} c={C.fl_bl} />
+          <R x={4} y={22} w={10} h={1} c={C.fl_bd} />
+          <R x={13} y={14} w={13} h={1} c={C.fl_yl} />
+          <R x={15} y={22} w={9} h={1} c={C.fl_yd} />
+        </g>
+      );
+    }
     default:
       return null;
   }

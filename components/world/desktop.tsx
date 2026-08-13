@@ -539,12 +539,7 @@ export default function Desktop(): ReactNode {
             aria-expanded={startOpen}
             onClick={() => setStartOpen((v) => !v)}
           >
-            <span className="win95-flag" aria-hidden>
-              <span className="win95-flag__r" />
-              <span className="win95-flag__g" />
-              <span className="win95-flag__y" />
-              <span className="win95-flag__w" />
-            </span>
+            <Win95Icon name="windows-flag" size={16} />
             <span>Start</span>
           </button>
           <div className="win95-taskbar__tasks" role="group" aria-label="Jendela terbuka">
