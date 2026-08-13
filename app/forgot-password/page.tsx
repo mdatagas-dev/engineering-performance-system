@@ -28,8 +28,9 @@ export default function ForgotPasswordPage() {
     <div className="flex flex-1 items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <span className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-800 font-mono text-sm font-bold text-white shadow-lg shadow-cyan-500/20">
-            EPS
+          <span className="block h-12 w-12 overflow-hidden rounded-xl shadow-lg shadow-cyan-500/20">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Logo" className="h-full w-full object-cover" />
           </span>
           <div>
             <h1 className="text-xl font-semibold tracking-tight">Lupa Password</h1>

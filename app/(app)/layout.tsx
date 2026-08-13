@@ -123,9 +123,10 @@ export default function AppLayout({ children }: Readonly<{ children: React.React
       <div className="flex items-center gap-3 border-b border-slate-950/10 px-5 py-4 dark:border-white/10">
         <Link
           href="/"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-cyan-500 to-blue-800 font-mono text-[11px] font-bold text-white shadow-lg shadow-cyan-500/20 transition hover:opacity-90"
+          className="block h-9 w-9 shrink-0 overflow-hidden rounded-lg shadow-lg shadow-cyan-500/20 transition hover:opacity-90"
         >
-          EPS
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Logo" className="h-full w-full object-cover" />
         </Link>
         <div className="min-w-0 leading-tight">
           <p className="truncate font-mono text-sm font-semibold tracking-wide">Engineering Production System</p>

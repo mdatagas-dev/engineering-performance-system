@@ -431,6 +431,37 @@ export function changelogKind(entry: Pick<ChangelogEntry, "kind">): ChangelogKin
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "v1.5.0",
+    date: "2026-08-13",
+    features: {
+      id: [
+        "Halaman login memakai video background Blue Wave Particles (loop mulus via crossfade dua video) di atas gradasi gelap",
+        "Kartu login memakai efek glass morph transparan (blur, border, kilau)",
+        "Logo diganti dengan gambar GAS ELECTRONIC di sidebar, halaman login, dan halaman lupa password",
+      ],
+      en: [
+        "Login page now uses a Blue Wave Particles video background (seamless loop via two-video crossfade) over a dark gradient",
+        "Login card now uses a transparent glass-morphism effect (blur, border, sheen)",
+        "Logo replaced with the GAS ELECTRONIC image in the sidebar, login page, and forgot-password page",
+      ],
+      zh: [
+        "登录页面使用 Blue Wave Particles 视频背景（双视频交叉淡入淡出实现无缝循环），叠加深色渐变",
+        "登录卡片采用透明玻璃拟态效果（模糊、边框、光泽）",
+        "侧边栏、登录页和忘记密码页的 Logo 更换为 GAS ELECTRONIC 图片",
+      ],
+      ko: [
+        "로그인 페이지가 다크 그라데이션 위에 Blue Wave Particles 비디오 배경(이중 비디오 크로스페이드로 매끄러운 루프)을 사용합니다",
+        "로그인 카드가 투명한 글래스모피즘 효과(블러, 테두리, 광택)를 사용합니다",
+        "사이드바, 로그인 페이지, 비밀번호 찾기 페이지의 로고를 GAS ELECTRONIC 이미지로 교체했습니다",
+      ],
+      ja: [
+        "ログインページがダークグラデーション上に Blue Wave Particles のビデオ背景（2動画クロスフェードによるシームレスループ）を使用",
+        "ログインカードが透明なグラスモーフィズム効果（ブラー、ボーダー、シーン）を使用",
+        "サイドバー・ログインページ・パスワード再設定ページのロゴを GAS ELECTRONIC の画像に変更",
+      ],
+    },
+  },
+  {
     version: "v1.4.3",
     date: "2026-08-13",
     features: {

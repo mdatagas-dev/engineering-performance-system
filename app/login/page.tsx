@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import LoginVideoBackground from "@/components/login-video-background";
 import { getMenuFor } from "@/lib/auth/menu";
 import { loadMockSession, saveMockSession } from "@/lib/mocks/accounts";
 import { withExpiry } from "@/lib/mocks/session";
@@ -96,31 +97,24 @@ export default function LoginPage() {
   }
 
   const inputClass =
-    "w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-[#00b3ac] focus:ring-2 focus:ring-[#00b3ac]/30 disabled:cursor-not-allowed disabled:opacity-60";
+    "w-full rounded-lg border border-white/25 bg-white/10 px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-white/40 focus:border-[#00b3ac] focus:ring-2 focus:ring-[#00b3ac]/40 disabled:cursor-not-allowed disabled:opacity-60";
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* Gradasi bergerak pelan */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(120deg, #0a2f33 0%, #123b49 20%, #1e2a5e 45%, #3b1e4e 70%, #4b2a63 85%, #0a2f33 100%)",
-          backgroundSize: "300% 300%",
-          animation: "gradient-shift 18s ease-in-out infinite",
-        }}
-      />
+      {/* Video background: Blue Wave Particles — loop seamless via crossfade */}
+      <LoginVideoBackground />
       <div className="absolute inset-0 bg-[#0a0f15]/45" />
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col lg:flex-row">
         {/* ===== KIRI: kata mutiara (lebih besar) ===== */}
         <div className="flex flex-[1.3] flex-col justify-center px-8 py-12 lg:px-16 xl:px-24">
           <div className="mb-12 flex items-center gap-4">
-            <span className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-[#00b3ac] to-[#0e7490] font-mono text-sm font-bold text-white shadow-lg shadow-cyan-500/20">
-              EPS
+            <span className="block h-14 w-14 shrink-0 overflow-hidden rounded-xl shadow-lg shadow-cyan-500/20">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="Logo" className="h-full w-full object-cover" />
             </span>
             <div className="text-left leading-tight">
-              <p className="text-3xl font-semibold tracking-tight text-white">EPS</p>
+              <p className="text-3xl font-semibold tracking-tight text-white">GAS ELECTRONIC</p>
               <p className="text-sm text-white/70">Engineering Production System</p>
             </div>
           </div>
@@ -159,26 +153,28 @@ export default function LoginPage() {
         {/* ===== KANAN: form login ===== */}
         <div className="flex w-full items-center justify-end px-4 pb-12 lg:w-[500px] lg:pr-16 xl:pr-24">
           <div className="anim-fade-up w-full max-w-md">
-            <div className="rounded-2xl bg-white p-8 shadow-2xl sm:p-10">
-              <div className="mb-8">
-                <h1 className="text-2xl font-semibold text-neutral-900">Selamat Datang</h1>
-                <p className="mt-1 text-sm text-neutral-500">Masuk ke Engineering Production System.</p>
-              </div>
+            <div className="relative rounded-2xl border border-white/20 bg-white/[0.08] p-8 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:p-10">
+              <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-white/10 via-transparent to-white/[0.03]" />
+              <div className="relative">
+                <div className="mb-8">
+                  <h1 className="text-2xl font-semibold text-white">Selamat Datang</h1>
+                  <p className="mt-1 text-sm text-white/70">Masuk ke Engineering Production System.</p>
+                </div>
 
               <form onSubmit={handleSubmit} noValidate className="space-y-4">
                 {expired && (
-                  <p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
+                  <p role="alert" className="rounded-lg border border-amber-300/40 bg-amber-500/15 px-4 py-2.5 text-sm text-amber-200">
                     Sesi Anda telah berakhir. Silakan login kembali.
                   </p>
                 )}
                 {error && (
-                  <p role="alert" aria-live="assertive" className="rounded-lg border border-red-300 bg-red-50 px-4 py-2.5 text-sm text-red-600">
+                  <p role="alert" aria-live="assertive" className="rounded-lg border border-red-300/40 bg-red-500/15 px-4 py-2.5 text-sm text-red-200">
                     {error}
                   </p>
                 )}
 
                 <div>
-                  <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-white/80">
                     Email
                   </label>
                   <input
@@ -194,14 +190,14 @@ export default function LoginPage() {
                     className={inputClass}
                   />
                   {errors.email && (
-                    <p id="email-error" role="alert" className="mt-1 text-xs text-red-600">
+                    <p id="email-error" role="alert" className="mt-1 text-xs text-red-300">
                       {errors.email}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-white/80">
                     Password
                   </label>
                   <div className="relative">
@@ -221,7 +217,7 @@ export default function LoginPage() {
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
                       aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-                      className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
+                      className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded-md p-1.5 text-white/50 transition-colors hover:bg-white/10 hover:text-white/80"
                     >
                       {showPassword ? (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -237,14 +233,14 @@ export default function LoginPage() {
                     </button>
                   </div>
                   {errors.password && (
-                    <p id="password-error" role="alert" className="mt-1 text-xs text-red-600">
+                    <p id="password-error" role="alert" className="mt-1 text-xs text-red-300">
                       {errors.password}
                     </p>
                   )}
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
-                  <label className="flex cursor-pointer items-center gap-2 text-neutral-600">
+                  <label className="flex cursor-pointer items-center gap-2 text-white/70">
                     <input
                       type="checkbox"
                       checked={rememberMe}
@@ -254,7 +250,7 @@ export default function LoginPage() {
                     />
                     Remember Me
                   </label>
-                  <Link href="/forgot-password" className="font-medium text-[#009a94] hover:underline">
+                  <Link href="/forgot-password" className="font-medium text-[#4dd8d2] hover:underline">
                     Forgot Password
                   </Link>
                 </div>
@@ -279,12 +275,13 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <p className="mt-8 text-center text-xs font-medium tracking-wide text-black/70">
+              <p className="mt-8 text-center text-xs font-medium tracking-wide text-white/50">
                 Engineering Production System · v1.0.0
               </p>
+              </div>
+              </div>
             </div>
           </div>
-        </div>
       </div>
     </div>
   );
