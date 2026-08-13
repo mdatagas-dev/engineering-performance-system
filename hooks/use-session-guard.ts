@@ -34,7 +34,7 @@ export function useSessionGuard(permission?: string): MockSession | null {
       }
       if (permission && !canAccess(s.user, permission)) {
         done = true;
-        router.replace("/");
+        router.replace("/home");
         return;
       }
       setSession((prev) => prev ?? s);

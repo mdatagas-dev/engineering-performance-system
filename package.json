@@ -1,6 +1,6 @@
 {
   "name": "eps-v2",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "securityPatch": "1.4.2",
   "private": true,
   "scripts": {

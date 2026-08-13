@@ -431,6 +431,32 @@ export function changelogKind(entry: Pick<ChangelogEntry, "kind">): ChangelogKin
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "v1.6.0",
+    date: "2026-08-13",
+    features: {
+      id: [
+        "Homepage baru THE WORLD di /: lingkungan desktop immersive (retro OS × cyber × arsip digital) dengan boot sequence, ikon interaktif, jendela yang bisa diseret, taskbar dengan jam & status, efek CRT/glitch, partikel ambient, dan easter egg (konami code, klik logo 3×, perintah rahasia di terminal)",
+        "ACCESS TERMINAL di desktop mengarahkan ke halaman login; dashboard authed pindah dari / ke /home",
+      ],
+      en: [
+        "New THE WORLD homepage at /: an immersive desktop environment (retro OS × cyber × digital archive) with boot sequence, interactive icons, draggable windows, taskbar with clock & status, CRT/glitch effects, ambient particles, and easter eggs (Konami code, 3× logo clicks, secret terminal commands)",
+        "ACCESS TERMINAL on the desktop leads to the login page; the authenticated dashboard moved from / to /home",
+      ],
+      zh: [
+        "新的 THE WORLD 首页（/）：沉浸式桌面环境（复古操作系统 × 赛博 × 数字档案），含开机序列、交互式图标、可拖拽窗口、带时钟与状态的任务栏、CRT/故障效果、环境粒子，以及彩蛋（Konami 秘技、连点 3 次 Logo、终端隐藏命令）",
+        "桌面上的 ACCESS TERMINAL 指向登录页；已登录仪表盘从 / 移至 /home",
+      ],
+      ko: [
+        "새로운 THE WORLD 홈페이지(/) : 부팅 시퀀스, 인터랙티브 아이콘, 드래그 가능한 창, 시계와 상태 표시가 있는 작업 표시줄, CRT/글리치 효과, 주변 입자, 이스터 에그(코나미 코드, 로고 3회 클릭, 터미널 비밀 명령)를 갖춘 몰입형 데스크톱 환경(레트로 OS × 사이버 × 디지털 아카이브)",
+        "데스크톱의 ACCESS TERMINAL은 로그인 페이지로 연결되며, 인증된 대시보드는 /에서 /home으로 이동했습니다",
+      ],
+      ja: [
+        "新しい THE WORLD ホームページ（/）：ブートシーケンス、インタラクティブアイコン、ドラッグ可能なウィンドウ、時計とステータス付きタスクバー、CRT/グリッチエフェクト、アンビエントパーティクル、イースターエッグ（コナミコマンド、ロゴ3回クリック、ターミナルの秘密コマンド）を備えた没入型デスクトップ環境（レトロOS × サイバー × デジタルアーカイブ）",
+        "デスクトップの ACCESS TERMINAL はログインページへ誘導し、認証済みダッシュボードは / から /home に移動",
+      ],
+    },
+  },
+  {
     version: "v1.5.0",
     date: "2026-08-13",
     features: {

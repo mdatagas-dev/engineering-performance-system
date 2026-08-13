@@ -122,7 +122,7 @@ export default function AppLayout({ children }: Readonly<{ children: React.React
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b border-slate-950/10 px-5 py-4 dark:border-white/10">
         <Link
-          href="/"
+          href="/home"
           className="block h-9 w-9 shrink-0 overflow-hidden rounded-lg shadow-lg shadow-cyan-500/20 transition hover:opacity-90"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}

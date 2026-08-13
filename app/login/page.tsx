@@ -39,7 +39,7 @@ export default function LoginPage() {
 
   // Sudah punya sesi lokal → langsung ke /.
   useEffect(() => {
-    if (loadMockSession()) router.replace("/");
+    if (loadMockSession()) router.replace("/home");
   }, [router]);
 
   // Rotasi kutipan tiap 2 menit.
@@ -83,7 +83,7 @@ export default function LoginPage() {
           rememberMe
         );
         saveMockSession(session);
-        router.replace("/");
+        router.replace("/home");
         return;
       }
 
