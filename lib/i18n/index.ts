@@ -431,6 +431,27 @@ export function changelogKind(entry: Pick<ChangelogEntry, "kind">): ChangelogKin
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "v1.8.0",
+    date: "2026-08-14",
+    features: {
+      id: [
+        "Halaman login menjadi THE GATE dalam universe komputer retro: dialog login Windows 95/98/2000 (title bar, bevel, tombol klasik) di atas wallpaper desktop, state machine (Loading THE GATE, Checking Password, Loading User Profile, Welcome Back, Access Denied, System Ready), progress bar klasik, jam sistem, avatar pixel-art, blinking cursor, toggle tampil password, remember session, validasi & aksesibilitas keyboard",
+      ],
+      en: [
+        "Login page is now THE GATE inside the retro computer universe: a Windows 95/98/2000 login dialog (title bar, bevels, classic buttons) over the desktop wallpaper, with a state machine (Loading THE GATE, Checking Password, Loading User Profile, Welcome Back, Access Denied, System Ready), classic progress bars, system clock, pixel-art avatar, blinking cursor, password visibility toggle, remember session, validation, and keyboard accessibility",
+      ],
+      zh: [
+        "登录页变成复古电脑宇宙中的 THE GATE：桌面壁纸上的 Windows 95/98/2000 登录对话框（标题栏、斜面边框、经典按钮），带状态机（正在加载 THE GATE、正在检查密码、正在加载用户资料、欢迎回来、拒绝访问、系统就绪）、经典进度条、系统时钟、像素头像、闪烁光标、密码显示切换、记住会话、校验与键盘无障碍",
+      ],
+      ko: [
+        "로그인 페이지가 레트로 컴퓨터 세계의 THE GATE가 되었습니다: 데스크톱 배경화면 위의 Windows 95/98/2000 로그인 대화상자(제목 표시줄, 베벨, 클래식 버튼), 상태 머신(Loading THE GATE, Checking Password, Loading User Profile, Welcome Back, Access Denied, System Ready), 클래식 진행 표시줄, 시스템 시계, 픽셀 아트 아바타, 깜빡이는 커서, 비밀번호 표시 토글, 세션 기억, 검증 및 키보드 접근성",
+      ],
+      ja: [
+        "ログインページがレトロコンピューター世界の THE GATE に：デスクトップ壁紙の上に Windows 95/98/2000 ログインダイアログ（タイトルバー、ベベル、クラシックなボタン）、状態機械（Loading THE GATE、Checking Password、Loading User Profile、Welcome Back、Access Denied、System Ready）、クラシックなプログレスバー、システム時計、ピクセルアートアバター、点滅カーソル、パスワード表示トグル、セッション記憶、バリデーションとキーボードアクセシビリティ",
+      ],
+    },
+  },
+  {
     version: "v1.7.3",
     date: "2026-08-14",
     features: {

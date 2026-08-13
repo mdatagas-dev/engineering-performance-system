@@ -1,0 +1,526 @@
+/* ============================================================
+   GE-OS — THE GATE login dialog (Win95/98/2000 look)
+   Prefix: gate- (no clash with homepage win95-*)
+   Font: Tahoma / Courier New. Sudut persegi. Bevel 3D.
+   ============================================================ */
+
+.gate-root {
+  position: fixed;
+  inset: 0;
+  background-image: url("/wallpaper.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #008080;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #000;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ---- Desktop icons (dekoratif) ---- */
+.gate-icons {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gate-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 86px;
+  padding: 6px 2px 4px;
+}
+
+.gate-icon__glyph {
+  width: 34px;
+  height: 34px;
+  font-size: 32px;
+  line-height: 1;
+  text-align: center;
+  filter: drop-shadow(1px 1px 0 rgb(0 0 0 / 0.6));
+}
+
+.gate-icon__label {
+  max-width: 84px;
+  font-size: 11px;
+  line-height: 1.15;
+  text-align: center;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* ---- Taskbar ---- */
+.gate-taskbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+}
+
+.gate-taskbar__start {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 12px;
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+  font: 700 11px Tahoma, "MS Sans Serif", sans-serif;
+  color: #000;
+  cursor: default;
+}
+
+.gate-taskbar__start:active {
+  border-top: 2px solid #404040;
+  border-left: 2px solid #404040;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+}
+
+.gate-taskbar__spacer {
+  flex: 1;
+}
+
+.gate-tray {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 8px;
+  background: #c0c0c0;
+  border-top: 2px solid #404040;
+  border-left: 2px solid #404040;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+}
+
+.gate-clock {
+  font: 700 11px "Courier New", Courier, monospace;
+  color: #000;
+}
+
+/* ---- Dialog frame ---- */
+.gate-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+  width: min(380px, calc(100vw - 24px));
+  background: #c0c0c0;
+  border-top: 2px solid #dfdfdf;
+  border-left: 2px solid #dfdfdf;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #808080,
+    2px 2px 0 #000;
+  color: #000;
+  font-size: 11px;
+}
+
+.gate-dialog--open {
+  animation: gate-open 0.18s ease-out;
+}
+
+@keyframes gate-open {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.gate-dialog--shake {
+  animation: gate-shake 0.4s linear;
+}
+
+@keyframes gate-shake {
+  0%, 100% {
+    transform: translate(-50%, -50%);
+  }
+  20% {
+    transform: translate(calc(-50% - 4px), -50%);
+  }
+  40% {
+    transform: translate(calc(-50% + 4px), -50%);
+  }
+  60% {
+    transform: translate(calc(-50% - 3px), -50%);
+  }
+  80% {
+    transform: translate(calc(-50% + 3px), -50%);
+  }
+}
+
+/* ---- Titlebar ---- */
+.gate-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font-weight: 700;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: default;
+}
+
+.gate-titlebar__icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  background: #000080;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #000;
+  border-bottom: 2px solid #000;
+  font-size: 9px;
+  line-height: 1;
+  color: #ffd700;
+}
+
+.gate-dialog__body {
+  padding: 14px 14px 12px;
+}
+
+/* ---- Body rows & messages ---- */
+.gate-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.gate-msg {
+  margin: 0;
+  line-height: 1.4;
+  color: #000;
+}
+
+.gate-msg--ok {
+  color: #008000;
+  font-weight: 700;
+}
+
+.gate-msg--info {
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  background: #ffffe1;
+  border: 1px solid #808080;
+  box-shadow: inset 1px 1px 0 #fff;
+  line-height: 1.35;
+}
+
+.gate-msg--err {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: 2px solid;
+  border-color: #a00000;
+  background: #ffe9e9;
+  color: #a00000;
+  line-height: 1.35;
+}
+
+.gate-msg--err .gate-msg__head {
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+/* ---- Avatar pixel (CSS murni) ---- */
+.gate-avatar {
+  flex: none;
+  display: inline-block;
+  position: relative;
+  background: #c0c0c0;
+  border: 2px solid #000;
+  box-shadow: 1px 1px 0 rgb(0 0 0 / 0.35);
+}
+
+.gate-avatar::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: -2px;
+  height: 10px;
+  background: #000;
+  border-bottom: 2px solid #000;
+}
+
+.gate-avatar::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 16px;
+  width: 4px;
+  height: 4px;
+  background: #000;
+  box-shadow: 16px 0 0 #000;
+}
+
+/* ---- Fields ---- */
+.gate-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+  font-weight: 700;
+  color: #000;
+}
+
+.gate-input {
+  height: 22px;
+  padding: 2px 4px;
+  background: #fff;
+  border: 2px solid;
+  border-color: #404040 #fff #fff #404040;
+  box-shadow: inset 1px 1px 0 #808080;
+  font: 11px Tahoma, "MS Sans Serif", sans-serif;
+  color: #000;
+}
+
+.gate-input:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -3px;
+}
+
+.gate-pwrow {
+  display: flex;
+  gap: 6px;
+}
+
+.gate-pwrow .gate-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.gate-field__error {
+  font-size: 10px;
+  font-weight: 400;
+  color: #a00000;
+}
+
+.gate-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  color: #000;
+  cursor: default;
+}
+
+.gate-check input {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border-top: 2px solid #404040;
+  border-left: 2px solid #404040;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+}
+
+.gate-check input:checked::after {
+  content: "✓";
+  font: 700 11px/1 Tahoma, "MS Sans Serif", sans-serif;
+  color: #000;
+}
+
+.gate-check input:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: 1px;
+}
+
+/* ---- Buttons ---- */
+.gate-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.gate-btn {
+  min-width: 72px;
+  height: 24px;
+  padding: 0 12px;
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+  box-shadow: 1px 1px 0 rgb(0 0 0 / 0.25);
+  font: 11px Tahoma, "MS Sans Serif", sans-serif;
+  color: #000;
+  cursor: default;
+}
+
+.gate-btn:active {
+  border-top: 2px solid #404040;
+  border-left: 2px solid #404040;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+}
+
+.gate-btn:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -3px;
+}
+
+.gate-btn:disabled {
+  color: #808080;
+  text-shadow: 1px 1px 0 #fff;
+}
+
+.gate-btn--default {
+  font-weight: 700;
+}
+
+.gate-btn--small {
+  min-width: 0;
+  width: 52px;
+  height: 22px;
+  padding: 0 6px;
+  box-shadow: none;
+}
+
+/* ---- Checking / progress ---- */
+.gate-checking {
+  padding: 6px 2px 2px;
+}
+
+.gate-status {
+  min-height: 16px;
+  margin-bottom: 10px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.gate-progress {
+  height: 18px;
+  padding: 2px;
+  background: #fff;
+  border-top: 2px solid #404040;
+  border-left: 2px solid #404040;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  overflow: hidden;
+}
+
+.gate-progress__bar {
+  height: 100%;
+  width: 100%;
+  background: repeating-linear-gradient(90deg, #0000a0 0 10px, #0000e8 10px 22px);
+  background-size: 44px 100%;
+  animation: gate-ribbon 0.6s linear infinite;
+}
+
+@keyframes gate-ribbon {
+  to {
+    background-position: 44px 0;
+  }
+}
+
+/* ---- Blinking caret ---- */
+.gate-blink {
+  animation: gate-blink 1s steps(1) infinite;
+}
+
+@keyframes gate-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ---- Boot splash ---- */
+.gate-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  color: #fff;
+}
+
+.gate-boot__logo {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: clamp(34px, 8vw, 68px);
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-shadow: 0 0 22px rgb(255 255 255 / 0.35);
+}
+
+.gate-boot__status {
+  margin-top: 10px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  color: #9a9a9a;
+}
+
+/* ---- Mobile ≤640px ---- */
+@media (max-width: 640px) {
+  .gate-dialog {
+    width: calc(100vw - 24px);
+  }
+
+  .gate-icon {
+    width: 74px;
+  }
+
+  .gate-icon__label {
+    font-size: 10px;
+  }
+
+  .gate-dialog__body {
+    padding: 12px 10px;
+  }
+}
+
+/* ---- prefers-reduced-motion: matikan animasi ---- */
+@media (prefers-reduced-motion: reduce) {
+  .gate-dialog--open,
+  .gate-dialog--shake,
+  .gate-progress__bar,
+  .gate-blink {
+    animation: none;
+  }
+}
