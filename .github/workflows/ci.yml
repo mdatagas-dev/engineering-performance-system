@@ -1,45 +1,23 @@
 name: CI
 
-# Gate ringan per PR + push ke main — tanpa build (hemat waktu CI).
-# Build berat hanya di workflow deploy.yml.
 on:
   push:
     branches: [main]
   pull_request:
 
-env:
-  NODE_VERSION: "20"
-
 jobs:
-  lint-typecheck:
-    name: Lint, typecheck & validate Prisma
+  check:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: 22
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      # Generated client (app/generated/prisma) tidak di-commit — regenerate
-      # sebelum typecheck. Tidak butuh DB.
-      - name: Generate Prisma client
-        run: npx prisma generate
-
-      # Placeholder — cek sintaks schema tanpa .env di CI.
-      - name: Validate Prisma schema
-        run: npx prisma validate
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npx prisma validate
         env:
-          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npx tsc --noEmit
+          DATABASE_URL: postgresql://user:pass@localhost:5432/ci
+      - run: npx tsx --test "lib/i18n/*.test.ts"

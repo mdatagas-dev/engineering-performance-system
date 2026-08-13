@@ -1,50 +1,18 @@
-name: Deploy Windows (self-hosted)
-
-# CI/CD utk server WINDOWS (akses RDP, tanpa SSH).
-# Mensyaratkan self-hosted runner terdaftar di server + variabel repo
-# ENABLE_WINDOWS_DEPLOY=true (Settings → Variables → Actions).
-# Kalau belum, job ini di-skip otomatis.
-#
-# Daftarkan runner (sekali, di server via RDP):
-#   Settings → Actions → Runners → New self-hosted runner → Windows x64
-#   ikuti perintah GitHub (download zip, .\config.cmd --url ... --token ..., lalu
-#   .\run.cmd ATAU install service: .\svc install && .\svc start)
-#   Label runner: windows (default utk Windows runner) — pastikan label
-#   "self-hosted" + "windows" terpasang.
-#
-# Lalu set variabel: Settings → Secrets and variables → Actions → Variables →
-#   ENABLE_WINDOWS_DEPLOY = true
-# Deploy berikutnya (push ke main ATAU workflow_dispatch) otomatis jalan.
+name: Deploy Windows
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-concurrency:
-  group: deploy-windows
-  cancel-in-progress: false
-
 jobs:
-  deploy-windows:
-    name: Deploy ke Windows server
-    # Hanya aktif bila variabel repo diset (runner ada di server).
+  deploy:
     if: vars.ENABLE_WINDOWS_DEPLOY == 'true'
     runs-on: [self-hosted, windows]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
-
-      - name: Deploy (pull-dulu di script, build & restart PM2)
-        shell: powershell
-        run: .\scripts\deploy-windows.ps1
+      - uses: actions/checkout@v4
+      - name: Deploy
+        shell: pwsh
+        run: ./scripts/deploy-windows.ps1
         env:
-          # .env sudah ada di server (AUTH_SECRET, DATABASE_URL) — jangan
-          # commit secret ke workflow.
-          NODE_ENV: production
+          SERVER_PATH: ${{ vars.SERVER_PATH }}

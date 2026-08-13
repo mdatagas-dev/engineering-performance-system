@@ -57,7 +57,11 @@ Expand-Archive -Path runner.zip -DestinationPath . -Force
 
 **c. Hasil:** setiap push ke `main` otomatis menjalankan
 `.github/workflows/deploy-windows.yml` di server:
-`git pull → npm ci → prisma generate → build → pm2 reload`. Pantau di tab **Actions** → **Deploy Windows**.
+`git pull → npm ci --include=dev → prisma generate → build → pm2 reload`. Pantau di tab **Actions** → **Deploy Windows**.
+
+> Script deploy otomatis meng-install `pm2` global untuk akun yang menjalankan
+> runner bila belum ada di PATH-nya (pm2 yang di-install via RDP di akun admin
+> tidak terlihat oleh akun service runner).
 
 ### 1.5 Folder project di server
 Workflow Windows menjalankan `scripts\deploy-windows.ps1` dari hasil `actions/checkout`
@@ -70,6 +74,9 @@ runner), sesuaikan salah satu:
 > Catatan: repo `C:\apps\eps` (klon manual) dan folder checkout runner adalah dua
 > salinan berbeda — pilih satu sumber. Rekomendasi: gunakan **folder checkout runner**
 > sebagai satu-satunya (pindahkan `.env` ke sana), jalankan `pm2 start` dari sana.
+>
+> PM2 daemon berjalan **per-akun** — daemon diakun RDP dan diakun service runner
+> berbeda. Pantau dari akun yang sama dengan yang menjalankan deploy.
 
 ### 1.6 Operasional PM2 di Windows
 ```powershell

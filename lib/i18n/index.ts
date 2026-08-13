@@ -415,6 +415,48 @@ export type ChangelogEntry = {
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "v1.3.2",
+    date: "2026-08-13",
+    features: {
+      id: [
+        "Fix deploy Windows di self-hosted runner: npm ci --include=dev (devDependencies wajib untuk build) dan auto-install pm2 bila tidak ada di PATH akun runner",
+      ],
+      en: [
+        "Fix Windows deploy on self-hosted runner: npm ci --include=dev (devDependencies required for build) and auto-install pm2 when missing from the runner account PATH",
+      ],
+      zh: [
+        "修复自托管运行器上的 Windows 部署：npm ci --include=dev（构建需要开发依赖）以及在运行器账户 PATH 中缺少 pm2 时自动安装",
+      ],
+      ko: [
+        "자체 호스팅 러너의 Windows 배포 수정: npm ci --include=dev(빌드에 필수인 devDependencies) 및 러너 계정 PATH에 pm2가 없으면 자동 설치",
+      ],
+      ja: [
+        "セルフホストランナーでの Windows デプロイを修正：npm ci --include=dev（ビルドに必要な devDependencies）と、ランナーアカウントの PATH に pm2 がない場合の自動インストール",
+      ],
+    },
+  },
+  {
+    version: "v1.3.1",
+    date: "2026-08-13",
+    features: {
+      id: [
+        "CI/CD: workflow deploy-windows.yml (self-hosted runner Windows, variable ENABLE_WINDOWS_DEPLOY & SERVER_PATH) dan ci.yml (lint, typecheck, prisma validate, test i18n)",
+      ],
+      en: [
+        "CI/CD: deploy-windows.yml workflow (Windows self-hosted runner, ENABLE_WINDOWS_DEPLOY & SERVER_PATH variables) and ci.yml (lint, typecheck, prisma validate, i18n tests)",
+      ],
+      zh: [
+        "CI/CD：deploy-windows.yml 工作流（Windows 自托管运行器，ENABLE_WINDOWS_DEPLOY 与 SERVER_PATH 变量）及 ci.yml（lint、typecheck、prisma validate、i18n 测试）",
+      ],
+      ko: [
+        "CI/CD: deploy-windows.yml 워크플로(Windows 자체 호스팅 러너, ENABLE_WINDOWS_DEPLOY 및 SERVER_PATH 변수) 및 ci.yml(lint, typecheck, prisma validate, i18n 테스트)",
+      ],
+      ja: [
+        "CI/CD：deploy-windows.yml ワークフロー（Windows セルフホストランナー、ENABLE_WINDOWS_DEPLOY と SERVER_PATH 変数）および ci.yml（lint、typecheck、prisma validate、i18n テスト）",
+      ],
+    },
+  },
+  {
     version: "v1.3.0",
     date: "2026-08-13",
     features: {
