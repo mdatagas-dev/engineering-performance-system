@@ -22,6 +22,7 @@ import {
   internal,
   unauthorized,
 } from "@/lib/http/api-error";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 export const dynamic = "force-dynamic";
 
@@ -145,7 +146,7 @@ export async function POST(req: Request) {
           entityId: created.id,
           before: Prisma.JsonNull,
           after: auditAfter as Prisma.InputJsonValue,
-          ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+          ip: getClientIp(req),
           userAgent: req.headers.get("user-agent"),
         },
       });

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { AUTH_CONFIG } from "@/lib/auth/config";
 import { getSession } from "@/lib/auth/session";
 import { validateKpiCreate } from "@/lib/kpi/validation";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 export const dynamic = "force-dynamic";
 
@@ -94,7 +95,7 @@ export async function POST(req: Request) {
         entityType: "KPI",
         entityId: created.id,
         after: result.data,
-        ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+        ip: getClientIp(req),
         userAgent: req.headers.get("user-agent"),
       },
     });

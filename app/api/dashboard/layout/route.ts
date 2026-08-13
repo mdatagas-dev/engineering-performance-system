@@ -6,6 +6,7 @@ import { getSession, requirePermission } from "@/lib/auth/session";
 import { LayoutType } from "@/app/generated/prisma/enums";
 import { Prisma } from "@/app/generated/prisma/client";
 import { validateLayoutSave } from "@/lib/dashboard/validation";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 export const dynamic = "force-dynamic";
 
@@ -89,7 +90,7 @@ export async function PUT(req: Request) {
         entityId: existing?.id ?? layoutRow.id,
         before: existing ? { layoutType: existing.layoutType } : Prisma.JsonNull,
         after: { layoutType, name } as Prisma.InputJsonValue,
-        ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+        ip: getClientIp(req),
         userAgent: req.headers.get("user-agent"),
       },
     });

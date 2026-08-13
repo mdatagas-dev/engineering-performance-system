@@ -12,6 +12,7 @@ import {
   NON_DRAFT_MESSAGE,
   ROLLBACK_DONE_MESSAGE,
 } from "@/lib/exporter/rollback";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 export const dynamic = "force-dynamic";
 
@@ -84,7 +85,7 @@ export async function DELETE(req: Request, { params }: Params) {
           entityId: importHistory.id,
           before: audit.before as Prisma.InputJsonValue,
           after: audit.after as Prisma.InputJsonValue,
-          ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+          ip: getClientIp(req),
           userAgent: req.headers.get("user-agent"),
         },
       });

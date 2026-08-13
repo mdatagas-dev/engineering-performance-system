@@ -16,6 +16,7 @@ import {
   notFound,
   unauthorized,
 } from "@/lib/http/api-error";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 export const dynamic = "force-dynamic";
 
@@ -111,7 +112,7 @@ export async function PATCH(req: Request, { params }: Params) {
           entityId: u.id,
           before: { ...record } as Prisma.InputJsonValue,
           after: auditAfter as Prisma.InputJsonValue,
-          ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+          ip: getClientIp(req),
           userAgent: req.headers.get("user-agent"),
         },
       });
@@ -178,7 +179,7 @@ export async function DELETE(req: Request, { params }: Params) {
           entityType: "PRODUCTION_RECORD",
           entityId: record.id,
           before: { ...record } as Prisma.InputJsonValue,
-          ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+          ip: getClientIp(req),
           userAgent: req.headers.get("user-agent"),
         },
       });

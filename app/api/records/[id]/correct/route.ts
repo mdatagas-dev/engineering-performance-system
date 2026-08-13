@@ -8,6 +8,7 @@ import type { Prisma } from "@/app/generated/prisma/client";
 import { decideCorrection, parseCorrectionBody } from "@/lib/records/correction";
 import { recomputeCalculated } from "@/lib/records/calculate";
 import { createVersionSnapshot } from "@/lib/records/versioning";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 export const dynamic = "force-dynamic";
 
@@ -140,7 +141,7 @@ export async function POST(req: Request, { params }: Params) {
         entityId: u.id,
         before: { ...record } as Prisma.InputJsonValue,
         after: after as Prisma.InputJsonValue,
-        ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+        ip: getClientIp(req),
         userAgent: req.headers.get("user-agent"),
       },
     });

@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth/session";
 import { RecordStatus } from "@/app/generated/prisma/enums";
 import type { Prisma } from "@/app/generated/prisma/client";
 import { decideTransition } from "@/lib/records/workflow";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +88,7 @@ export async function PATCH(req: Request, { params }: Params) {
         entityId: u.id,
         before: { status: record.status },
         after: after as Prisma.InputJsonValue,
-        ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+        ip: getClientIp(req),
         userAgent: req.headers.get("user-agent"),
       },
     });

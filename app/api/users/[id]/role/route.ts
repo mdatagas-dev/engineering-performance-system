@@ -5,6 +5,7 @@ import { AUTH_CONFIG } from "@/lib/auth/config";
 import { getSession } from "@/lib/auth/session";
 import { decideRoleChange } from "@/lib/auth/rolePolicy";
 import { RoleName } from "@/app/generated/prisma/enums";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +77,7 @@ export async function PATCH(req: Request, { params }: Params) {
         entityId: target.id,
         before: { role: beforeRole },
         after: { role: newRole as RoleName },
-        ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+        ip: getClientIp(req),
         userAgent: req.headers.get("user-agent"),
       },
     }),

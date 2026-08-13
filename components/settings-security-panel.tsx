@@ -3,15 +3,43 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   DEFAULT_SECURITY_CONFIG,
-  loadSecurityConfig,
   parseSecurityConfig,
-  saveSecurityConfig,
-  SECURITY_CONFIG_STORAGE_KEY,
   SECURITY_CONFIG_LIMITS,
   type SecurityConfig,
 } from "@/lib/security/config";
-import { appendMockAudit, clientMeta } from "@/lib/mocks/audit";
 import { t, type Lang, type TranslationKey } from "@/lib/i18n";
+
+// Shape backend GET/PUT /api/security-config (lib/brute-force/config.ts):
+// waktu dalam milidetik; UI lokal pakai menit — konversi di lapisan ini.
+type ApiSecurityConfig = {
+  maxAttempts: number;
+  lockoutBaseMs: number;
+  lockoutMaxMs: number;
+  rateLimitMaxAttempts: number;
+  rateLimitWindowMs: number;
+};
+
+const MS_PER_MINUTE = 60_000;
+
+function apiToLocal(a: ApiSecurityConfig): SecurityConfig {
+  return {
+    maxFailedAttempts: a.maxAttempts,
+    lockoutBaseMinutes: Math.round(a.lockoutBaseMs / MS_PER_MINUTE),
+    lockoutMaxMinutes: Math.round(a.lockoutMaxMs / MS_PER_MINUTE),
+    rateLimitMax: a.rateLimitMaxAttempts,
+    rateLimitWindowMinutes: Math.round(a.rateLimitWindowMs / MS_PER_MINUTE),
+  };
+}
+
+function localToApi(c: SecurityConfig): ApiSecurityConfig {
+  return {
+    maxAttempts: c.maxFailedAttempts,
+    lockoutBaseMs: c.lockoutBaseMinutes * MS_PER_MINUTE,
+    lockoutMaxMs: c.lockoutMaxMinutes * MS_PER_MINUTE,
+    rateLimitMaxAttempts: c.rateLimitMax,
+    rateLimitWindowMs: c.rateLimitWindowMinutes * MS_PER_MINUTE,
+  };
+}
 
 type FormState = {
   maxFailedAttempts: string;
@@ -66,17 +94,27 @@ function validateForm(lang: Lang, form: FormState): Record<string, string> {
   return errors;
 }
 
-type SecurityUser = { id: string; name: string; email: string };
-
-export default function SettingsSecurityPanel({ lang, user }: { lang: Lang; user: SecurityUser }) {
+export default function SettingsSecurityPanel({ lang }: { lang: Lang }) {
   const [form, setForm] = useState<FormState | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [saving, setSaving] = useState(false);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Konfigurasi NYATA dari backend (GET /api/security-config — dipakai juga
+  // oleh route login untuk rate limit & lockout). Gagal muat → form default
+  // (backend fallback AUTH_CONFIG) + pesan, tanpa crash.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setForm(toForm(loadSecurityConfig(window.localStorage)));
+    setForm(toForm(DEFAULT_SECURITY_CONFIG));
+    fetch("/api/security-config")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Gagal memuat pengaturan keamanan."))))
+      .then((data: { config: ApiSecurityConfig }) => {
+        setForm(toForm(apiToLocal(data.config)));
+      })
+      .catch((err: unknown) => {
+        flash({ type: "err", text: err instanceof Error ? err.message : "Gagal memuat pengaturan keamanan." });
+      });
   }, []);
 
   useEffect(
@@ -102,21 +140,30 @@ export default function SettingsSecurityPanel({ lang, user }: { lang: Lang; user
     });
   }
 
-  function audit(previous: SecurityConfig, next: SecurityConfig) {
-    const meta = clientMeta();
-    appendMockAudit({
-      action: "SECURITY_CONFIG_UPDATED",
-      entityType: "SECURITY_CONFIG",
-      entityId: SECURITY_CONFIG_STORAGE_KEY,
-      before: previous,
-      after: next,
-      ip: meta.ip,
-      userAgent: meta.userAgent,
-      user: { id: user.id, name: user.name, email: user.email },
-    });
+  // Simpan via PUT /api/security-config — backend menulis tabel security_configs
+  // + audit SECURITY_CONFIG_UPDATED (route). Bukan lagi localStorage/mock audit.
+  async function persist(config: SecurityConfig, okMessage: string) {
+    setSaving(true);
+    setFeedback(null);
+    try {
+      const res = await fetch("/api/security-config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(localToApi(config)),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message ?? "Gagal menyimpan pengaturan keamanan.");
+      setForm(toForm(apiToLocal(data.config)));
+      setErrors({});
+      flash({ type: "ok", text: okMessage });
+    } catch (err) {
+      flash({ type: "err", text: err instanceof Error ? err.message : "Gagal menyimpan pengaturan keamanan." });
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!form) return;
     const nextErrors = validateForm(lang, form);
@@ -125,22 +172,12 @@ export default function SettingsSecurityPanel({ lang, user }: { lang: Lang; user
       flash({ type: "err", text: t(lang, "sec.saveErr") });
       return;
     }
-    const previous = loadSecurityConfig(window.localStorage);
-    const config = parseSecurityConfig(form);
-    saveSecurityConfig(config, window.localStorage);
-    audit(previous, config);
-    setForm(toForm(config));
-    flash({ type: "ok", text: t(lang, "sec.savedOk") });
+    await persist(parseSecurityConfig(form), t(lang, "sec.savedOk"));
   }
 
-  function handleReset() {
+  async function handleReset() {
     if (!window.confirm(t(lang, "sec.resetConfirm"))) return;
-    const previous = loadSecurityConfig(window.localStorage);
-    saveSecurityConfig(DEFAULT_SECURITY_CONFIG, window.localStorage);
-    audit(previous, DEFAULT_SECURITY_CONFIG);
-    setForm(toForm(DEFAULT_SECURITY_CONFIG));
-    setErrors({});
-    flash({ type: "ok", text: t(lang, "sec.resetOk") });
+    await persist(DEFAULT_SECURITY_CONFIG, t(lang, "sec.resetOk"));
   }
 
   return (
@@ -220,13 +257,11 @@ export default function SettingsSecurityPanel({ lang, user }: { lang: Lang; user
           <div className="flex flex-wrap items-center gap-3 border-t border-slate-950/10 pt-5 dark:border-white/10">
             <button
               type="submit"
-              className="rounded-lg bg-gradient-to-r from-cyan-600 to-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-600/25 transition hover:opacity-90"
+              disabled={saving}
+              className="rounded-lg bg-gradient-to-r from-cyan-600 to-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-600/25 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {t(lang, "sec.save")}
+              {saving ? "…" : t(lang, "sec.save")}
             </button>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t(lang, "sec.storageKey").replace("{key}", SECURITY_CONFIG_STORAGE_KEY)}
-            </p>
           </div>
         </form>
 

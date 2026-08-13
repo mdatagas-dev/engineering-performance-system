@@ -91,6 +91,7 @@ export const I18N_KEYS = [
   "about.title",
   "about.subtitle",
   "about.version",
+  "about.securityPatch",
   "about.stack",
   "about.changelog",
   "about.release",
@@ -143,7 +144,7 @@ export const DICT: Record<Lang, Record<TranslationKey, string>> = {
     "sec.storageKey": "Kunci: {key}",
     "sec.notesTitle": "Catatan:",
     "sec.notesBody":
-      "Pengaturan ini hanya tiruan (mock di localStorage) dan langsung dipakai oleh lockout login mock. Backend login JWT pakai AUTH_CONFIG statis (lib/auth/config.ts) — tanpa DB belum ada endpoint konfigurasi, jadi batas & durasi di sini belum berpengaruh ke API nyata.",
+      "Pengaturan ini disimpan di database (tabel security_configs) dan langsung dipakai route login untuk rate limit & lockout akun (backend JWT).",
     "sec.errRangeAttempts": "Harus {min}–{max} percobaan.",
     "sec.errRangeMinutes": "Harus {min}–{max} menit.",
     "sec.errLockMaxLessBase": "Durasi maksimal tidak boleh lebih kecil dari durasi dasar.",
@@ -155,6 +156,7 @@ export const DICT: Record<Lang, Record<TranslationKey, string>> = {
     "about.title": "Informasi Aplikasi",
     "about.subtitle": "Versi, teknologi, dan riwayat rilis aplikasi.",
     "about.version": "Versi Aplikasi",
+    "about.securityPatch": "Security Patch Terakhir",
     "about.stack": "Stack Teknologi",
     "about.changelog": "Changelog",
     "about.release": "Rilis",
@@ -203,7 +205,7 @@ export const DICT: Record<Lang, Record<TranslationKey, string>> = {
     "sec.storageKey": "Key: {key}",
     "sec.notesTitle": "Note:",
     "sec.notesBody":
-      "These are mock settings (localStorage) used directly by the mock login lockout. The JWT login backend uses static AUTH_CONFIG (lib/auth/config.ts) — without a DB there is no config endpoint, so these limits don't affect the real API yet.",
+      "These settings are stored in the database (security_configs table) and are used directly by the login route for rate limiting & account lockout (JWT backend).",
     "sec.errRangeAttempts": "Must be {min}–{max} attempts.",
     "sec.errRangeMinutes": "Must be {min}–{max} minutes.",
     "sec.errLockMaxLessBase": "Max duration cannot be lower than base duration.",
@@ -215,6 +217,7 @@ export const DICT: Record<Lang, Record<TranslationKey, string>> = {
     "about.title": "About",
     "about.subtitle": "Version, technology stack, and release history.",
     "about.version": "App Version",
+    "about.securityPatch": "Last Security Patch",
     "about.stack": "Tech Stack",
     "about.changelog": "Changelog",
     "about.release": "Release",
@@ -263,7 +266,7 @@ export const DICT: Record<Lang, Record<TranslationKey, string>> = {
     "sec.storageKey": "键：{key}",
     "sec.notesTitle": "说明：",
     "sec.notesBody":
-      "这些是模拟设置（localStorage），直接供模拟登录锁定使用。JWT 登录后端使用静态 AUTH_CONFIG（lib/auth/config.ts）——没有数据库就没有配置接口，因此这些限制暂不影响真实 API。",
+      "这些设置存储在数据库中（security_configs 表），并由登录路由直接用于速率限制与账户锁定（JWT 后端）。",
     "sec.errRangeAttempts": "必须在 {min}–{max} 次之间。",
     "sec.errRangeMinutes": "必须在 {min}–{max} 分钟之间。",
     "sec.errLockMaxLessBase": "最大时长不能小于基础时长。",
@@ -275,6 +278,7 @@ export const DICT: Record<Lang, Record<TranslationKey, string>> = {
     "about.title": "关于",
     "about.subtitle": "应用版本、技术栈与发布历史。",
     "about.version": "应用版本",
+    "about.securityPatch": "最近安全补丁",
     "about.stack": "技术栈",
     "about.changelog": "更新日志",
     "about.release": "版本",
@@ -323,7 +327,7 @@ export const DICT: Record<Lang, Record<TranslationKey, string>> = {
     "sec.storageKey": "키: {key}",
     "sec.notesTitle": "참고:",
     "sec.notesBody":
-      "이 설정은 목(mock)이며(localStorage) 목 로그인 잠금에서 직접 사용됩니다. JWT 로그인 백엔드는 정적 AUTH_CONFIG(lib/auth/config.ts)를 사용합니다 — DB가 없으면 설정 엔드포인트가 없으므로 이 제한은 아직 실제 API에 영향을 주지 않습니다.",
+      "이 설정은 데이터베이스(security_configs 테이블)에 저장되며 JWT 백엔드의 로그인 라우트에서 속도 제한 및 계정 잠금에 직접 사용됩니다.",
     "sec.errRangeAttempts": "{min}–{max}회 사이여야 합니다.",
     "sec.errRangeMinutes": "{min}–{max}분 사이여야 합니다.",
     "sec.errLockMaxLessBase": "최대 시간은 기본 시간보다 작을 수 없습니다.",
@@ -335,6 +339,7 @@ export const DICT: Record<Lang, Record<TranslationKey, string>> = {
     "about.title": "앱 정보",
     "about.subtitle": "버전, 기술 스택 및 릴리스 기록.",
     "about.version": "앱 버전",
+    "about.securityPatch": "최신 보안 패치",
     "about.stack": "기술 스택",
     "about.changelog": "변경 내역",
     "about.release": "릴리스",
@@ -383,7 +388,7 @@ export const DICT: Record<Lang, Record<TranslationKey, string>> = {
     "sec.storageKey": "キー: {key}",
     "sec.notesTitle": "注記：",
     "sec.notesBody":
-      "これはモック設定（localStorage）で、モックのログインロックアウトで直接使用されます。JWT ログインバックエンドは静的 AUTH_CONFIG（lib/auth/config.ts）を使用します — DB がないため設定エンドポイントはなく、これらの制限はまだ実際の API には影響しません。",
+      "これらの設定はデータベース（security_configs テーブル）に保存され、JWT バックエンドのログインルートでレート制限とアカウントロックアウトに直接使用されます。",
     "sec.errRangeAttempts": "{min}–{max}回の範囲である必要があります。",
     "sec.errRangeMinutes": "{min}–{max}分の範囲である必要があります。",
     "sec.errLockMaxLessBase": "最大時間は基本時間より短くできません。",
@@ -395,6 +400,7 @@ export const DICT: Record<Lang, Record<TranslationKey, string>> = {
     "about.title": "アプリ情報",
     "about.subtitle": "バージョン、技術スタック、リリース履歴。",
     "about.version": "アプリバージョン",
+    "about.securityPatch": "最新のセキュリティパッチ",
     "about.stack": "技術スタック",
     "about.changelog": "更新履歴",
     "about.release": "リリース",
@@ -406,14 +412,67 @@ export function t(lang: Lang, key: TranslationKey): string {
   return DICT[lang][key];
 }
 
+// Jenis rilis: "security" = security patch (wajib versinya terdaftar di
+// package.json securityPatch — dicek test i18n); selain itu rilis biasa.
+export type ChangelogKind = "release" | "security";
+
 export type ChangelogEntry = {
   version: string;
   date: string;
   features: Record<Lang, string[]>;
+  kind?: ChangelogKind;
 };
+
+// Helper label rilis (default "release").
+export function changelogKind(entry: Pick<ChangelogEntry, "kind">): ChangelogKind {
+  return entry.kind ?? "release";
+}
 
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
+  {
+    version: "v1.4.3",
+    date: "2026-08-13",
+    features: {
+      id: [
+        "Perbaikan bug: panel Keamanan & Lockout kini memuat & menyimpan konfigurasi melalui API (/api/security-config) ke database — pengaturan rate limit & lockout benar-benar dipakai route login, bukan sekadar mock localStorage",
+      ],
+      en: [
+        "Bug fix: the Security & Lockout panel now loads and saves settings through the API (/api/security-config) to the database — rate limit & lockout settings actually affect the login route, not just mock localStorage",
+      ],
+      zh: [
+        "错误修复：「安全与锁定」面板现通过 API（/api/security-config）将设置加载并保存到数据库——速率限制与锁定设置真正作用于登录路由，而非仅限 localStorage 模拟数据",
+      ],
+      ko: [
+        "버그 수정: 보안 및 잠금 패널이 이제 API(/api/security-config)를 통해 설정을 데이터베이스에 로드하고 저장합니다 — 속도 제한 및 잠금 설정이 실제로 로그인 라우트에 적용되며, 더 이상 localStorage 모의 데이터가 아닙니다",
+      ],
+      ja: [
+        "バグ修正：「セキュリティとロック」パネルが API（/api/security-config）経由で設定をデータベースに読み込み・保存するように — レート制限とロックアウト設定がログインルートに実際に反映され、localStorage のモックではなくなりました",
+      ],
+    },
+  },
+  {
+    version: "v1.4.2",
+    date: "2026-08-13",
+    kind: "security",
+    features: {
+      id: [
+        "Security patch: header IP (x-forwarded-for/x-real-ip) tidak lagi dipercaya tanpa proxy terpercaya (env TRUSTED_PROXIES) — mencegah spoofing IP untuk bypass rate limit login dan pemalsuan audit trail",
+      ],
+      en: [
+        "Security patch: IP headers (x-forwarded-for/x-real-ip) are no longer trusted without a trusted proxy (TRUSTED_PROXIES env) — prevents IP spoofing to bypass login rate limits and forge audit trails",
+      ],
+      zh: [
+        "安全补丁：没有可信代理（TRUSTED_PROXIES 环境变量）时不再信任 IP 请求头（x-forwarded-for/x-real-ip）——防止通过伪造 IP 绕过登录速率限制并伪造审计记录",
+      ],
+      ko: [
+        "보안 패치: 신뢰할 수 있는 프록시(TRUSTED_PROXIES 환경 변수) 없이는 IP 헤더(x-forwarded-for/x-real-ip)를 신뢰하지 않음 — IP 스푸핑으로 로그인 속도 제한 우회 및 감사 추적 위조를 방지",
+      ],
+      ja: [
+        "セキュリティパッチ：信頼できるプロキシ（TRUSTED_PROXIES 環境変数）がない場合、IP ヘッダー（x-forwarded-for/x-real-ip）を信用しない — IP スプーフィングによるログイン回数制限の回避と監査証跡の改ざんを防止",
+      ],
+    },
+  },
   {
     version: "v1.4.1",
     date: "2026-08-13",

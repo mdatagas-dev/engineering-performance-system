@@ -97,7 +97,7 @@ export default function SettingsPage() {
         )}
 
         <div className="flex-1">
-          {activeTab === "security" && <SettingsSecurityPanel lang={lang} user={session.user} />}
+          {activeTab === "security" && <SettingsSecurityPanel lang={lang} />}
           {activeTab === "modules" && <SettingsModulesPanel lang={lang} user={session.user} />}
           {activeTab === "language" && <SettingsLanguagePanel lang={lang} onSelect={handleLangSelect} />}
           {activeTab === "about" && <SettingsAboutPanel lang={lang} />}

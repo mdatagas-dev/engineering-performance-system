@@ -2,8 +2,10 @@
 // helper load/save/t aman terhadap input rusak, changelog lengkap per bahasa.
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import pkg from "../../package.json";
 import {
   CHANGELOG,
+  changelogKind,
   DEFAULT_LANG,
   DICT,
   LANGS,
@@ -92,5 +94,34 @@ describe("changelog", () => {
     const versions = CHANGELOG.map((e) => e.version);
     const sorted = [...versions].sort().reverse();
     assert.deepEqual(versions, sorted);
+  });
+
+  // Aturan wajib: setiap security patch (package.json securityPatch) HARUS punya
+  // entry changelog bertanda kind "security" — security patch tidak boleh
+  // dilewati dari riwayat yang tampil di Informasi Aplikasi.
+  it("security patch di package.json selalu terdaftar di changelog sebagai kind security", () => {
+    const securityVersion = pkg.securityPatch;
+    assert.ok(
+      typeof securityVersion === "string" && securityVersion.length > 0,
+      "package.json wajib punya field securityPatch"
+    );
+    const entry = CHANGELOG.find((e) => e.version === `v${securityVersion}`);
+    assert.ok(entry, `changelog tidak memuat security patch v${securityVersion}`);
+    assert.equal(
+      changelogKind(entry!),
+      "security",
+      `entry v${securityVersion} harus bertanda kind "security"`
+    );
+  });
+
+  it("entry bertanda security harus tercantum di package.json securityPatch", () => {
+    const securityEntries = CHANGELOG.filter((e) => changelogKind(e) === "security");
+    for (const entry of securityEntries) {
+      assert.equal(
+        entry.version,
+        `v${pkg.securityPatch}`,
+        `hanya security patch terbaru (v${pkg.securityPatch}) yang boleh bertanda security — entry ${entry.version} harus rilis biasa`
+      );
+    }
   });
 });

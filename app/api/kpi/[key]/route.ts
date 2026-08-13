@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { AUTH_CONFIG } from "@/lib/auth/config";
 import { getSession } from "@/lib/auth/session";
 import { validateKpiUpdate, buildSoftDelete } from "@/lib/kpi/validation";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 export const dynamic = "force-dynamic";
 
@@ -124,7 +125,7 @@ export async function PATCH(req: Request, { params }: Params) {
         entityId: updated.id,
         before,
         after,
-        ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+        ip: getClientIp(req),
         userAgent: req.headers.get("user-agent"),
       },
     });
@@ -170,7 +171,7 @@ export async function DELETE(req: Request, { params }: Params) {
           deletedAt: soft.deletedAt,
           deletedBy: session.sub,
         },
-        ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+        ip: getClientIp(req),
         userAgent: req.headers.get("user-agent"),
       },
     });

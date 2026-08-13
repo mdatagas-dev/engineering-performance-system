@@ -9,6 +9,7 @@ import {
   validateSecurityConfigUpdate,
   type BruteForceConfig,
 } from "@/lib/brute-force/config";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 export const dynamic = "force-dynamic";
 
@@ -92,7 +93,7 @@ export async function PUT(req: Request) {
         entityId: saved.id,
         before: previous.config,
         after,
-        ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+        ip: getClientIp(req),
         userAgent: req.headers.get("user-agent"),
       },
     });

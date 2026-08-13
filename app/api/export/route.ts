@@ -7,6 +7,7 @@ import { unauthorized, internal } from "@/lib/http/api-error";
 import { buildExportQuery } from "@/lib/exporter/query";
 import { EXPORT_SELECT } from "@/lib/exporter/fields";
 import { buildExportCsv, buildExportFilename } from "@/lib/exporter/csv";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
         entityId: null,
         before: { filter } as Prisma.InputJsonValue,
         after: { count: total, exportedCount: rows.length } as Prisma.InputJsonValue,
-        ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+        ip: getClientIp(req),
         userAgent: req.headers.get("user-agent"),
       },
     });

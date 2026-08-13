@@ -13,6 +13,7 @@
 // setiap request tidak boleh kena tulis DB; pencatatan terjadi di lapis layanan.
 
 import { Prisma } from "@/app/generated/prisma/client";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 // --- Kontrak action (janji konsistensi backend + mock frontend) ------------
 // Superset dari lib/mocks/audit.ts (MockAuditAction) + aksi backend aktual
@@ -105,16 +106,11 @@ export async function writeAudit(params: WriteAuditParams): Promise<unknown> {
   });
 }
 
-// Ekstrak identitas request (sama dengan requestMeta di lib/auth/logout.ts —
-// duplikat sengaja agar lapis audit mandiri; dedupe ke satu helper bila lapis
-// auth & audit disatukan). x-forwarded-for bisa "ip1, ip2" → ambil paling awal
-// (hop asli klien), fallback x-real-ip.
+// Ekstrak identitas request. IP via getClientIp (aman dari spoofing XFF —
+// hanya percaya header bila TRUSTED_PROXIES di-set; lihat lib/auth/request-ip.ts).
 export function metaFromRequest(req: Request): { ip: string | null; userAgent: string | null } {
   return {
-    ip:
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      req.headers.get("x-real-ip") ??
-      null,
+    ip: getClientIp(req),
     userAgent: req.headers.get("user-agent") ?? null,
   };
 }

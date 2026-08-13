@@ -11,6 +11,7 @@ import {
 } from "@/lib/auth/rateLimit";
 import { loadSecurityConfig } from "@/lib/brute-force/config";
 import { hashToken } from "@/lib/auth/sessions";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 export const dynamic = "force-dynamic";
 
@@ -56,10 +57,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Email dan password wajib diisi." }, { status: 400 });
   }
 
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    req.headers.get("x-real-ip") ??
-    null;
+  // IP via getClientIp: hanya percaya x-forwarded-for bila TRUSTED_PROXIES
+  // di-set (anti-spoofing — header ini bisa dipalsukan klien langsung).
+  const ip = getClientIp(req);
   const userAgent = req.headers.get("user-agent") ?? null;
 
   // 0) CONFIG dinamis (Perlindungan Brute-Force): nilai maxAttempts/lockout/

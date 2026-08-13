@@ -2,7 +2,7 @@
 // "buat-middleware-pencatatan-aktivitas-pengguna"). Murni node:test, klien
 // audit palsu (tanpa DB).
 
-import { describe, it } from "node:test";
+import { after, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES, metaFromRequest, writeAudit, type AuditLogClient } from "./record";
 import { Prisma } from "@/app/generated/prisma/client";
@@ -148,16 +148,35 @@ describe("AUDIT_ACTIONS kontrak", () => {
 });
 
 describe("metaFromRequest", () => {
-  it("x-forwarded-for berantai diambil hop paling awal", () => {
+  // Kontrak anti-spoofing: header x-forwarded-for/x-real-ip HANYA dipercaya
+  // bila TRUSTED_PROXIES di-set (lihat lib/auth/request-ip.ts); tanpa itu IP
+  // null — header palsu tidak bisa memalsukan IP di audit/rate-limit.
+  const OLD_TRUSTED = process.env.TRUSTED_PROXIES;
+  after(() => {
+    if (OLD_TRUSTED === undefined) delete process.env.TRUSTED_PROXIES;
+    else process.env.TRUSTED_PROXIES = OLD_TRUSTED;
+  });
+
+  it("tanpa TRUSTED_PROXIES: x-forwarded-for diabaikan → ip null", () => {
+    delete process.env.TRUSTED_PROXIES;
+    const req = new Request("http://x", {
+      headers: { "x-forwarded-for": "198.51.100.1, 10.0.0.5" },
+    });
+    assert.equal(metaFromRequest(req).ip, null);
+  });
+
+  it("dengan TRUSTED_PROXIES: x-forwarded-for berantai diambil hop paling awal", () => {
+    process.env.TRUSTED_PROXIES = "127.0.0.1";
     const req = new Request("http://x", {
       headers: { "x-forwarded-for": "198.51.100.1, 10.0.0.5" },
     });
     assert.equal(metaFromRequest(req).ip, "198.51.100.1");
   });
 
-  it("tanpa x-forwarded-for fallback ke x-real-ip", () => {
+  it("tanpa TRUSTED_PROXIES: x-real-ip diabaikan → ip null", () => {
+    delete process.env.TRUSTED_PROXIES;
     const req = new Request("http://x", { headers: { "x-real-ip": "192.0.2.9" } });
-    assert.equal(metaFromRequest(req).ip, "192.0.2.9");
+    assert.equal(metaFromRequest(req).ip, null);
   });
 
   it("userAgent dibaca apa adanya; tanpa IP hasilnya null", () => {

@@ -1,5 +1,6 @@
 import { AUTH_CONFIG } from "./config";
 import { hashToken } from "./sessions";
+import { getClientIp } from "./request-ip";
 
 export type RevokeCurrentDeps = {
   revokeByTokenHash(tokenHash: string): Promise<unknown>;
@@ -37,10 +38,7 @@ export async function logoutAll(deps: RevokeAllDeps, userId: string): Promise<vo
 
 export function requestMeta(req: Request) {
   return {
-    ip:
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      req.headers.get("x-real-ip") ??
-      null,
+    ip: getClientIp(req),
     userAgent: req.headers.get("user-agent") ?? null,
   };
 }

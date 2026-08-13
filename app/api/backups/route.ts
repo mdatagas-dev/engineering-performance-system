@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { AUTH_CONFIG } from "@/lib/auth/config";
 import { getSession } from "@/lib/auth/session";
 import { createPgDumpExecutor, runBackup } from "@/lib/backup/backupService";
+import { getClientIp } from "@/lib/auth/request-ip";
 
 export const dynamic = "force-dynamic";
 
@@ -104,7 +105,7 @@ export async function POST(req: Request) {
               status: backupRun.status,
               sizeBytes: backupRun.sizeBytes?.toString() ?? null,
             } as Prisma.InputJsonValue,
-            ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+            ip: getClientIp(req),
             userAgent: req.headers.get("user-agent"),
           },
         });
