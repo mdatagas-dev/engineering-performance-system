@@ -1,8 +1,7 @@
-import WorldHomepage from "@/components/world/world-homepage";
+import Desktop from "@/components/world/desktop";
 
-// THE WORLD — homepage publik sebelum login. Desktop immersive: retro OS ×
-// cyber × digital archive. ACCESS TERMINAL → /login. Dashboard authed pindah
-// ke /home (app/(app)/home/page.tsx).
+// Homepage publik: desktop interaktif Windows 95 (GE-OS).
+// ACCESS TERMINAL → /login. Dashboard authed di /home (app/(app)/home/page.tsx).
 export default function WorldPage() {
-  return <WorldHomepage />;
+  return <Desktop />;
 }

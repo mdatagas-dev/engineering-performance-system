@@ -1,0 +1,1012 @@
+/* ============================================================
+   Win95/98/2000 application styles (prefix: win95-)
+   Menubar, toolbar, listview, statusbar, calculator, minesweeper,
+   notepad, system properties, login dialog, terminal, about box.
+   Font: Tahoma / Courier New. Sudut persegi. Bevel 3D klasik.
+   Dikonsumsi oleh components/world/apps/*.
+   ============================================================ */
+
+.win95-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #c0c0c0;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #000;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.win95-app button:focus-visible,
+.win95-app input:focus-visible,
+.win95-app textarea:focus-visible {
+  outline: 1px dashed #000;
+  outline-offset: -1px;
+}
+
+.win95-app .win95-btn:disabled,
+.win95-app .win95-toolbar__btn:disabled {
+  color: #808080;
+  text-shadow: 1px 1px 0 #fff;
+}
+
+/* ---- Menubar ---- */
+
+.win95-menubar {
+  display: flex;
+  align-items: stretch;
+  background: #c0c0c0;
+  padding: 1px 2px;
+  flex: none;
+}
+
+.win95-menubar__wrap {
+  position: relative;
+  flex: none;
+}
+
+.win95-menubar__item {
+  font: inherit;
+  color: #000;
+  background: transparent;
+  border: none;
+  padding: 3px 9px;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.win95-menubar__item:hover,
+.win95-menubar__item--open {
+  background: #000080;
+  color: #fff;
+}
+
+.win95-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 80;
+  min-width: 170px;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-bottom-color: #404040;
+  border-right-color: #404040;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+}
+
+.win95-menu__item {
+  font: inherit;
+  text-align: left;
+  color: #000;
+  background: transparent;
+  border: none;
+  padding: 4px 12px;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.win95-menu__item:hover:not(:disabled),
+.win95-menu__item:focus:not(:disabled) {
+  background: #000080;
+  color: #fff;
+}
+
+.win95-menu__item--disabled,
+.win95-menu__item:disabled {
+  color: #808080;
+  text-shadow: 1px 1px 0 #fff;
+}
+
+/* ---- Statusbar ---- */
+
+.win95-statusbar {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  margin-top: auto;
+  padding: 2px 3px;
+  background: #c0c0c0;
+  border-top: 2px solid;
+  border-top-color: #808080;
+  flex: none;
+}
+
+.win95-statusbar__cell {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 7px;
+  border: 1px solid;
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+  white-space: nowrap;
+}
+
+.win95-statusbar__cell--right {
+  margin-left: auto;
+}
+
+/* ---- Notepad ---- */
+
+.win95-notepad__title {
+  padding: 2px 4px;
+  color: #404040;
+  font-size: 11px;
+  flex: none;
+}
+
+.win95-notepad__edit {
+  flex: 1;
+  width: 100%;
+  resize: none;
+  background: #fff;
+  color: #000;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.35;
+  border: 2px solid;
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+  padding: 4px 6px;
+  outline: none;
+}
+
+/* ---- Calculator ---- */
+
+.win95-calc {
+  padding: 4px;
+  gap: 4px;
+}
+
+.win95-calc__display {
+  flex: none;
+  background: #000;
+  color: #fff;
+  font-family: "Courier New", monospace;
+  font-size: 19px;
+  text-align: right;
+  padding: 3px 8px;
+  border: 2px solid;
+  border-top-color: #404040;
+  border-left-color: #404040;
+  border-bottom-color: #dfdfdf;
+  border-right-color: #dfdfdf;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.win95-calc__grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 3px;
+}
+
+.win95-calc__btn {
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 13px;
+  color: #000;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-bottom-color: #404040;
+  border-right-color: #404040;
+  box-shadow: 1px 1px 0 #808080;
+  padding: 0;
+  cursor: default;
+}
+
+.win95-calc__btn:active {
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+  box-shadow: none;
+  padding: 1px 0 0 1px;
+}
+
+.win95-calc__btn--op {
+  font-weight: 700;
+}
+
+.win95-calc__btn--wide {
+  grid-column: span 2;
+}
+
+/* ---- Minesweeper ---- */
+
+.win95-mine {
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+}
+
+.win95-mine__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+}
+
+.win95-mine__count {
+  background: #000;
+  color: #f00;
+  font-family: "Courier New", monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 1px 4px;
+  border: 1px solid #808080;
+  min-width: 46px;
+  text-align: center;
+}
+
+.win95-mine__face {
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+  line-height: 1;
+  color: #000;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-bottom-color: #808080;
+  border-right-color: #808080;
+  padding: 0;
+  cursor: default;
+}
+
+.win95-mine__face:active {
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+}
+
+.win95-mine__grid {
+  display: grid;
+  grid-template-columns: repeat(9, 24px);
+  gap: 0;
+  padding: 3px;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+}
+
+.win95-mine__cell {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #000;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-bottom-color: #808080;
+  border-right-color: #808080;
+  cursor: default;
+}
+
+.win95-mine__cell:active {
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+}
+
+.win95-mine__cell--revealed {
+  border: 1px solid #808080;
+  background: #c0c0c0;
+  font-family: "Courier New", monospace;
+}
+
+.win95-mine__banner {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #000;
+  text-align: center;
+}
+
+/* ---- Explorer (My Computer / My Documents) ---- */
+
+.win95-explorer {
+  height: 100%;
+}
+
+.win95-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 4px;
+  border-bottom: 1px solid #808080;
+  flex: none;
+}
+
+.win95-toolbar__btn {
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #000;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-bottom-color: #808080;
+  border-right-color: #808080;
+  padding: 2px 9px;
+  cursor: default;
+}
+
+.win95-toolbar__btn:active:not(:disabled) {
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+  padding: 3px 8px 1px 10px;
+}
+
+.win95-addressbar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 5px;
+  flex: none;
+}
+
+.win95-addressbar__label {
+  font-size: 11px;
+}
+
+.win95-addressbar__value {
+  flex: 1;
+  background: #fff;
+  color: #000;
+  font-size: 11px;
+  padding: 2px 5px;
+  border: 2px solid;
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.win95-pane {
+  flex: 1;
+  overflow: auto;
+  background: #fff;
+  border: 2px solid;
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+}
+
+.win95-explorer__body {
+  margin: 0 4px 4px;
+}
+
+.win95-explorer__empty {
+  padding: 12px;
+  font-size: 11px;
+  color: #404040;
+}
+
+.win95-icon-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 3px;
+  padding: 5px;
+}
+
+.win95-pane .win95-icon {
+  width: auto;
+  height: auto;
+  min-width: 74px;
+  padding: 4px 2px;
+  gap: 3px;
+  border: 1px dotted transparent;
+  background: transparent;
+  color: #000;
+}
+
+.win95-pane .win95-icon:hover {
+  border-color: #000080;
+}
+
+.win95-pane .win95-icon--selected,
+.win95-pane .win95-icon--selected:hover {
+  background: #000080;
+  border-style: solid;
+  border-color: #000080;
+  color: #fff;
+}
+
+.win95-pane .win95-icon__glyph {
+  width: 30px;
+  height: 26px;
+  font-size: 16px;
+  background: transparent;
+  border: none;
+  color: #000;
+}
+
+.win95-pane .win95-icon--selected .win95-icon__glyph {
+  color: #fff;
+}
+
+.win95-pane .win95-icon__label {
+  max-width: 80px;
+  font-size: 11px;
+  line-height: 1.2;
+  color: #000;
+  text-shadow: none;
+  word-break: break-word;
+}
+
+.win95-pane .win95-icon--selected .win95-icon__label {
+  color: #fff;
+}
+
+/* ---- Listview ---- */
+
+.win95-listview {
+  height: 100%;
+  background: #fff;
+  overflow: auto;
+}
+
+.win95-listview__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 7px;
+  font-size: 12px;
+  color: #000;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.win95-listview__item:hover {
+  background: #000080;
+  color: #fff;
+}
+
+.win95-listview__item--selected {
+  background: #000080;
+  color: #fff;
+}
+
+.win95-listview__icon {
+  width: 20px;
+  text-align: center;
+  font-size: 15px;
+  flex: none;
+}
+
+.win95-listview__name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.win95-listview--compact .win95-listview__item {
+  font-size: 11px;
+  padding: 2px 6px;
+}
+
+/* ---- System Properties ---- */
+
+.win95-sysprops {
+  padding: 4px;
+}
+
+.win95-tabs {
+  display: flex;
+  align-items: flex-end;
+  padding: 0 6px;
+  flex: none;
+}
+
+.win95-tab {
+  font: inherit;
+  color: #000;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-bottom-color: #404040;
+  border-right-color: #404040;
+  border-bottom: none;
+  padding: 3px 12px 4px;
+  margin-right: -2px;
+  position: relative;
+  cursor: default;
+  z-index: 1;
+}
+
+.win95-tab--active {
+  z-index: 3;
+  font-weight: 700;
+  padding-top: 5px;
+  border-top: 2px solid #000080;
+}
+
+.win95-tabpanel {
+  flex: 1;
+  overflow: auto;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-bottom-color: #404040;
+  border-right-color: #404040;
+  padding: 10px;
+}
+
+.win95-sysprops__general {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.win95-sysprops__icon {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-top: 4px;
+}
+
+.win95-sysprops__screen {
+  width: 64px;
+  height: 46px;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-bottom-color: #404040;
+  border-right-color: #404040;
+}
+
+.win95-sysprops__stand {
+  width: 8px;
+  height: 12px;
+  background: #808080;
+  border: 1px solid #404040;
+}
+
+.win95-sysprops__text {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.win95-sysprops__name {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.win95-sysprops__ver {
+  font-size: 12px;
+}
+
+.win95-sysprops__line {
+  border-top: 1px solid #808080;
+  margin: 7px 0;
+}
+
+.win95-sysprops__bold {
+  font-weight: 700;
+}
+
+.win95-sysprops__ram-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.win95-sysprops__ram {
+  width: 130px;
+  height: 14px;
+  background: #fff;
+  border: 2px solid;
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+}
+
+.win95-sysprops__ram-fill {
+  height: 100%;
+  background: #000080;
+  transition: width 90ms linear;
+}
+
+.win95-sysprops__ram-text {
+  font-size: 11px;
+  min-width: 44px;
+}
+
+.win95-sysprops__simple {
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.win95-sysprops__indent {
+  padding-left: 16px;
+}
+
+.win95-sysprops__dim {
+  color: #404040;
+  font-size: 11px;
+}
+
+.win95-sysprops__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 8px;
+  flex: none;
+}
+
+/* ---- Login dialog (ACCESS TERMINAL) ---- */
+
+.win95-login {
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+}
+
+.win95-login__icon {
+  font-size: 44px;
+  line-height: 1;
+  color: #000080;
+}
+
+.win95-login__title {
+  text-align: center;
+}
+
+.win95-login__name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.win95-login__sub {
+  font-size: 11px;
+  color: #404040;
+  margin-top: 2px;
+}
+
+.win95-login__form {
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.win95-login__field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.win95-login__label {
+  width: 86px;
+  flex: none;
+  text-align: right;
+  font-size: 11px;
+}
+
+.win95-login__input {
+  flex: 1;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 12px;
+  color: #000;
+  background: #fff;
+  border: 2px solid;
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+  padding: 2px 4px;
+  outline: none;
+}
+
+.win95-login__err {
+  color: #800000;
+  font-size: 11px;
+}
+
+.win95-login__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.win95-login__hintwrap {
+  position: relative;
+  margin-top: 2px;
+}
+
+.win95-login__hint {
+  font: inherit;
+  color: #000080;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.win95-login__tooltip {
+  position: absolute;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 230px;
+  background: #ffffe1;
+  color: #000;
+  border: 1px solid #000;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+  padding: 7px 9px;
+  font-size: 11px;
+  line-height: 1.45;
+  z-index: 60;
+}
+
+/* ---- Recycle Bin ---- */
+
+.win95-bin__body {
+  margin: 4px;
+}
+
+.win95-bin__empty {
+  padding: 18px 10px;
+  text-align: center;
+  font-size: 12px;
+  color: #404040;
+}
+
+.win95-bin__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 4px 6px;
+  flex: none;
+}
+
+.win95-bin__ask {
+  font-size: 11px;
+}
+
+/* ---- About box ---- */
+
+.win95-about {
+  padding: 12px;
+}
+
+.win95-about__main {
+  flex: 1;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.win95-about__icon {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  font-family: "Courier New", monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: #000080;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-bottom-color: #404040;
+  border-right-color: #404040;
+  box-shadow: 1px 1px 0 #808080;
+}
+
+.win95-about__name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.win95-about__ver {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.win95-about__copy {
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.win95-about__line {
+  border-top: 1px solid #808080;
+  margin-top: 8px;
+  padding-top: 7px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.win95-about__dim {
+  color: #404040;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.win95-about__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 8px;
+  flex: none;
+}
+
+/* ---- Command Prompt (DOS) ---- */
+
+.win95-term {
+  background: #000;
+  color: #c0c0c0;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  position: relative;
+  overflow: hidden;
+}
+
+.win95-term__out {
+  flex: 1;
+  overflow: auto;
+  padding: 6px 8px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.win95-term__out::-webkit-scrollbar {
+  width: 16px;
+}
+
+.win95-term__out::-webkit-scrollbar-track {
+  background: #000;
+  border: 1px solid #404040;
+}
+
+.win95-term__out::-webkit-scrollbar-thumb {
+  background: #808080;
+  border: 1px solid;
+  border-top-color: #c0c0c0;
+  border-left-color: #c0c0c0;
+  border-bottom-color: #404040;
+  border-right-color: #404040;
+}
+
+.win95-term__dim {
+  color: #808080;
+}
+
+.win95-term__inputrow {
+  display: flex;
+  align-items: center;
+  padding: 0 8px 6px;
+  flex: none;
+}
+
+.win95-term__prompt {
+  white-space: pre;
+  color: #c0c0c0;
+  flex: none;
+}
+
+.win95-term__input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #c0c0c0;
+  font: inherit;
+  caret-color: #c0c0c0;
+}
+
+.win95-term__input:focus-visible {
+  outline: none;
+}
+
+.win95-term__shutdown {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: #000;
+  display: grid;
+  place-items: center;
+  color: #ffa000;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ---- Classic scrollbars inside app panes ---- */
+
+.win95-pane::-webkit-scrollbar,
+.win95-listview::-webkit-scrollbar,
+.win95-tabpanel::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+.win95-pane::-webkit-scrollbar-track,
+.win95-listview::-webkit-scrollbar-track,
+.win95-tabpanel::-webkit-scrollbar-track {
+  background: #c0c0c0;
+  border: 1px solid;
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #dfdfdf;
+  border-right-color: #dfdfdf;
+}
+
+.win95-pane::-webkit-scrollbar-thumb,
+.win95-listview::-webkit-scrollbar-thumb,
+.win95-tabpanel::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 1px solid;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-bottom-color: #404040;
+  border-right-color: #404040;
+  box-shadow: 1px 1px 0 #808080;
+}
+
+.win95-pane::-webkit-scrollbar-button,
+.win95-listview::-webkit-scrollbar-button,
+.win95-tabpanel::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* ---- Reduced motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  .win95-sysprops__ram-fill {
+    transition: none;
+  }
+}

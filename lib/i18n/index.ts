@@ -431,6 +431,32 @@ export function changelogKind(entry: Pick<ChangelogEntry, "kind">): ChangelogKin
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "v1.7.0",
+    date: "2026-08-13",
+    features: {
+      id: [
+        "Homepage / menjadi desktop komputer interaktif Windows 95/98/2000: taskbar, menu Start, jendela draggable/resizable/maximize/minimize, ikon desktop, aplikasi klasik (Notepad, Calculator, Minesweeper, My Computer, My Documents, Command Prompt, System Properties, Recycle Bin, About, Access Terminal), easter egg (Konami, Ctrl+Alt+Del BSOD, klik kanan desktop, shutdown, rahasia tersembunyi), tooltip, dan adaptasi mobile",
+        "ACCESS TERMINAL menjadi satu-satunya pintu login; dashboard authed tetap di /home",
+      ],
+      en: [
+        "The / homepage is now an interactive Windows 95/98/2000 computer desktop: taskbar, Start menu, draggable/resizable/maximize/minimize windows, desktop icons, classic apps (Notepad, Calculator, Minesweeper, My Computer, My Documents, Command Prompt, System Properties, Recycle Bin, About, Access Terminal), easter eggs (Konami, Ctrl+Alt+Del BSOD, desktop right-click, shutdown, hidden secrets), tooltips, and mobile adaptation",
+        "ACCESS TERMINAL is the single login gate; the authenticated dashboard remains at /home",
+      ],
+      zh: [
+        "/ 首页变成可交互的 Windows 95/98/2000 电脑桌面：任务栏、开始菜单、可拖拽/缩放/最大化/最小化窗口、桌面图标、经典应用（记事本、计算器、扫雷、我的电脑、我的文档、命令提示符、系统属性、回收站、关于、Access Terminal）、彩蛋（Konami 秘技、Ctrl+Alt+Del 蓝屏、桌面右键、关机、隐藏秘密）、悬停提示与移动端适配",
+        "ACCESS TERMINAL 成为唯一的登录入口；已登录仪表盘仍位于 /home",
+      ],
+      ko: [
+        "/ 홈페이지가 인터랙티브 Windows 95/98/2000 컴퓨터 데스크톱이 되었습니다: 작업 표시줄, 시작 메뉴, 드래그/크기 조절/최대화/최소화 가능한 창, 데스크톱 아이콘, 클래식 앱(메모장, 계산기, 지뢰찾기, 내 컴퓨터, 내 문서, 명령 프롬프트, 시스템 속성, 휴지통, 정보, Access Terminal), 이스터 에그(코나미, Ctrl+Alt+Del BSOD, 데스크톱 우클릭, 종료, 숨겨진 비밀), 툴팁 및 모바일 적응",
+        "ACCESS TERMINAL이 유일한 로그인 진입점이며, 인증된 대시보드는 /home에 유지됩니다",
+      ],
+      ja: [
+        "/ ホームページがインタラクティブな Windows 95/98/2000 コンピュータデスクトップに：タスクバー、スタートメニュー、ドラッグ/リサイズ/最大化/最小化可能なウィンドウ、デスクトップアイコン、クラシックアプリ（メモ帳、電卓、マインスイーパ、マイ コンピュータ、マイ ドキュメント、コマンドプロンプト、システムのプロパティ、ごみ箱、バージョン情報、Access Terminal）、イースターエッグ（コナミコマンド、Ctrl+Alt+Del の BSOD、デスクトップ右クリック、シャットダウン、隠しシークレット）、ツールチップ、モバイル対応",
+        "ACCESS TERMINAL が唯一のログイン導入口に；認証済みダッシュボードは /home のまま",
+      ],
+    },
+  },
+  {
     version: "v1.6.1",
     date: "2026-08-13",
     features: {
