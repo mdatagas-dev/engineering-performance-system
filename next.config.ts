@@ -10,7 +10,7 @@ const IS_PRODUCTION = process.env.NODE_ENV === "production";
 // 1) app/layout.tsx memuat script theme-init via dangerouslySetInnerHTML
 //    (inline <script>) — tanpa 'unsafe-inline' halaman mati (blank/dark-mode
 //    broken). File ini di app/** (domain frontend), bukan untuk diubah di sini.
-// 2) Next dev (HMR jalan di port 3030) menginjeksi inline script + eval untuk
+// 2) Next dev (HMR jalan di port 3050) menginjeksi inline script + eval untuk
 //    hot-reload & source map.
 // 3) Next.js production menderetkan beberapa inline script (hydration payload
 //    streaming) — menghapus unsafe-inline butuh mekanisme nonce penuh.

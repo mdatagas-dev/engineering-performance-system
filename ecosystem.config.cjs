@@ -18,7 +18,7 @@ module.exports = {
       name: "eps-v2",
       // Path binary Next 16 (package.json bin: next -> dist/bin/next).
       script: "node_modules/next/dist/bin/next",
-      args: "start -p 3030",
+      args: "start -p 3050",
       instances: 1,
       exec_mode: "fork",
       max_memory_restart: "600M",
@@ -30,12 +30,12 @@ module.exports = {
       error_file: "/var/log/eps/eps-v2-error.log",
       env: {
         NODE_ENV: "production",
-        PORT: "3030",
+        PORT: "3050",
       },
       // Sama dgn env — dipakai saat `pm2 start ... --env production`.
       env_production: {
         NODE_ENV: "production",
-        PORT: "3030",
+        PORT: "3050",
       },
     },
   ],

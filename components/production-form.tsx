@@ -15,6 +15,7 @@ import {
   saveSavedRecords,
   type MockProductionRecord,
 } from "@/lib/mocks/records";
+import { randomUUID } from "@/lib/uuid";
 
 const NUMERIC_FIELDS: { field: NumericField; label: string; hint?: string }[] = [
   { field: "uphTarget", label: "UPH Target" },
@@ -64,7 +65,7 @@ function todayISO(): string {
 }
 
 function emptyRow(): Row {
-  return { key: crypto.randomUUID(), date: todayISO(), model: "", shift: "", area: "", values: emptyValues() };
+  return { key: randomUUID(), date: todayISO(), model: "", shift: "", area: "", values: emptyValues() };
 }
 
 const numFmt = new Intl.NumberFormat("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -159,14 +160,14 @@ export default function ProductionForm({ existingRecords, userName, onSaved }: P
     const current = loadSavedRecords(window.localStorage);
     const created = rows.map((r) =>
       buildRecordFromRow({
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         date: r.date,
         model: r.model,
         shift: r.shift.trim() === "" ? null : r.shift.trim(),
         area:
           r.area.trim() === ""
             ? null
-            : { id: `area_form_${crypto.randomUUID()}`, name: r.area.trim(), lineCode: null },
+            : { id: `area_form_${randomUUID()}`, name: r.area.trim(), lineCode: null },
         values: r.values,
         createdByName: userName ?? "Engineering Staff",
       })

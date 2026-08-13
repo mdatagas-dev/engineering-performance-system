@@ -415,6 +415,53 @@ export type ChangelogEntry = {
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "v1.3.0",
+    date: "2026-08-13",
+    features: {
+      id: [
+        "Halaman Manajemen Pengguna terintegrasi API live: daftar (GET /api/users), ubah peran (PATCH /api/users/[id]/role), toggle status aktif & edit profil (PATCH /api/users/[id]), tambah pengguna (POST /api/users) — dengan fallback otomatis ke data tiruan bila DB tidak tersedia",
+        "CI/CD: deploy menghentikan PM2 sebelum upload agar .next tidak ditimpa saat proses lama berjalan (mencegah 500/ChunkLoadError pada aset statis)",
+      ],
+      en: [
+        "User Management page integrated with the live API: list (GET /api/users), role change (PATCH /api/users/[id]/role), active-status toggle & profile edit (PATCH /api/users/[id]), create user (POST /api/users) — with automatic fallback to mock data when the DB is unavailable",
+        "CI/CD: deploy stops PM2 before upload so .next is not overwritten while the old process is running (prevents 500/ChunkLoadError on static assets)",
+      ],
+      zh: [
+        "用户管理页面已集成实时 API：列表（GET /api/users）、更改角色（PATCH /api/users/[id]/role）、切换启用状态与编辑资料（PATCH /api/users/[id]）、新建用户（POST /api/users）——数据库不可用时自动回退到模拟数据",
+        "CI/CD：部署在上传前停止 PM2，避免旧进程运行时覆盖 .next（防止静态资源 500/ChunkLoadError）",
+      ],
+      ko: [
+        "사용자 관리 페이지가 라이브 API와 통합됨: 목록(GET /api/users), 역할 변경(PATCH /api/users/[id]/role), 활성 상태 토글 및 프로필 편집(PATCH /api/users/[id]), 사용자 생성(POST /api/users) — DB를 사용할 수 없으면 자동으로 모의 데이터로 폴백",
+        "CI/CD: 배포 시 업로드 전에 PM2를 중지해 이전 프로세스 실행 중 .next가 덮어써지지 않도록 함(정적 자산 500/ChunkLoadError 방지)",
+      ],
+      ja: [
+        "ユーザー管理ページをライブ API と統合：一覧（GET /api/users）、役割変更（PATCH /api/users/[id]/role）、有効状態トグルとプロフィール編集（PATCH /api/users/[id]）、ユーザー作成（POST /api/users）— DB が利用できない場合はモックデータに自動フォールバック",
+        "CI/CD：デプロイ時、アップロード前に PM2 を停止し、旧プロセス稼働中に .next が上書きされないように（静的アセットの 500/ChunkLoadError を防止）",
+      ],
+    },
+  },
+  {
+    version: "v1.2.1",
+    date: "2026-08-13",
+    features: {
+      id: [
+        "Perbaikan bug: halaman Input Data Produksi tidak bisa dimuat saat diakses lewat HTTP non-localhost (crypto.randomUUID tidak tersedia di origin tidak aman) — penggantian id memakai helper fallback yang aman",
+      ],
+      en: [
+        "Bug fix: the Production Data Entry page failed to load when accessed over non-localhost HTTP (crypto.randomUUID is unavailable on insecure origins) — id generation now uses a safe fallback helper",
+      ],
+      zh: [
+        "错误修复：通过非 localhost HTTP 访问时，生产数据录入页面无法加载（不安全源中不可用 crypto.randomUUID）——ID 生成改用安全的后备辅助函数",
+      ],
+      ko: [
+        "버그 수정: localhost가 아닌 HTTP로 접근 시 생산 데이터 입력 페이지가 로드되지 않던 문제(crypto.randomUUID는 안전하지 않은 출처에서 사용 불가) — ID 생성에 안전한 폴백 헬퍼 사용",
+      ],
+      ja: [
+        "バグ修正：localhost 以外の HTTP 経由でアクセスすると生産データ入力ページが読み込めなかった問題（安全でないオリジンでは crypto.randomUUID が利用不可）— ID 生成に安全なフォールバックヘルパーを使用",
+      ],
+    },
+  },
+  {
     version: "v1.2.0",
     date: "2026-08-13",
     features: {

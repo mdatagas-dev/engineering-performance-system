@@ -1,6 +1,7 @@
 // Shape meniru respons GET /api/audit (frontend-first; backend butuh DB —
 // lihat app/api/audit/route.ts + lib/audit/query.ts). Entri baru dari login
 // mock (lib/mocks/accounts.ts) ditulis ke localStorage (eps_mock_audit).
+import { randomUUID } from "@/lib/uuid";
 export type MockAuditAction =
   | "LOGIN_SUCCESS"
   | "LOGIN_FAILED"
@@ -548,7 +549,7 @@ export function saveMockAudit(list: MockAuditItem[]): void {
 }
 
 export function appendMockAudit(entry: Omit<MockAuditItem, "id" | "createdAt">): MockAuditItem {
-  const item: MockAuditItem = { ...entry, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+  const item: MockAuditItem = { ...entry, id: randomUUID(), createdAt: new Date().toISOString() };
   const next = [item, ...loadMockAudit()];
   if (typeof window !== "undefined") saveMockAudit(next);
   return item;

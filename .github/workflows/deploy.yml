@@ -78,6 +78,10 @@ jobs:
             .github
           SCRIPT_BEFORE: |
             mkdir -p ${{ secrets.SERVER_PATH || '/opt/eps/app' }} /var/log/eps
+            # Hentikan app SEBELUM upload: rsync menimpa .next saat proses lama
+            # masih jalan → chunk lama hilang dari disk tapi HTML lama masih
+            # direferensikan browser → 500 text/plain + ChunkLoadError.
+            pm2 stop eps-v2 || true
 
       # Perintah remote pasca-upload.
       # npm ci (tanpa --omit=dev): prisma CLI ada di devDependencies, dipakai
@@ -98,6 +102,6 @@ jobs:
             npx prisma generate
             # Migrasi DB — aktifkan bila database produksi nyata sudah siap:
             # npx prisma migrate deploy
-            pm2 reload ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs --env production
+            pm2 start ecosystem.config.cjs --env production || pm2 reload ecosystem.config.cjs --update-env
             pm2 save
             pm2 status

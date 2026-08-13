@@ -97,7 +97,8 @@ export default function SessionsPage() {
               <div>
                 <h1 className="text-xl font-bold tracking-tight">Perangkat yang Login</h1>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Kelola sesi aktif. Data tiruan (mock) — backend belum punya tabel Session.
+                  Kelola sesi aktif. Tampilan ini masih memakai data tiruan (mock) — backend nyata sudah
+                  tersedia (tabel Session + /api/auth/sessions).
                 </p>
               </div>
               <button
@@ -160,15 +161,6 @@ export default function SessionsPage() {
                 </li>
               ))}
             </ul>
-
-            <div className="mt-8 rounded-lg border border-amber-500/30 bg-amber-500/[0.07] px-4 py-3 text-[11px] leading-relaxed text-amber-800 dark:text-amber-400">
-              <p className="font-semibold">Catatan:</p>
-              <p>
-                Aksi ini hanya tiruan (mock di localStorage). Backend login JWT stateless belum punya tabel
-                Session, jadi &quot;logout all devices&quot; yang sungguhan belum bisa — nanti backend perlu menyimpan
-                sesi (jti) per token agar dapat di-revoke global.
-              </p>
-            </div>
           </div>
         </section>
       </main>

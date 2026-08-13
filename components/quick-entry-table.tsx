@@ -17,6 +17,7 @@ import {
   type NumericField,
 } from "@/lib/records/form";
 import { buildMockRecordTotal, type MockProductionRecord } from "@/lib/mocks/records";
+import { randomUUID } from "@/lib/uuid";
 
 // Tabel input cepat multi-baris (TASK buat-tabel-input-cepat-multi-baris &
 // tambahkan-fitur-tambah-baris-massal): grid editable inline, banyak baris
@@ -163,7 +164,7 @@ export default function QuickEntryTable({
   function addEmptyRow() {
     onAdd(
       buildRecordFromRow({
-        id: `qe_${crypto.randomUUID()}`,
+        id: `qe_${randomUUID()}`,
         date: todayISO(),
         model: "",
         shift: "1",
@@ -216,7 +217,7 @@ export default function QuickEntryTable({
       model,
       shift: bulk.shift,
       areaName: bulk.areaName,
-      makeId: (i) => `qe_${i}_${crypto.randomUUID()}`,
+      makeId: (i) => `qe_${i}_${randomUUID()}`,
     });
     if (err) {
       setBulkError(err);
@@ -229,7 +230,7 @@ export default function QuickEntryTable({
         model,
         shift: bulk.shift,
         areaName: bulk.areaName,
-        makeId: (i) => `qe_${i}_${crypto.randomUUID()}`,
+        makeId: (i) => `qe_${i}_${randomUUID()}`,
         createdByName: userName ?? "Engineering Staff",
       })
     );

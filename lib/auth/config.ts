@@ -1,6 +1,9 @@
 export const AUTH_CONFIG = {
   cookieName: "eps_session",
-  cookieSecure: process.env.NODE_ENV === "production",
+  // Secure cookie HANYA ketika disajikan via HTTPS. Server ini berjalan HTTP
+  // polos di LAN (standalone, tanpa TLS) — Secure=true justru membuat browser
+  // menolak cookie (login gagal). Set COOKIE_SECURE=true bila HTTPS dipasang.
+  cookieSecure: process.env.COOKIE_SECURE === "true",
   sessionTtlSeconds: 8 * 60 * 60,
   rememberTtlSeconds: 30 * 24 * 60 * 60,
   // idle timeout (sliding): sesi dibunuh bila tidak dipakai selama ini; null

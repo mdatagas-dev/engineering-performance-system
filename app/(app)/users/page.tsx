@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import ConfirmDialog from "@/components/confirm-dialog";
 import RoleChangeDialog, { type RoleOption } from "@/components/role-change-dialog";
 import UserFormDialog from "@/components/user-form-dialog";
@@ -87,6 +87,31 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
   );
 }
 
+// Mapping respons API → bentuk yang dipakai UI. GET /api/users mengembalikan
+// role sebagai string|null; PATCH mengembalikan {name} — dua-duanya dinormalisasi.
+function apiUserToMock(u: {
+  id: string;
+  email: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  role: string | { name: string } | null;
+  area: { id: string; name: string } | null;
+}): MockUser {
+  const roleName = typeof u.role === "string" ? u.role : (u.role?.name ?? RoleName.VIEWER);
+  return {
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    isActive: u.isActive,
+    createdAt: u.createdAt,
+    updatedAt: u.updatedAt,
+    role: { name: roleName as RoleName },
+    area: u.area ?? null,
+  };
+}
+
 export default function UsersPage() {
   const session = useSessionGuard("user.manage");
   const authed = session !== null;
@@ -96,6 +121,7 @@ export default function UsersPage() {
   const [page, setPage] = useState(1);
 
   const [items, setItems] = useState<MockUser[]>([]);
+  const [total, setTotal] = useState(0);
   const [roleTarget, setRoleTarget] = useState<MockUser | null>(null);
   const [pendingRole, setPendingRole] = useState<{ user: MockUser; role: RoleName } | null>(null);
   const [toggleTarget, setToggleTarget] = useState<MockUser | null>(null);
@@ -107,27 +133,49 @@ export default function UsersPage() {
     if (toastTimer.current) clearTimeout(toastTimer.current);
   }, []);
 
-  // Muat seed + override tersimpan (eps_mock_users) setelah guard lolos —
-  // localStorage hanya tersedia di client.
-  useEffect(() => {
+  // Muat data: API live dulu (GET /api/users), fallback seed mock bila API
+  // gagal (offline / DB mati) — pola sama dengan halaman login.
+  const load = useCallback(async () => {
     if (!authed) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setItems(applyUserOverrides(seedMockUsers(), loadUserOverrides(window.localStorage)));
-  }, [authed]);
+    const qs = new URLSearchParams();
+    qs.set("page", String(page));
+    qs.set("perPage", String(perPage));
+    if (role) qs.set("role", role);
+    if (search.trim()) qs.set("search", search.trim());
+    try {
+      const res = await fetch(`/api/users?${qs.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setItems((data.users ?? []).map(apiUserToMock));
+        setTotal(Number(data.pagination?.total ?? data.users?.length ?? 0));
+        return;
+      }
+      if (res.status === 401 || res.status === 403) {
+        setItems([]);
+        setTotal(0);
+        return;
+      }
+    } catch {
+      // network error → fallback mock
+    }
+    const result = filterUsers(
+      applyUserOverrides(seedMockUsers(), loadUserOverrides(window.localStorage)),
+      { role, search, page, perPage }
+    );
+    setItems(result.items);
+    setTotal(result.total);
+  }, [authed, page, perPage, role, search]);
 
-  const result = useMemo(
-    () => filterUsers(items, { role, search, page, perPage }),
-    [items, role, search, page, perPage]
-  );
+  // Debounce 300ms — tiap ketik filter (search/role) langsung refetch API.
+  useEffect(() => {
+    const t = setTimeout(load, 300);
+    return () => clearTimeout(t);
+  }, [load]);
 
   function flash(text: string) {
     setToast(text);
     if (toastTimer.current) clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), 3500);
-  }
-
-  function refreshFromStorage() {
-    setItems(applyUserOverrides(seedMockUsers(), loadUserOverrides(window.localStorage)));
   }
 
   function handleRoleSubmit(nextRole: RoleName) {
@@ -136,63 +184,135 @@ export default function UsersPage() {
     setRoleTarget(null);
   }
 
-  function applyRoleChange() {
+  async function applyRoleChange() {
     if (!pendingRole) return;
+    const { user, role: nextRole } = pendingRole;
+    const label = ROLE_META[nextRole].label;
+    try {
+      const res = await fetch(`/api/users/${user.id}/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: nextRole }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok) {
+        flash(data?.message ?? `Peran ${user.name} diubah menjadi ${label}.`);
+        setPendingRole(null);
+        load();
+        return;
+      }
+      // 4xx = keputusan backend sungguhan → tampilkan, jangan fallback.
+      if (res.status >= 400 && res.status < 500) {
+        flash(data?.message ?? "Gagal mengubah peran.");
+        setPendingRole(null);
+        return;
+      }
+    } catch {
+      // network error → fallback mock
+    }
     updateUserOverride(window.localStorage, {
-      id: pendingRole.user.id,
-      role: { name: pendingRole.role },
+      id: user.id,
+      role: { name: nextRole },
       updatedAt: new Date().toISOString(),
     });
-    refreshFromStorage();
-    flash(`Peran ${pendingRole.user.name} diubah menjadi ${ROLE_META[pendingRole.role].label}.`);
+    flash(`Peran ${user.name} diubah menjadi ${label}. (mock)`);
     setPendingRole(null);
+    load();
+  }
+
+  async function persistStatus(u: MockUser, isActive: boolean, label: string) {
+    try {
+      const res = await fetch(`/api/users/${u.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok) {
+        flash(data?.message ?? label);
+        load();
+        return;
+      }
+      if (res.status >= 400 && res.status < 500) {
+        flash(data?.message ?? "Gagal memperbarui status.");
+        return;
+      }
+    } catch {
+      // network error → fallback mock
+    }
+    updateUserOverride(window.localStorage, {
+      id: u.id,
+      isActive,
+      updatedAt: new Date().toISOString(),
+    });
+    flash(`${label} (mock)`);
+    load();
   }
 
   function activateUser(u: MockUser) {
-    updateUserOverride(window.localStorage, {
-      id: u.id,
-      isActive: true,
-      updatedAt: new Date().toISOString(),
-    });
-    refreshFromStorage();
-    flash(`Akun ${u.name} diaktifkan.`);
+    persistStatus(u, true, `Akun ${u.name} diaktifkan.`);
   }
 
   function applyStatusToggle() {
     if (!toggleTarget) return;
-    const nextActive = !toggleTarget.isActive;
-    updateUserOverride(window.localStorage, {
-      id: toggleTarget.id,
-      isActive: nextActive,
-      updatedAt: new Date().toISOString(),
-    });
-    refreshFromStorage();
-    flash(nextActive ? `Akun ${toggleTarget.name} diaktifkan.` : `Akun ${toggleTarget.name} dinonaktifkan.`);
+    const next = !toggleTarget.isActive;
+    const label = next ? `Akun ${toggleTarget.name} diaktifkan.` : `Akun ${toggleTarget.name} dinonaktifkan.`;
     setToggleTarget(null);
+    persistStatus(toggleTarget, next, label);
   }
 
-  function handleFormSubmit(values: UserFormValues) {
+  async function handleFormSubmit(values: UserFormValues) {
     if (!formDialog) return;
+    const isCreate = formDialog.mode === "create";
+    const body = {
+      name: values.name.trim(),
+      email: values.email.trim().toLowerCase(),
+      role: values.role,
+      areaId: values.areaId || null,
+      isActive: values.isActive,
+      ...(values.password ? { password: values.password } : {}),
+    };
+    try {
+      const res = await fetch(isCreate ? "/api/users" : `/api/users/${formDialog.user?.id}`, {
+        method: isCreate ? "POST" : "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok) {
+        flash(data?.message ?? (isCreate ? "Pengguna ditambahkan." : "Pengguna diperbarui."));
+        setFormDialog(null);
+        load();
+        return;
+      }
+      if (res.status >= 400 && res.status < 500) {
+        flash(data?.message ?? "Gagal menyimpan pengguna.");
+        setFormDialog(null);
+        return;
+      }
+    } catch {
+      // network error → fallback mock
+    }
+    // Fallback mock (jalur lama).
     const seed = seedMockUsers();
     const now = new Date();
     const password = values.password || undefined;
-    if (formDialog.mode === "create") {
+    if (isCreate) {
       const created = createMockUser(values, now);
       updateUserOverride(window.localStorage, toUserPatch(created, seedUserIds(seed), password));
-      refreshFromStorage();
-      flash(`Pengguna ${created.name} ditambahkan.`);
+      flash(`Pengguna ${created.name} ditambahkan. (mock)`);
     } else if (formDialog.user) {
       const updated = updateMockUser(formDialog.user, values, now);
       updateUserOverride(window.localStorage, toUserPatch(updated, seedUserIds(seed), password));
-      refreshFromStorage();
-      flash(`Pengguna ${updated.name} diperbarui.`);
+      flash(`Pengguna ${updated.name} diperbarui. (mock)`);
     }
     setFormDialog(null);
+    load();
   }
 
-  const totalPages = Math.max(1, Math.ceil(result.total / perPage));
-  const fromCount = result.total === 0 ? 0 : (page - 1) * perPage + 1;
-  const toCount = Math.min(page * perPage, result.total);
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const fromCount = total === 0 ? 0 : (page - 1) * perPage + 1;
+  const toCount = Math.min(page * perPage, total);
 
   if (!authed) {
     return (
@@ -222,7 +342,7 @@ export default function UsersPage() {
               <div>
                 <h1 className="text-xl font-bold tracking-tight">Manajemen Pengguna</h1>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Daftar akun, peran RBAC, dan status aktif — {result.total} pengguna.
+                  Daftar akun, peran RBAC, dan status aktif — {total} pengguna.
                 </p>
               </div>
               <button
@@ -285,7 +405,7 @@ export default function UsersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-950/5 dark:divide-white/5">
-                  {result.items.length === 0 ? (
+                  {items.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-3 py-12 text-center">
                         <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
@@ -297,7 +417,7 @@ export default function UsersPage() {
                       </td>
                     </tr>
                   ) : (
-                    result.items.map((u) => (
+                    items.map((u) => (
                       <tr key={u.id} className="transition-colors hover:bg-cyan-500/[0.04]">
                         <td className="px-3 py-3">
                           <div className="flex items-center gap-3">
@@ -358,9 +478,9 @@ export default function UsersPage() {
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {result.total === 0
+                {total === 0
                   ? "0 pengguna"
-                  : `Menampilkan ${fromCount}–${toCount} dari ${result.total} pengguna`}
+                  : `Menampilkan ${fromCount}–${toCount} dari ${total} pengguna`}
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -388,18 +508,12 @@ export default function UsersPage() {
             <div className="mt-8 rounded-lg border border-amber-500/30 bg-amber-500/[0.07] px-4 py-3 text-[11px] leading-relaxed text-amber-800 dark:text-amber-400">
               <p className="font-semibold">Catatan:</p>
               <p>
-                Data tiruan (mock) — backend GET /api/users & PATCH /api/users/[id]/role sudah ada tapi butuh
-                DB, jadi halaman ini membaca seed mock (lib/mocks/users.ts). Toggle status aktif/nonaktif
-                MOCK-ONLY: backend belum punya endpoint toggle status, perubahan disimpan ke{" "}
-                <code className="rounded bg-amber-500/10 px-1 py-0.5 font-mono">eps_mock_users</code> (localStorage).
-                Ubah peran juga mock-only via localStorage dan memakai proteksi RBAC yang sama dengan backend
-                (lib/auth/rolePolicy.ts); saat DB nyambung, aksi ini harus menulis{" "}
-                <code className="rounded bg-amber-500/10 px-1 py-0.5 font-mono">{"PATCH /api/users/[id]/role"}</code>.
-                Tambah/edit pengguna juga mock-only via{" "}
-                <code className="rounded bg-amber-500/10 px-1 py-0.5 font-mono">eps_mock_users</code> — password
-                disimpan sebagai placeholder <code className="rounded bg-amber-500/10 px-1 py-0.5 font-mono">argon2-mock:…</code>,
-                bukan plaintext; saat backend nyambung, POST /api/users & PATCH profil harus menulis hash Argon2id
-                (prisma/seed.ts).
+                Halaman ini memakai API live (GET/POST /api/users, PATCH /api/users/[id] &
+                /api/users/[id]/role) — tanpa DB/offline, otomatis fallback ke data tiruan
+                (seed mock + localStorage <code className="rounded bg-amber-500/10 px-1 py-0.5 font-mono">eps_mock_users</code>).
+                Saat fallback, password disimpan sebagai placeholder{" "}
+                <code className="rounded bg-amber-500/10 px-1 py-0.5 font-mono">argon2-mock:…</code> (bukan plaintext);
+                backend menulis hash Argon2id.
               </p>
             </div>
           </div>
@@ -441,8 +555,8 @@ export default function UsersPage() {
         message={
           <>
             Peran akan berubah dari <strong>{pendingRole ? ROLE_META[pendingRole.user.role.name].label : ""}</strong>{" "}
-            menjadi <strong>{pendingRole ? ROLE_META[pendingRole.role].label : ""}</strong>. Perubahan hanya
-            tiruan (mock) dan disimpan di browser.
+            menjadi <strong>{pendingRole ? ROLE_META[pendingRole.role].label : ""}</strong>. Perubahan disimpan ke
+            server (API) bila tersedia; tanpa DB, tersimpan sementara di browser.
           </>
         }
         confirmLabel="Ya, Ubah"
