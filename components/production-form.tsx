@@ -9,12 +9,8 @@ import {
   type DraftRowValues,
   type NumericField,
 } from "@/lib/records/form";
-import {
-  loadSavedRecords,
-  mockModelOptions,
-  saveSavedRecords,
-  type MockProductionRecord,
-} from "@/lib/mocks/records";
+import type { MockProductionRecord } from "@/lib/mocks/records";
+import type { CreateRecordPayload } from "@/lib/api/records";
 import { randomUUID } from "@/lib/uuid";
 
 const NUMERIC_FIELDS: { field: NumericField; label: string; hint?: string }[] = [
@@ -111,16 +107,18 @@ function PreviewCell({
 export type ProductionFormProps = {
   existingRecords: MockProductionRecord[];
   userName?: string;
-  onSaved: (saved: MockProductionRecord[]) => void;
+  onSaved: (created: MockProductionRecord[]) => void;
+  onError?: (message: string) => void;
 };
 
 // Form isian harian multi-baris: tiap baris = 12 raw input (date, model, shift,
 // area opsional, 10 numerik) + preview kalkulasi instan (GAP UPH/HC/OP, UPPH).
-// Simpan = mock ke localStorage (eps_mock_records) lalu emit onSaved supaya
-// tabel halaman ikut refresh. Backend CRUD menggantikan di fase nanti.
-export default function ProductionForm({ existingRecords, userName, onSaved }: ProductionFormProps) {
+// Simpan = POST /api/records (backend menyimpan + menghitung calculated), lalu
+// emit onSaved supaya tabel halaman ikut refresh dari server.
+export default function ProductionForm({ existingRecords, userName, onSaved, onError }: ProductionFormProps) {
   const [rows, setRows] = useState<Row[]>(() => [emptyRow()]);
   const [attempted, setAttempted] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
   const dupKeys = useMemo(
@@ -149,7 +147,7 @@ export default function ProductionForm({ existingRecords, userName, onSaved }: P
     setRows((rs) => (rs.length > 1 ? rs.filter((r) => r.key !== key) : rs));
   }
 
-  function handleSave() {
+  async function handleSave() {
     setAttempted(true);
     setMessage(null);
     const invalid = rows.filter((r) => Object.keys(validateRow(r)).length > 0);
@@ -157,27 +155,82 @@ export default function ProductionForm({ existingRecords, userName, onSaved }: P
       setMessage({ kind: "err", text: `Tidak tersimpan — ${invalid.length} baris belum lengkap/valid.` });
       return;
     }
-    const current = loadSavedRecords(window.localStorage);
-    const created = rows.map((r) =>
-      buildRecordFromRow({
-        id: randomUUID(),
-        date: r.date,
-        model: r.model,
-        shift: r.shift.trim() === "" ? null : r.shift.trim(),
-        area:
-          r.area.trim() === ""
-            ? null
-            : { id: `area_form_${randomUUID()}`, name: r.area.trim(), lineCode: null },
-        values: r.values,
-        createdByName: userName ?? "Engineering Staff",
-      })
-    );
-    const next = [...created, ...current];
-    saveSavedRecords(window.localStorage, next);
-    onSaved(next);
-    setRows([emptyRow()]);
-    setAttempted(false);
-    setMessage({ kind: "ok", text: `${created.length} record disimpan (mock) ke ${"eps_mock_records"}.` });
+    setSaving(true);
+    const payloads: CreateRecordPayload[] = rows.map((r) => ({
+      date: r.date,
+      model: r.model.trim(),
+      shift: r.shift.trim() === "" ? null : r.shift.trim(),
+      areaId: null,
+      uphTarget: Number(r.values.uphTarget),
+      uphResult: Number(r.values.uphResult),
+      hcStandard: Number(r.values.hcStandard),
+      hcActual: Number(r.values.hcActual),
+      plan: Number(r.values.plan),
+      outputProd: Number(r.values.outputProd),
+      totalSetup: Number(r.values.totalSetup),
+      workingHour: Number(r.values.workingHour),
+      totalSetupPacking: Number(r.values.totalSetupPacking),
+      workingHourPacking: Number(r.values.workingHourPacking),
+    }));
+    try {
+      const { createRecord } = await import("@/lib/api/records");
+      const results = await Promise.allSettled(payloads.map((p) => createRecord(p)));
+      const created: MockProductionRecord[] = [];
+      const failedRows: Row[] = [];
+      results.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          const p = payloads[index];
+          created.push(
+            buildRecordFromRow({
+              id: result.value.id,
+              date: p.date,
+              model: p.model,
+              shift: p.shift,
+              area: null,
+              values: rValuesOf(p),
+              createdByName: userName ?? "Engineering Staff",
+            })
+          );
+        } else {
+          failedRows.push(rows[index]);
+        }
+      });
+      onSaved(created);
+      if (failedRows.length > 0) {
+        const reason = results.find((result) => result.status === "rejected") as PromiseRejectedResult;
+        const reasonText = reason.reason instanceof Error ? reason.reason.message : "Gagal menyimpan record.";
+        setRows(failedRows);
+        setMessage({
+          kind: "err",
+          text: `${created.length} record tersimpan; ${failedRows.length} gagal. ${reasonText}`,
+        });
+      } else {
+        setRows([emptyRow()]);
+        setAttempted(false);
+        setMessage({ kind: "ok", text: `${created.length} record disimpan ke database.` });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal menyimpan record.";
+      onError?.(msg);
+      setMessage({ kind: "err", text: msg });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function rValuesOf(p: CreateRecordPayload): DraftRowValues {
+    return {
+      uphTarget: String(p.uphTarget),
+      uphResult: String(p.uphResult),
+      hcStandard: String(p.hcStandard),
+      hcActual: String(p.hcActual),
+      plan: String(p.plan),
+      outputProd: String(p.outputProd),
+      totalSetup: String(p.totalSetup),
+      workingHour: String(p.workingHour),
+      totalSetupPacking: String(p.totalSetupPacking),
+      workingHourPacking: String(p.workingHourPacking),
+    };
   }
 
   return (
@@ -186,7 +239,7 @@ export default function ProductionForm({ existingRecords, userName, onSaved }: P
         <div>
           <h2 className="text-sm font-semibold tracking-tight">Form Isian Harian</h2>
           <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-            Multi-baris · preview GAP/UPPH live saat ketik · simpan mock ke localStorage.
+            Multi-baris · preview GAP/UPPH live saat ketik · simpan ke database.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -200,9 +253,10 @@ export default function ProductionForm({ existingRecords, userName, onSaved }: P
           <button
             type="button"
             onClick={handleSave}
-            className="rounded-lg bg-gradient-to-r from-cyan-600 to-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:opacity-90"
+            disabled={saving}
+            className="rounded-lg bg-gradient-to-r from-cyan-600 to-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Simpan
+            {saving ? "Menyimpan…" : "Simpan"}
           </button>
         </div>
       </div>
@@ -221,7 +275,7 @@ export default function ProductionForm({ existingRecords, userName, onSaved }: P
       )}
 
       <datalist id="eps-mock-models">
-        {mockModelOptions.map((m) => (
+        {Array.from(new Set(existingRecords.map((r) => r.model))).map((m) => (
           <option key={m} value={m} />
         ))}
       </datalist>

@@ -2,24 +2,21 @@
 
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useSessionGuard } from "@/hooks/use-session-guard";
-import {
-  filterAudit,
-  loadMockAudit,
-  saveMockAudit,
-  seedMockAudit,
-  type MockAuditAction,
-  type MockAuditItem,
-} from "@/lib/mocks/audit";
+import type { MockAuditItem } from "@/lib/mocks/audit";
 
 const dateFmt = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" });
 
-const ACTION_META: Record<MockAuditAction, { label: string; badge: string }> = {
+const ACTION_META: Record<string, { label: string; badge: string }> = {
   LOGIN_SUCCESS: {
     label: "Login Berhasil",
     badge: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   },
   LOGIN_FAILED: {
     label: "Login Gagal",
+    badge: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400",
+  },
+  LOGIN_RATE_LIMITED: {
+    label: "Login Dibatasi",
     badge: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400",
   },
   ACCOUNT_LOCKED: {
@@ -70,7 +67,54 @@ const ACTION_META: Record<MockAuditAction, { label: string; badge: string }> = {
     label: "Pengaturan Keamanan Diubah",
     badge: "border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-400",
   },
+  RECORD_CREATED: {
+    label: "Rekam Dibuat",
+    badge: "border-indigo-500/30 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400",
+  },
+  IMPORT_COMPLETED: {
+    label: "Impor Selesai",
+    badge: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
+  },
+  EXPORTED: {
+    label: "Data Diekspor",
+    badge: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
+  },
+  LOGOUT: {
+    label: "Logout",
+    badge: "border-slate-500/30 bg-slate-500/10 text-slate-700 dark:text-slate-400",
+  },
+  LOGOUT_ALL: {
+    label: "Logout Semua Sesi",
+    badge: "border-slate-500/30 bg-slate-500/10 text-slate-700 dark:text-slate-400",
+  },
+  USER_CREATED: {
+    label: "Pengguna Dibuat",
+    badge: "border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-400",
+  },
+  USER_UPDATED: {
+    label: "Pengguna Diubah",
+    badge: "border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-400",
+  },
+  IMPORT_ROLLED_BACK: {
+    label: "Impor Dibatalkan",
+    badge: "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-400",
+  },
+  BACKUP_RUN: {
+    label: "Backup Dijalankan",
+    badge: "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-400",
+  },
+  DASHBOARD_LAYOUT_UPDATED: {
+    label: "Layout Dashboard Diubah",
+    badge: "border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-400",
+  },
 };
+
+const FALLBACK_META = {
+  label: "Aksi Lain",
+  badge: "border-slate-500/30 bg-slate-500/10 text-slate-700 dark:text-slate-400",
+};
+
+const metaOf = (action: string): { label: string; badge: string } => ACTION_META[action] ?? FALLBACK_META;
 
 const inputClass =
   "w-full rounded-lg border border-slate-950/15 bg-white/70 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-cyan-600 focus:ring-2 focus:ring-cyan-500/30 dark:border-white/15 dark:bg-white/5 dark:text-slate-100 dark:placeholder-slate-500";
@@ -86,7 +130,9 @@ function detailText(item: MockAuditItem): string {
 export default function AuditPage() {
   const authed = useSessionGuard("audit.view") !== null;
   const [items, setItems] = useState<MockAuditItem[]>([]);
-  const [action, setAction] = useState<MockAuditAction | "">("");
+  const [total, setTotal] = useState(0);
+  const [users, setUsers] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [action, setAction] = useState<string>("");
   const [userId, setUserId] = useState("");
   const [search, setSearch] = useState("");
   const [from, setFrom] = useState("");
@@ -94,37 +140,50 @@ export default function AuditPage() {
   const [perPage, setPerPage] = useState(10);
   const [page, setPage] = useState(1);
 
-  // Seed audit trail setelah guard lolos; entri login mock menumpuk dari
-  // localStorage eps_mock_audit (appendMockAudit di lib/mocks/accounts.ts).
+  // Daftar pengguna untuk filter (GET /api/users).
   useEffect(() => {
     if (!authed) return;
-    let list = loadMockAudit();
-    if (list.length === 0) {
-      list = seedMockAudit();
-      saveMockAudit(list);
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setItems(list);
+    let alive = true;
+    fetch("/api/users?perPage=100")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { items?: Array<{ id: string; name: string; email: string }> } | null) => {
+        if (alive && data?.items) setUsers(data.items);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
   }, [authed]);
 
-  const users = useMemo(() => {
-    const seen = new Map<string, { id: string; name: string; email: string }>();
-    for (const it of items) seen.set(it.user.id, it.user);
-    return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
-  }, [items]);
+  // Data audit dari server (GET /api/audit) — filter & pagination server-side.
+  useEffect(() => {
+    if (!authed) return;
+    let alive = true;
+    const q = new URLSearchParams({
+      page: String(page),
+      perPage: String(perPage),
+    });
+    if (action) q.set("action", action);
+    if (userId) q.set("userId", userId);
+    if (search) q.set("search", search);
+    if (from) q.set("from", `${from}T00:00:00`);
+    if (to) q.set("to", `${to}T23:59:59.999`);
+    fetch(`/api/audit?${q.toString()}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`Gagal memuat audit (${res.status}).`))))
+      .then((data: { items: MockAuditItem[]; total: number }) => {
+        if (!alive) return;
+        setItems(data.items);
+        setTotal(data.total);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [authed, action, userId, search, from, to, page, perPage]);
 
   const result = useMemo(
-    () =>
-      filterAudit(items, {
-        action,
-        userId: userId || undefined,
-        search,
-        from: from ? new Date(`${from}T00:00:00`).toISOString() : undefined,
-        to: to ? new Date(`${to}T23:59:59.999`).toISOString() : undefined,
-        page,
-        perPage,
-      }),
-    [items, action, userId, search, from, to, page, perPage]
+    () => ({ items, total, page, perPage }),
+    [items, total, page, perPage]
   );
 
   const totalPages = Math.max(1, Math.ceil(result.total / perPage));
@@ -149,7 +208,7 @@ export default function AuditPage() {
   }
 
   function handleAction(e: ChangeEvent<HTMLSelectElement>) {
-    setAction(e.target.value as MockAuditAction | "");
+    setAction(e.target.value);
     setPage(1);
   }
   function handleUser(e: ChangeEvent<HTMLSelectElement>) {
@@ -197,7 +256,7 @@ export default function AuditPage() {
                 <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Aksi</span>
                 <select value={action} onChange={handleAction} className={inputClass}>
                   <option value="">Semua</option>
-                  {(Object.keys(ACTION_META) as MockAuditAction[]).map((a) => (
+                  {Object.keys(ACTION_META).sort().map((a) => (
                     <option key={a} value={a}>
                       {ACTION_META[a].label}
                     </option>
@@ -276,7 +335,7 @@ export default function AuditPage() {
                     </tr>
                   ) : (
                     result.items.map((it) => {
-                      const meta = ACTION_META[it.action];
+                      const meta = metaOf(it.action);
                       return (
                         <tr key={it.id} className="align-top transition-colors hover:bg-cyan-500/[0.04]">
                           <td className="px-3 py-3 text-xs whitespace-nowrap text-slate-600 dark:text-slate-300">

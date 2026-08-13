@@ -1,19 +1,50 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import KpiSummary from "@/components/kpi-summary";
 import ProductionForm from "@/components/production-form";
 import QuickEntryTable from "@/components/quick-entry-table";
 import { useSessionGuard } from "@/hooks/use-session-guard";
-import { createRecordsStore } from "@/lib/records/state";
-import { useRecordsStore } from "./use-records-store";
+import { createRecord, fetchAllRecords, type CreateRecordPayload } from "@/lib/api/records";
 import {
   buildMockRecordTotal,
-  mockProductionRecords,
   type MockProductionRecord,
   type MockRecordTotal,
 } from "@/lib/mocks/records";
 import { RecordStatus } from "@/app/generated/prisma/enums";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const NUMERIC_RECORD_FIELDS = new Set([
+  "uphTarget",
+  "uphResult",
+  "hcStandard",
+  "hcActual",
+  "plan",
+  "outputProd",
+  "totalSetup",
+  "workingHour",
+  "totalSetupPacking",
+  "workingHourPacking",
+]);
+
+function toCreatePayload(r: MockProductionRecord): CreateRecordPayload {
+  return {
+    date: r.date,
+    model: r.model,
+    shift: r.shift,
+    areaId: r.area && UUID_RE.test(r.area.id) ? r.area.id : null,
+    uphTarget: Number(r.uphTarget),
+    uphResult: Number(r.uphResult),
+    hcStandard: Number(r.hcStandard),
+    hcActual: Number(r.hcActual),
+    plan: Number(r.plan),
+    outputProd: Number(r.outputProd),
+    totalSetup: Number(r.totalSetup),
+    workingHour: Number(r.workingHour),
+    totalSetupPacking: Number(r.totalSetupPacking),
+    workingHourPacking: Number(r.workingHourPacking),
+  };
+}
 
 const numFmt = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 });
 const fmt = (v: number): string => numFmt.format(v);
@@ -84,27 +115,48 @@ export default function DataEntryRecordsPage() {
   const session = useSessionGuard("record.create");
   const authed = session !== null;
 
-  // Satu sumber kebenaran (TASK buat-state-management-data-produksi):
-  // store ringan lib/records/state.ts (tanpa pustaka eksternal) — form,
-  // quick-entry, tabel, total row & KPI semua baca dari sini; persist ke
-  // localStorage eps_mock_records otomatis tiap mutasi.
-  const [store] = useState(() =>
-    createRecordsStore({ storage: typeof window === "undefined" ? null : window.localStorage })
-  );
-  const savedRecords = useRecordsStore(store);
+  // Data dari database (GET /api/records); draft quick-entry disimpan di state
+  // lokal lalu di-POST ke /api/records saat "Simpan Semua".
+  const [records, setRecords] = useState<MockProductionRecord[]>([]);
+  const [quickRows, setQuickRows] = useState<MockProductionRecord[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+    fetchAllRecords()
+      .then((rs) => {
+        if (alive) setRecords(rs);
+      })
+      .catch((err: unknown) => {
+        if (alive) setLoadError(err instanceof Error ? err.message : "Gagal memuat data.");
+      });
+    return () => {
+      alive = false;
+    };
+  }, [reloadKey]);
 
   // Tab panel input: Form per-baris | Input Cepat (TASK 5).
   const [entryMode, setEntryMode] = useState<"form" | "quick">("form");
 
-  const records = useMemo(
-    () =>
-      [...savedRecords, ...mockProductionRecords].sort(
-        (a, b) => b.date.localeCompare(a.date) || (a.shift ?? "").localeCompare(b.shift ?? "") || a.model.localeCompare(b.model)
-      ),
-    [savedRecords]
-  );
-  // Baris quick-entry = record store dengan id prefix "qe_" (DRAFT).
-  const quickRows = useMemo(() => savedRecords.filter((r) => r.id.startsWith("qe_")), [savedRecords]);
+  async function persistQuick(rows: MockProductionRecord[]): Promise<string | null> {
+    const results = await Promise.allSettled(rows.map((r) => createRecord(toCreatePayload(r))));
+    const successfulIds = rows.filter((_, i) => results[i]?.status === "fulfilled").map((r) => r.id);
+    const failed = results.filter((result): result is PromiseRejectedResult => result.status === "rejected");
+
+    if (successfulIds.length > 0) {
+      setQuickRows((current) => current.filter((r) => !successfulIds.includes(r.id)));
+      setReloadKey((k) => k + 1);
+    }
+    if (failed.length > 0) {
+      const firstError = failed[0].reason;
+      const message = firstError instanceof Error ? firstError.message : "Gagal menyimpan record.";
+      return successfulIds.length > 0
+        ? `${successfulIds.length} baris tersimpan; ${failed.length} baris gagal. ${message}`
+        : message;
+    }
+    return null;
+  }
 
   if (!authed) {
     return (
@@ -132,7 +184,7 @@ export default function DataEntryRecordsPage() {
                 </span>
               </div>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Entri manual per model per shift — data tiruan (mock), backend phase 2 belum tersedia.
+                Entri manual per model per shift — tersimpan ke database{loadError ? ` · ${loadError}` : ""}.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -183,7 +235,7 @@ export default function DataEntryRecordsPage() {
             <div>
               <h2 className="text-sm font-semibold tracking-tight">Input Data Harian</h2>
               <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                Satu sumber kebenaran — simpan/ubah langsung ke store, tabel & KPI refresh otomatis.
+                Simpan → POST /api/records · tabel &amp; KPI refresh dari server.
               </p>
             </div>
             <div className="flex rounded-lg border border-slate-950/10 bg-slate-950/[0.03] p-1 dark:border-white/10 dark:bg-white/[0.03]">
@@ -214,18 +266,29 @@ export default function DataEntryRecordsPage() {
             <ProductionForm
               existingRecords={records}
               userName={session.user.name}
-              onSaved={(saved) => store.setRecords(saved)}
+              onSaved={() => setReloadKey((k) => k + 1)}
             />
           ) : (
             <QuickEntryTable
               rows={quickRows}
               allRecords={records}
               userName={session.user.name}
-              onAdd={(rec) => store.add(rec)}
-              onUpdate={(id, patch) => store.update(id, patch)}
-              onRemove={(id) => store.remove(id)}
-              onAddBulk={(rs) => store.setRecords([...rs, ...store.getRecords()])}
-              onPersist={() => store.persist()}
+              onAdd={(rec) => setQuickRows((rs) => [...rs, rec])}
+              onUpdate={(id, patch) => {
+                const normalized = { ...patch };
+                for (const [key, value] of Object.entries(normalized)) {
+                  if (NUMERIC_RECORD_FIELDS.has(key) && typeof value === "string") {
+                    const parsed = Number(value);
+                    normalized[key] = Number.isFinite(parsed) ? parsed : 0;
+                  }
+                }
+                setQuickRows((rs) =>
+                  rs.map((r) => (r.id === id ? ({ ...r, ...normalized } as MockProductionRecord) : r))
+                );
+              }}
+              onRemove={(id) => setQuickRows((rs) => rs.filter((r) => r.id !== id))}
+              onAddBulk={(rs) => setQuickRows((prev) => [...prev, ...rs])}
+              onPersist={persistQuick}
             />
           )}
         </section>
@@ -236,7 +299,7 @@ export default function DataEntryRecordsPage() {
             <div>
               <h2 className="text-sm font-semibold tracking-tight">Daily Production Table</h2>
               <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                Data mock ({records.length} record) · GAP total dihitung dari total, bukan jumlah GAP per baris.
+                Data dari database ({records.length} record) · GAP total dihitung dari total, bukan jumlah GAP per baris.
               </p>
             </div>
             <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">

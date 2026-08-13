@@ -52,17 +52,17 @@ const NUMERIC_FIELDS: { field: NumericField; label: string }[] = [
 const SHIFT_OPTIONS = ["1", "2", "3"];
 
 export type QuickEntryTableProps = {
-  /** Baris milik quick-entry (dari store, id prefix "qe_"). */
+  /** Baris milik quick-entry (draft lokal, id prefix "qe_"). */
   rows: MockProductionRecord[];
-  /** Semua record terlihat (saved + seed) — konteks duplikat/total. */
+  /** Semua record terlihat (dari API) — konteks duplikat/total. */
   allRecords: MockProductionRecord[];
   userName?: string;
   onAdd: (record: MockProductionRecord) => void;
   onUpdate: (id: string, patch: Record<string, unknown>) => void;
   onRemove: (id: string) => void;
   onAddBulk: (records: MockProductionRecord[]) => void;
-  /** "Simpan Semua" → persist ulang store. */
-  onPersist: () => void;
+  /** "Simpan Semua" → simpan baris draft ke DB via POST /api/records; null = sukses. */
+  onPersist: (rows: MockProductionRecord[]) => Promise<string | null>;
 };
 
 function todayISO(): string {
@@ -112,6 +112,7 @@ export default function QuickEntryTable({
   // "menyentak" saat store menolak nilai invalid (negatif/non-angka).
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [attempted, setAttempted] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulk, setBulk] = useState({ count: "5", date: todayISO(), shift: "1", model: "", areaName: "" });
@@ -176,7 +177,7 @@ export default function QuickEntryTable({
     setMessage(null);
   }
 
-  function handleSaveAll() {
+  async function handleSaveAll() {
     setAttempted(true);
     setMessage(null);
     const invalid = rows
@@ -189,10 +190,20 @@ export default function QuickEntryTable({
       });
       return;
     }
-    onPersist();
-    setAttempted(false);
-    setDrafts({});
-    setMessage({ kind: "ok", text: `${rows.length} baris valid — tersimpan ke eps_mock_records.` });
+    const count = rows.length;
+    setSaving(true);
+    try {
+      const err = await onPersist(rows);
+      if (err) {
+        setMessage({ kind: "err", text: err });
+        return;
+      }
+      setAttempted(false);
+      setDrafts({});
+      setMessage({ kind: "ok", text: `${count} baris tersimpan ke database.` });
+    } finally {
+      setSaving(false);
+    }
   }
 
   // "Terapkan dari baris 1": copy nilai baris pertama (draft bila ada) ke semua
@@ -236,7 +247,7 @@ export default function QuickEntryTable({
     );
     setBulkOpen(false);
     setBulkError(null);
-    setMessage({ kind: "ok", text: `${bulk.count} baris ditambahkan ke grid (DRAFT, tersimpan ke mock).` });
+    setMessage({ kind: "ok", text: `${bulk.count} baris ditambahkan ke grid (draft, belum disimpan).` });
   }
 
   const lastRow = rows[rows.length - 1]?.id;
@@ -247,7 +258,7 @@ export default function QuickEntryTable({
         <div>
           <h2 className="text-sm font-semibold tracking-tight">Input Cepat Multi-Baris</h2>
           <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-            Edit inline langsung ke store · Enter di baris terakhir menambah baris · GAP/UPPH live.
+            Edit inline · Enter di baris terakhir menambah baris · GAP/UPPH live · Simpan Semua → POST /api/records.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -271,9 +282,10 @@ export default function QuickEntryTable({
           <button
             type="button"
             onClick={handleSaveAll}
-            className="rounded-lg bg-gradient-to-r from-cyan-600 to-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:opacity-90"
+            disabled={saving}
+            className="rounded-lg bg-gradient-to-r from-cyan-600 to-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Simpan Semua
+            {saving ? "Menyimpan…" : "Simpan Semua"}
           </button>
         </div>
       </div>

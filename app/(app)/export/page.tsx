@@ -1,13 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSessionGuard } from "@/hooks/use-session-guard";
-import { createRecordsStore } from "@/lib/records/state";
-import { mockProductionRecords } from "@/lib/mocks/records";
+import { fetchAllRecords } from "@/lib/api/records";
+import type { MockProductionRecord } from "@/lib/mocks/records";
 import { buildMockRecordTotal } from "@/lib/mocks/records";
 import { formatDecimal, formatNumber } from "@/lib/production-table/format";
 import { buildCsv, buildTemplateCsv, toCsvDownload } from "@/lib/imports/csv";
-import { mergeAndSortRecords } from "@/lib/imports/records";
 
 const FILENAME_TODAY = () => `EPS_${new Date().toISOString().slice(0, 10)}.csv`;
 const TEMPLATE_FILENAME = "EPS_Template_Impor.csv";
@@ -17,19 +16,26 @@ export default function ExportPage() {
   const session = useSessionGuard("export.run");
   const authed = session !== null;
 
-  const store = useMemo(
-    () =>
-      createRecordsStore({
-        storage: typeof window === "undefined" ? null : window.localStorage,
-      }),
-    []
-  );
-  const savedRecords = useSyncExternalStore(store.subscribe, store.getRecords, store.getRecords);
-
-  const [notice, setNotice] = useState<string | null>(null);
+  const [records, setRecords] = useState<MockProductionRecord[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const noticeTimer = useRef<number | null>(null);
 
-  const records = useMemo(() => mergeAndSortRecords(savedRecords, mockProductionRecords, "desc"), [savedRecords]);
+  useEffect(() => {
+    let alive = true;
+    fetchAllRecords()
+      .then((rs) => {
+        if (alive) setRecords(rs);
+      })
+      .catch((err: unknown) => {
+        if (alive) setLoadError(err instanceof Error ? err.message : "Gagal memuat data.");
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const total = useMemo(() => buildMockRecordTotal(records), [records]);
   const dates = records.length > 0 ? [records[records.length - 1].date, records[0].date] : [];
   const previewCsv = useMemo(() => {
@@ -46,20 +52,40 @@ export default function ExportPage() {
     );
   }
 
-  const showNotice = (message: string) => {
-    setNotice(message);
+  const showNotice = (kind: "ok" | "err", message: string) => {
+    setNotice({ kind, text: message });
     if (noticeTimer.current) window.clearTimeout(noticeTimer.current);
     noticeTimer.current = window.setTimeout(() => setNotice(null), 4000);
   };
 
-  const exportCsv = () => {
-    toCsvDownload(buildCsv(records), FILENAME_TODAY());
-    showNotice(`Ekspor ${records.length} record → ${FILENAME_TODAY()}`);
+  // Ekspor via GET /api/export — backend menyusun CSV 17 kolom dari DB,
+  // membatasi jumlah baris (EXPORT_MAX_ROWS) & mencatat audit EXPORTED.
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/export");
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message ?? `Ekspor gagal (${res.status}).`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = FILENAME_TODAY();
+      a.click();
+      URL.revokeObjectURL(url);
+      showNotice("ok", `Ekspor ${records.length} record → ${FILENAME_TODAY()}`);
+    } catch (err) {
+      showNotice("err", err instanceof Error ? err.message : "Ekspor gagal.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const downloadTemplate = () => {
     toCsvDownload(buildTemplateCsv(), TEMPLATE_FILENAME);
-    showNotice(`Template diunduh → ${TEMPLATE_FILENAME} (kolom input saja)`);
+    showNotice("ok", `Template diunduh → ${TEMPLATE_FILENAME} (kolom input saja)`);
   };
 
   return (
@@ -78,18 +104,18 @@ export default function ExportPage() {
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Unduh seluruh record sebagai file CSV siap buka di Excel — BOM + pemisah titik koma (;)
-                  + desimal titik, kolom 17 persis PRD.
+                  Unduh seluruh record dari database sebagai file CSV siap buka di Excel — BOM + pemisah
+                  titik koma (;) + desimal titik, kolom 17 persis PRD{loadError ? ` · ${loadError}` : ""}.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={exportCsv}
-                  disabled={records.length === 0}
+                  disabled={records.length === 0 || exporting}
                   className="rounded-lg bg-gradient-to-br from-cyan-500 to-blue-800 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  Ekspor Excel
+                  {exporting ? "Mengekspor…" : "Ekspor Excel"}
                 </button>
                 <button
                   type="button"
@@ -103,8 +129,14 @@ export default function ExportPage() {
             </div>
 
             {notice && (
-              <div className="mt-4 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2.5 text-xs font-medium text-cyan-800 dark:text-cyan-300">
-                {notice}
+              <div
+                className={`mt-4 rounded-xl border px-4 py-2.5 text-xs font-medium ${
+                  notice.kind === "ok"
+                    ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-800 dark:text-cyan-300"
+                    : "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400"
+                }`}
+              >
+                {notice.text}
               </div>
             )}
           </div>

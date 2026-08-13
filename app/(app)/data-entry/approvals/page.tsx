@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RecordStatus } from "@/app/generated/prisma/enums";
 import { useSessionGuard } from "@/hooks/use-session-guard";
-import { applyMockTransition, mockAllRecords, type MockTransitionResult } from "@/lib/mocks/workflow";
+import { changeRecordStatus, fetchAllRecords } from "@/lib/api/records";
+import type { MockProductionRecord } from "@/lib/mocks/records";
 import { formatNumber, formatDecimal } from "@/lib/production-table/format";
 
 const STATUS_META: Record<string, { label: string; badge: string }> = {
@@ -14,9 +15,23 @@ const STATUS_META: Record<string, { label: string; badge: string }> = {
 };
 
 export default function ApprovalsPage() {
-  const session = useSessionGuard();
-  const [records, setRecords] = useState(() => mockAllRecords(typeof window === "undefined" ? null : window.localStorage));
+  const session = useSessionGuard("record.approve");
+  const [records, setRecords] = useState<MockProductionRecord[]>([]);
+  const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  // Antrean persetujuan dari database (workflow nyata via /api/records/[id]/status).
+  useEffect(() => {
+    let alive = true;
+    fetchAllRecords()
+      .then((rs) => {
+        if (alive) setRecords(rs);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const queue = useMemo(
     () =>
@@ -34,28 +49,20 @@ export default function ApprovalsPage() {
     );
   }
 
-  const user = session.user;
-  const actor = {
-    sub: user.id,
-    role: user.role.name,
-    permissions: user.permissions,
-    name: user.name,
-    email: user.email,
-  };
-
-  function transition(id: string, to: RecordStatus) {
-    const result: MockTransitionResult = applyMockTransition(
-      window.localStorage,
-      records,
-      id,
-      to,
-      actor
-    );
-    if (result.ok) {
-      setRecords(records.map((r) => (r.id === id ? result.record! : r)));
+  async function transition(id: string, to: RecordStatus) {
+    setBusy(id);
+    try {
+      await changeRecordStatus(id, to);
+      const rs = await fetchAllRecords();
+      setRecords(rs);
       setNotice({ type: "ok", text: to === RecordStatus.REVIEWED ? "Record di-review." : "Record disetujui." });
-    } else {
-      setNotice({ type: "err", text: result.message });
+    } catch (err) {
+      setNotice({
+        type: "err",
+        text: err instanceof Error ? err.message : "Gagal mengubah status record.",
+      });
+    } finally {
+      setBusy(null);
     }
     window.setTimeout(() => setNotice(null), 3000);
   }
@@ -128,17 +135,19 @@ export default function ApprovalsPage() {
                         <button
                           type="button"
                           onClick={() => transition(r.id, RecordStatus.REVIEWED)}
-                          className="rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-500/20 dark:text-blue-400"
+                          disabled={busy === r.id}
+                          className="rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400"
                         >
-                          Review
+                          {busy === r.id ? "…" : "Review"}
                         </button>
                       ) : (
                         <button
                           type="button"
                           onClick={() => transition(r.id, RecordStatus.APPROVED)}
-                          className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
+                          disabled={busy === r.id}
+                          className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-400"
                         >
-                          Approve
+                          {busy === r.id ? "…" : "Approve"}
                         </button>
                       )}
                     </td>

@@ -32,6 +32,7 @@ export const AUDIT_ROUTE_MAP: AuditRouteMap = {
   "app/api/auth/login/route.ts": ["LOGIN_SUCCESS", "LOGIN_FAILED", "LOGIN_RATE_LIMITED", "ACCOUNT_LOCKED"],
   "app/api/auth/logout/route.ts": ["LOGOUT"],
   "app/api/auth/logout-all/route.ts": ["LOGOUT_ALL"],
+  "app/api/auth/sessions/[id]/route.ts": ["LOGOUT"],
   "app/api/users/route.ts": ["USER_CREATED"],
   "app/api/users/[id]/route.ts": ["USER_UPDATED", "USER_ROLE_CHANGED"],
   "app/api/users/[id]/role/route.ts": ["USER_ROLE_CHANGED"],

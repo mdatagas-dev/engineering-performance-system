@@ -4,19 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { getMenuFor } from "@/lib/auth/menu";
-import {
-  loginMockAccount,
-  loadMockSession,
-  saveMockSession,
-  mockAccounts,
-  getMockLock,
-  getMockRateLimitRemaining,
-  MOCK_LOGIN_ERROR,
-  MOCK_INACTIVE_MESSAGE,
-  MOCK_RATE_LIMITED_MESSAGE,
-} from "@/lib/mocks/accounts";
+import { loadMockSession, saveMockSession } from "@/lib/mocks/accounts";
 import { withExpiry } from "@/lib/mocks/session";
-import LockoutNotice from "@/components/lockout-notice";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -29,16 +18,6 @@ const MANUFACTURE_QUOTES: { quote: string; author: string }[] = [
   { quote: "Kesederhanaan adalah kecanggihan tertinggi.", author: "Leonardo da Vinci" },
 ];
 
-const ROLE_META: Record<string, { label: string; desc: string }> = {
-  SUPER_ADMIN: { label: "Super Admin", desc: "Akses penuh seluruh sistem & konfigurasi." },
-  ADMIN: { label: "Admin", desc: "Kelola pengguna, audit, dan pengaturan." },
-  ENGINEERING_MANAGER: { label: "Engineering Manager", desc: "Persetujuan, lock record, KPI & ekspor." },
-  ENGINEERING_STAFF: { label: "Engineering Staff", desc: "Input data produksi harian." },
-  VIEWER: { label: "Viewer", desc: "Lihat dashboard & ekspor saja." },
-};
-
-const ROLE_ORDER = ["SUPER_ADMIN", "ADMIN", "ENGINEERING_MANAGER", "ENGINEERING_STAFF", "VIEWER"];
-
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -50,11 +29,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [expired, setExpired] = useState(false);
   const [quoteIdx, setQuoteIdx] = useState(0);
-  const [selectedRole, setSelectedRole] = useState<string>("SUPER_ADMIN");
-  // Lockout tiruan: waktu berakhir (epoch ms) saat akun demo terkunci; null = bebas.
-  const [lockEnd, setLockEnd] = useState<number | null>(null);
-  // Rate limit global tiruan: waktu berakhir (epoch ms) saat semua percobaan diblokir.
-  const [rateLimitEnd, setRateLimitEnd] = useState<number | null>(null);
 
   // ?expired=1 di-set guard sesi saat timeout → tampilkan pesan "sesi berakhir".
   useEffect(() => {
@@ -62,7 +36,7 @@ export default function LoginPage() {
     setExpired(new URLSearchParams(window.location.search).has("expired"));
   }, []);
 
-  // Sudah punya sesi lokal (mock) → langsung ke /.
+  // Sudah punya sesi lokal → langsung ke /.
   useEffect(() => {
     if (loadMockSession()) router.replace("/");
   }, [router]);
@@ -84,28 +58,12 @@ export default function LoginPage() {
     return Object.keys(next).length === 0;
   }
 
-  function refreshLock(email: string) {
-    const lock = getMockLock(email);
-    const until = lock?.lockedUntil ? new Date(lock.lockedUntil).getTime() : 0;
-    setLockEnd(until > Date.now() ? until : null);
-  }
-
-  function refreshRateLimit() {
-    const remaining = getMockRateLimitRemaining();
-    setRateLimitEnd(remaining !== null ? Date.now() + remaining : null);
-  }
-
-  const locked = lockEnd !== null;
-  const rateLimited = rateLimitEnd !== null;
-
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (locked || rateLimited) return;
     if (!validate()) return;
     setLoading(true);
 
-    // 1) Coba API live (backend real sudah ada DB). Kalau gagal → fallback mock.
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -128,46 +86,13 @@ export default function LoginPage() {
         return;
       }
 
-      // 401/403 = keputusan backend sungguhan → jangan fallback.
-      if (res.status === 401 || res.status === 403) {
-        const data = await res.json().catch(() => null);
-        setError(data?.message ?? MOCK_LOGIN_ERROR);
-        return;
-      }
-      // Selain itu (500/no DB) → lanjut fallback mock.
+      const data = await res.json().catch(() => null);
+      setError(data?.message ?? "Email atau password salah.");
     } catch {
-      // Network error → fallback mock.
-    }
-
-    // 2) Fallback: akun seed tiruan (staff@eps.local / Staff123!, dsb) atau
-    // user override buatan via /users (eps_mock_users).
-    const result = loginMockAccount(email, password, rememberMe);
-    if (!result.ok) {
-      if (result.reason === "locked") refreshLock(email);
-      else if (result.reason === "rate_limited") refreshRateLimit();
-      else if (result.reason === "inactive") setError(MOCK_INACTIVE_MESSAGE);
-      else setError(MOCK_LOGIN_ERROR);
+      setError("Gagal terhubung ke server. Silakan coba lagi.");
+    } finally {
       setLoading(false);
-      return;
     }
-    saveMockSession(result.session);
-    router.replace("/");
-  }
-
-  // Masuk cepat via tombol role (mode tiruan) — langsung pakai akun demo role tsb.
-  function mockLogin(role: string) {
-    const account = mockAccounts.find((a) => a.role === role);
-    if (!account) return;
-    const result = loginMockAccount(account.email, account.password, false);
-    if (!result.ok) {
-      if (result.reason === "locked") refreshLock(account.email);
-      else if (result.reason === "rate_limited") refreshRateLimit();
-      else if (result.reason === "inactive") setError(MOCK_INACTIVE_MESSAGE);
-      else setError(MOCK_LOGIN_ERROR);
-      return;
-    }
-    saveMockSession(result.session);
-    router.replace("/");
   }
 
   const inputClass =
@@ -246,15 +171,7 @@ export default function LoginPage() {
                     Sesi Anda telah berakhir. Silakan login kembali.
                   </p>
                 )}
-                {locked && <LockoutNotice lockedUntil={lockEnd} onCountdownEnd={() => setLockEnd(null)} />}
-                {rateLimited && (
-                  <LockoutNotice
-                    lockedUntil={rateLimitEnd}
-                    message={MOCK_RATE_LIMITED_MESSAGE}
-                    onCountdownEnd={() => setRateLimitEnd(null)}
-                  />
-                )}
-                {error && !locked && !rateLimited && (
+                {error && (
                   <p role="alert" aria-live="assertive" className="rounded-lg border border-red-300 bg-red-50 px-4 py-2.5 text-sm text-red-600">
                     {error}
                   </p>
@@ -344,7 +261,7 @@ export default function LoginPage() {
 
                 <button
                   type="submit"
-                  disabled={loading || locked || rateLimited}
+                  disabled={loading}
                   className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#00b3ac] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#009a94] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading ? (
@@ -364,77 +281,6 @@ export default function LoginPage() {
 
               <p className="mt-8 text-center text-xs font-medium tracking-wide text-black/70">
                 Engineering Production System · v1.0.0
-              </p>
-            </div>
-
-            <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
-              <div className="flex items-center gap-2">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-neutral-500">
-                  <path d="M15 3h4a1 1 0 0 1 1 1v4" />
-                  <path d="M10 14 21 3" />
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                </svg>
-                <h2 className="text-sm font-semibold text-neutral-800">Masuk cepat (mode tiruan)</h2>
-              </div>
-              <p className="mt-1 text-xs text-neutral-500">
-                Pilih peran untuk masuk langsung dengan akun demo sesuai level aksesnya.
-              </p>
-              <div className="mt-4 space-y-2">
-                {ROLE_ORDER.map((role) => {
-                  const meta = ROLE_META[role];
-                  const account = mockAccounts.find((a) => a.role === role);
-                  return (
-                    <button
-                      key={role}
-                      type="button"
-                      onClick={() => setSelectedRole(role)}
-                      className={`flex w-full items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left transition-all ${
-                        selectedRole === role
-                          ? "border-[#00b3ac] bg-[#00b3ac]/10 ring-2 ring-[#00b3ac]/20"
-                          : "border-neutral-200 bg-white hover:border-neutral-300"
-                      }`}
-                    >
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={`h-5 w-5 shrink-0 ${selectedRole === role ? "text-[#00b3ac]" : "text-neutral-400"}`}
-                      >
-                        <circle cx="12" cy="8" r="4" />
-                        <path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" />
-                      </svg>
-                      <span className="flex-1">
-                        <span className="block text-sm font-semibold text-neutral-800">{meta.label}</span>
-                        <span className="block text-[11px] text-neutral-500">{meta.desc}</span>
-                      </span>
-                      {account && (
-                        <span className="font-mono text-[10px] text-neutral-400">
-                          {account.email}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-              <button
-                type="button"
-                onClick={() => mockLogin(selectedRole)}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-neutral-700"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M15 3h4a1 1 0 0 1 1 1v4" />
-                  <path d="M10 14 21 3" />
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                </svg>
-                Masuk sebagai {ROLE_META[selectedRole]?.label}
-              </button>
-              <p className="mt-3 text-center text-[11px] text-neutral-400">
-                Akun demo contoh: staff@eps.local / Staff123!, admin@eps.local / Admin123!.
               </p>
             </div>
           </div>

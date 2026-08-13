@@ -2,23 +2,18 @@
 
 import { useMemo, useRef, useState } from "react";
 import type { MockSession } from "@/lib/mocks/session";
-import type { MockProductionRecord } from "@/lib/mocks/records";
-import { buildRecordFromRow, type DraftRowValues } from "@/lib/records/form";
 import { validateRows, type ValidateRowsResult } from "@/lib/imports/validation";
-import { parseCsv, type ParseCsvResult, type ParsedCsvRow } from "@/lib/imports/parse";
+import { parseCsv, type ParseCsvResult } from "@/lib/imports/parse";
 import {
   CALC_FIELD_IDS,
   CSV_COLUMN_LABELS,
   INPUT_FIELD_IDS,
-  NUMERIC_INPUT_FIELD_IDS,
-  type InputFieldId,
 } from "@/lib/imports/columns";
 import { SAMPLE_CSV, SAMPLE_CSV_FILENAME } from "@/lib/imports/sample";
 
 const PREVIEW_ROWS_LIMIT = 5;
 
 export type ImportOutcome = {
-  records: MockProductionRecord[];
   fileName: string;
   rowsImported: number;
   rowsSkipped: number;
@@ -27,25 +22,23 @@ export type ImportOutcome = {
 type ImportModalProps = {
   open: boolean;
   onClose: () => void;
-  /** Record yang sudah ada (seed + simpanan) untuk deteksi duplikat. */
+  /** Record yang sudah ada (dari API) untuk deteksi duplikat di pratinjau. */
   existing: { date: string; model: string; shift: string | null }[];
   session: MockSession;
-  onImported: (outcome: ImportOutcome) => void;
+  /** Impor file ke POST /api/import (server parse + validasi + simpan). */
+  onImportFile: (file: File) => Promise<ImportOutcome>;
 };
 
 type Step = "pick" | "review" | "done";
 
-function toDraftValues(values: Partial<Record<InputFieldId, string>>): DraftRowValues {
-  const out = {} as Record<string, string>;
-  for (const field of NUMERIC_INPUT_FIELD_IDS) out[field] = values[field] ?? "";
-  return out as DraftRowValues;
-}
-
-export default function ImportModal({ open, onClose, existing, session, onImported }: ImportModalProps) {
+export default function ImportModal({ open, onClose, existing, onImportFile }: ImportModalProps) {
   const [step, setStep] = useState<Step>("pick");
   const [parsed, setParsed] = useState<ParseCsvResult | null>(null);
   const [fileName, setFileName] = useState<string>("");
+  const [file, setFile] = useState<File | null>(null);
   const [skipErrors, setSkipErrors] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
   const [doneSummary, setDoneSummary] = useState<ImportOutcome | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -57,14 +50,14 @@ export default function ImportModal({ open, onClose, existing, session, onImport
 
   if (!open) return null;
 
-  const rowsByIndex = new Map<number, ParsedCsvRow>();
-  for (const row of parsed?.rows ?? []) rowsByIndex.set(row.index, row);
-
   const reset = () => {
     setStep("pick");
     setParsed(null);
     setFileName("");
+    setFile(null);
     setSkipErrors(false);
+    setImporting(false);
+    setImportError(null);
     setDoneSummary(null);
     setDragOver(false);
   };
@@ -77,7 +70,9 @@ export default function ImportModal({ open, onClose, existing, session, onImport
   const loadText = (text: string, name: string) => {
     setParsed(parseCsv(text));
     setFileName(name);
+    setFile(new File([text], name, { type: "text/csv" }));
     setSkipErrors(false);
+    setImportError(null);
     setStep("review");
   };
 
@@ -90,34 +85,19 @@ export default function ImportModal({ open, onClose, existing, session, onImport
     reader.readAsText(file, "UTF-8");
   };
 
-  const handleImport = () => {
-    if (!parsed || !validation) return;
-    const records: MockProductionRecord[] = [];
-    for (const validRow of validation.rows) {
-      if (validRow.status !== "ok") continue;
-      const row = rowsByIndex.get(validRow.index);
-      if (!row) continue;
-      records.push(
-        buildRecordFromRow({
-          id: `rec_imp_${Date.now()}_${validRow.index}`,
-          date: row.values.date ?? "",
-          model: row.values.model ?? "",
-          shift: (row.values.shift ?? "").trim() || null,
-          area: session.user.area ? { ...session.user.area, lineCode: null } : null,
-          values: toDraftValues(row.values),
-          createdByName: session.user.name,
-        })
-      );
+  const handleImport = async () => {
+    if (!parsed || !validation || !file) return;
+    setImporting(true);
+    setImportError(null);
+    try {
+      const outcome = await onImportFile(file);
+      setDoneSummary(outcome);
+      setStep("done");
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "Impor gagal — coba lagi.");
+    } finally {
+      setImporting(false);
     }
-    const outcome: ImportOutcome = {
-      records,
-      fileName: fileName || "import.csv",
-      rowsImported: records.length,
-      rowsSkipped: validation.errorCount,
-    };
-    setDoneSummary(outcome);
-    setStep("done");
-    onImported(outcome);
   };
 
   const errorTotal = validation?.errorCount ?? 0;
@@ -386,18 +366,22 @@ export default function ImportModal({ open, onClose, existing, session, onImport
         {step === "review" && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-950/10 px-5 py-3 dark:border-white/10">
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              {errorTotal > 0 && !skipErrors
-                ? "Ada baris error — perbaiki file atau aktifkan &quot;lewati baris error&quot;."
-                : validation && validation.validCount > 0
-                  ? `${validation.validCount} baris siap diimpor.`
-                  : "Tidak ada baris valid untuk diimpor."}
+              {importError ? (
+                <span className="font-medium text-rose-600 dark:text-rose-400">{importError}</span>
+              ) : errorTotal > 0 && !skipErrors ? (
+                "Ada baris error — perbaiki file atau aktifkan &quot;lewati baris error&quot;."
+              ) : validation && validation.validCount > 0 ? (
+                `${validation.validCount} baris siap diimpor.`
+              ) : (
+                "Tidak ada baris valid untuk diimpor."
+              )}
             </p>
             <div className="flex gap-2">
-              <button type="button" onClick={reset} className={btnGhost}>
+              <button type="button" onClick={reset} className={btnGhost} disabled={importing}>
                 Kembali
               </button>
-              <button type="button" onClick={handleImport} disabled={!canImport} className={btnPrimary}>
-                Impor
+              <button type="button" onClick={handleImport} disabled={!canImport || importing} className={btnPrimary}>
+                {importing ? "Mengimpor…" : "Impor"}
               </button>
             </div>
           </div>

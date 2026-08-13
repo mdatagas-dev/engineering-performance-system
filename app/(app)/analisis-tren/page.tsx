@@ -1,20 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TrendLineChart, TREND_COLORS } from "@/components/trend-line-chart";
 import { TrendDateFilter } from "@/components/trend-filter";
 import { useSessionGuard } from "@/hooks/use-session-guard";
-import { loadSavedRecords } from "@/lib/mocks/records";
 import { formatDateShort, formatDecimal, formatNumber } from "@/lib/production-table/format";
-import {
-  applyFilters,
-  presetLastNDays,
-  uniqueDates,
-  type DateRangeFilter,
-} from "@/lib/dashboard/filters";
-import { buildTrendSeed } from "@/lib/trends/seed";
-import { buildSeries, type TrendPoint } from "@/lib/trends/series";
-import { comparePeriods, type PeriodComparison, type PeriodMetrics, type PeriodDelta } from "@/lib/trends/compare";
+import { presetLastNDays, type DateRangeFilter } from "@/lib/dashboard/filters";
+import type { TrendPoint } from "@/lib/trends/series";
+import type { PeriodComparison, PeriodDelta, PeriodMetrics } from "@/lib/trends/compare";
 
 function Panel({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
@@ -140,31 +133,50 @@ function ComparePanel({ comparison, from, to }: { comparison: PeriodComparison; 
 export default function AnalisisTrenPage() {
   const session = useSessionGuard("dashboard.view");
 
-  const [savedRecords] = useState(() =>
-    typeof window === "undefined" ? [] : loadSavedRecords(window.localStorage)
-  );
+  const [allPoints, setAllPoints] = useState<TrendPoint[]>([]);
+  const [series, setSeries] = useState<TrendPoint[]>([]);
+  const [comparison, setComparison] = useState<PeriodComparison | null>(null);
   const [range, setRange] = useState<DateRangeFilter>(() => presetLastNDays(7));
 
-  const all = useMemo(
-    () =>
-      [...savedRecords, ...buildTrendSeed()].sort(
-        (a, b) => a.date.localeCompare(b.date) || (a.shift ?? "").localeCompare(b.shift ?? "") || a.model.localeCompare(b.model)
-      ),
-    [savedRecords]
-  );
-  const dates = useMemo(() => uniqueDates(all), [all]);
-  const filtered = useMemo(
-    () => applyFilters(all, { ...range, model: null, area: null }),
-    [all, range]
-  );
-  const series = useMemo(() => buildSeries(filtered), [filtered]);
+  // Data dari server: /api/trends/series (agregasi Σ per tanggal) & /api/trends/compare.
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/trends/series")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`Gagal memuat tren (${res.status}).`))))
+      .then((data: { points: TrendPoint[] }) => {
+        if (alive) setAllPoints(data.points);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const dates = useMemo(() => allPoints.map((p) => p.date), [allPoints]);
 
   const effFrom = range.from ?? dates[0] ?? null;
   const effTo = range.to ?? dates[dates.length - 1] ?? null;
-  const comparison = useMemo(
-    () => (effFrom !== null && effTo !== null ? comparePeriods(filtered, effFrom, effTo) : null),
-    [filtered, effFrom, effTo]
-  );
+
+  useEffect(() => {
+    let alive = true;
+    if (effFrom === null || effTo === null) {
+      return;
+    }
+    const q = new URLSearchParams({ from: effFrom, to: effTo });
+    Promise.all([
+      fetch(`/api/trends/series?${q}`).then((res) => (res.ok ? res.json() : Promise.reject(new Error("Gagal memuat tren.")))),
+      fetch(`/api/trends/compare?${q}`).then((res) => (res.ok ? res.json() : Promise.reject(new Error("Gagal memuat perbandingan.")))),
+    ])
+      .then(([s, c]: [{ points: TrendPoint[] }, PeriodComparison]) => {
+        if (!alive) return;
+        setSeries(s.points);
+        setComparison(c);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [effFrom, effTo]);
 
   if (!session) {
     return (
@@ -174,7 +186,7 @@ export default function AnalisisTrenPage() {
     );
   }
 
-  const noData = filtered.length === 0;
+  const noData = series.length === 0;
 
   return (
     
@@ -192,12 +204,12 @@ export default function AnalisisTrenPage() {
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Tren UPH, output, HC &amp; setup per tanggal dibandingkan dengan periode sebelumnya — data tiruan
-                  (mock) + varian tanggal untuk tren, menunggu backend DB.
+                  Tren UPH, output, HC &amp; setup per tanggal dibandingkan dengan periode sebelumnya — agregasi
+                  server dari database (/api/trends).
                 </p>
               </div>
               <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                {filtered.length} record · {series.length} tanggal · {formatDateShort(dates[dates.length - 1] ?? "")}
+                {dates.length} tanggal · {series.length} titik · {formatDateShort(dates[dates.length - 1] ?? "")}
               </span>
             </div>
           </div>
@@ -210,14 +222,14 @@ export default function AnalisisTrenPage() {
               value={range}
               minDate={dates[0] ?? ""}
               maxDate={dates[dates.length - 1] ?? ""}
-              disabled={all.length === 0}
+              disabled={dates.length === 0}
               onChange={setRange}
             />
           </div>
           <p className="mt-3 border-t border-slate-950/5 pt-2 text-[11px] text-slate-500 dark:border-white/5 dark:text-slate-400">
-            Filter diterapkan SEBELUM agregasi (grafik &amp; perbandingan dihitung dari record yang tersaring:{" "}
-            <span className="font-semibold tabular-nums">{filtered.length}</span> dari{" "}
-            <span className="font-semibold tabular-nums">{all.length}</span> record)
+            Filter diterapkan SEBELUM agregasi (grafik &amp; perbandingan dihitung dari rentang yang tersaring:{" "}
+            <span className="font-semibold tabular-nums">{series.length}</span> dari{" "}
+            <span className="font-semibold tabular-nums">{dates.length}</span> tanggal)
           </p>
         </section>
 

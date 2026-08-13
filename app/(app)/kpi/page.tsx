@@ -1,14 +1,8 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSessionGuard } from "@/hooks/use-session-guard";
-import {
-  auditKpi,
-  loadMockKpi,
-  saveMockKpi,
-  validateKpiInput,
-  type MockKpiConfig,
-} from "@/lib/mocks/kpi";
+import { validateKpiInput, type MockKpiConfig } from "@/lib/mocks/kpi";
 import { formatDecimal } from "@/lib/production-table/format";
 
 const EMPTY: MockKpiConfig = {
@@ -28,21 +22,43 @@ const EMPTY: MockKpiConfig = {
   isDeleted: false,
 };
 
+// KPI dari API tidak membawa isDeleted (server sudah menyaring soft-delete).
+type ApiKpiItem = Omit<MockKpiConfig, "isDeleted"> & { isDeleted?: boolean };
+
 function thresholdLabel(t: number | null, higher: boolean): string {
   if (t === null) return "—";
   return higher ? `≥ ${t}` : `≤ ${t}`;
 }
 
 export default function KpiPage() {
-  const session = useSessionGuard();
-  const [items, setItems] = useState<MockKpiConfig[]>(() =>
-    loadMockKpi(typeof window === "undefined" ? null : window.localStorage)
-  );
+  const session = useSessionGuard("kpi.configure");
+  const [items, setItems] = useState<MockKpiConfig[]>([]);
   const [editing, setEditing] = useState<MockKpiConfig | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<MockKpiConfig>(EMPTY);
   const [formError, setFormError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [noticeKind, setNoticeKind] = useState<"ok" | "err">("ok");
+  const [saving, setSaving] = useState(false);
+
+  const load = () =>
+    fetch("/api/kpi?perPage=100")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Gagal memuat KPI."))))
+      .then((data: { items?: ApiKpiItem[] }) => setItems((data.items ?? []).filter((k) => k.isDeleted !== true) as MockKpiConfig[]))
+      .catch(() => undefined);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/kpi?perPage=100")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Gagal memuat KPI."))))
+      .then((data: { items?: ApiKpiItem[] }) => {
+        if (alive) setItems((data.items ?? []).filter((k) => k.isDeleted !== true) as MockKpiConfig[]);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const rows = useMemo(() => items.filter((k) => !k.isDeleted), [items]);
 
@@ -54,13 +70,14 @@ export default function KpiPage() {
     );
   }
 
-  function flash(msg: string) {
+  function flash(msg: string, kind: "ok" | "err" = "ok") {
+    setNoticeKind(kind);
     setNotice(msg);
     window.setTimeout(() => setNotice(null), 3000);
   }
 
   function openCreate() {
-    setForm({ ...EMPTY, id: `kpi_${Date.now()}` });
+    setForm({ ...EMPTY });
     setFormError(null);
     setCreating(true);
     setEditing(null);
@@ -78,44 +95,76 @@ export default function KpiPage() {
     setEditing(null);
   }
 
-  function save(e: FormEvent) {
+  async function save(e: FormEvent) {
     e.preventDefault();
     const err = validateKpiInput(form, items);
     if (err) {
       setFormError(err);
       return;
     }
-    if (creating) {
-      const next = [...items, { ...form, isDeleted: false }];
-      saveMockKpi(window.localStorage, next);
-      setItems(next);
-      auditKpi("KPI_CREATED", null, form);
-      flash("KPI dibuat.");
-    } else if (editing) {
-      const next = items.map((k) => (k.id === editing.id ? { ...form } : k));
-      saveMockKpi(window.localStorage, next);
-      setItems(next);
-      auditKpi("KPI_UPDATED", editing, form);
-      flash("KPI diperbarui.");
+    setSaving(true);
+    try {
+      const body = {
+        key: form.key,
+        name: form.name,
+        formula: form.formula,
+        unit: form.unit,
+        decimals: form.decimals,
+        target: form.target,
+        higherIsBetter: form.higherIsBetter,
+        warningThreshold: form.warningThreshold,
+        criticalThreshold: form.criticalThreshold,
+        definition: form.definition,
+        sourceData: form.sourceData,
+        isActive: form.isActive,
+      };
+      const res = await fetch(
+        creating ? "/api/kpi" : `/api/kpi/${encodeURIComponent(editing?.key ?? form.key)}`,
+        {
+          method: creating ? "POST" : "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(creating ? body : { ...body, key: undefined }),
+        }
+      );
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message ?? "Gagal menyimpan KPI.");
+      await load();
+      flash(creating ? "KPI dibuat." : "KPI diperbarui.");
+      closeDialog();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Gagal menyimpan KPI.");
+    } finally {
+      setSaving(false);
     }
-    closeDialog();
   }
 
-  function toggleActive(k: MockKpiConfig) {
-    const next = items.map((x) => (x.id === k.id ? { ...x, isActive: !x.isActive } : x));
-    saveMockKpi(window.localStorage, next);
-    setItems(next);
-    auditKpi("KPI_UPDATED", k, next.find((x) => x.id === k.id));
-    flash(k.isActive ? "KPI dinonaktifkan." : "KPI diaktifkan.");
+  async function toggleActive(k: MockKpiConfig) {
+    try {
+      const res = await fetch(`/api/kpi/${encodeURIComponent(k.key)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !k.isActive }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message ?? "Gagal mengubah status KPI.");
+      await load();
+      flash(k.isActive ? "KPI dinonaktifkan." : "KPI diaktifkan.");
+    } catch (err) {
+      flash(err instanceof Error ? err.message : "Gagal mengubah status KPI.", "err");
+    }
   }
 
-  function remove(k: MockKpiConfig) {
+  async function remove(k: MockKpiConfig) {
     if (!window.confirm(`Hapus KPI "${k.name}"?`)) return;
-    const next = items.map((x) => (x.id === k.id ? { ...x, isDeleted: true } : x));
-    saveMockKpi(window.localStorage, next);
-    setItems(next);
-    auditKpi("KPI_DELETED", k, null);
-    flash("KPI dihapus.");
+    try {
+      const res = await fetch(`/api/kpi/${encodeURIComponent(k.key)}`, { method: "DELETE" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message ?? "Gagal menghapus KPI.");
+      await load();
+      flash("KPI dihapus.");
+    } catch (err) {
+      flash(err instanceof Error ? err.message : "Gagal menghapus KPI.", "err");
+    }
   }
 
   const numInput =
@@ -143,7 +192,11 @@ export default function KpiPage() {
       {notice && (
         <p
           role="status"
-          className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+          className={`rounded-lg border px-4 py-2.5 text-xs font-medium ${
+            noticeKind === "ok"
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+              : "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400"
+          }`}
         >
           {notice}
         </p>
@@ -259,6 +312,7 @@ export default function KpiPage() {
                 <input
                   id="kpi-key"
                   value={form.key}
+                  disabled={Boolean(editing)}
                   onChange={(e) => setForm({ ...form, key: e.target.value })}
                   className={numInput}
                   placeholder="uph_rate"
@@ -363,9 +417,10 @@ export default function KpiPage() {
               </button>
               <button
                 type="submit"
-                className="rounded-lg bg-gradient-to-r from-cyan-600 to-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-600/25 transition hover:opacity-90"
+                disabled={saving}
+                className="rounded-lg bg-gradient-to-r from-cyan-600 to-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-600/25 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Simpan
+                {saving ? "Menyimpan…" : "Simpan"}
               </button>
             </div>
           </form>

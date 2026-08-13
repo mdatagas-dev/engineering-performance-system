@@ -3,11 +3,8 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import ColumnVisibility, { type ColumnDef } from "@/components/column-visibility";
 import { useSessionGuard } from "@/hooks/use-session-guard";
-import {
-  loadSavedRecords,
-  mockProductionRecords,
-  type MockProductionRecord,
-} from "@/lib/mocks/records";
+import { fetchAllRecords } from "@/lib/api/records";
+import type { MockProductionRecord } from "@/lib/mocks/records";
 import {
   formatDateLong,
   formatDateShort,
@@ -225,9 +222,22 @@ export default function ProductionTablePage() {
   const session = useSessionGuard("dashboard.view");
   const authed = session !== null;
 
-  const [savedRecords] = useState<MockProductionRecord[]>(() =>
-    typeof window === "undefined" ? [] : loadSavedRecords(window.localStorage)
-  );
+  const [records, setRecords] = useState<MockProductionRecord[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetchAllRecords()
+      .then((rs) => {
+        if (alive) setRecords(rs);
+      })
+      .catch((err: unknown) => {
+        if (alive) setLoadError(err instanceof Error ? err.message : "Gagal memuat data.");
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Task 8 & 9 — visibilitas kolom + persistensi localStorage (load di mount
   // via lazy initializer; save otomatis tiap toggle via effect).
@@ -265,16 +275,6 @@ export default function ProductionTablePage() {
 
   const resetColumns = () => setVisible(new Set(COLUMN_IDS));
 
-  const records = useMemo(
-    () =>
-      [...savedRecords, ...mockProductionRecords].sort(
-        (a, b) =>
-          b.date.localeCompare(a.date) ||
-          (a.shift ?? "").localeCompare(b.shift ?? "") ||
-          a.model.localeCompare(b.model)
-      ),
-    [savedRecords]
-  );
   const groups = useMemo(() => groupProductionTotals(records), [records]);
 
   if (!authed) {
@@ -302,7 +302,7 @@ export default function ProductionTablePage() {
                 </div>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   Semua kolom PRD per model per shift — baris total per tanggal (GAP &amp; UPPH dihitung dari
-                  total, bukan jumlah per baris).
+                  total, bukan jumlah per baris).{loadError ? ` ${loadError}` : ""}
                 </p>
               </div>
               <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
@@ -327,7 +327,7 @@ export default function ProductionTablePage() {
             <div>
               <h2 className="text-sm font-semibold tracking-tight">Rekap Harian</h2>
               <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                Data mock ({records.length} record) · grup per tanggal{records.some((r) => r.shift) ? " dengan subtotal shift" : ""} · tanpa total global.
+                {records.length} record dari database · grup per tanggal{records.some((r) => r.shift) ? " dengan subtotal shift" : ""} · tanpa total global.
               </p>
             </div>
           </div>

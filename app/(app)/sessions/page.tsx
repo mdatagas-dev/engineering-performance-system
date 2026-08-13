@@ -3,14 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSessionGuard } from "@/hooks/use-session-guard";
-import {
-  clearMockSessions,
-  ensureMockSessions,
-  loadMockSessions,
-  saveMockSessions,
-  type MockActiveSession,
-} from "@/lib/mocks/sessions";
 import { clearMockSession } from "@/lib/mocks/accounts";
+import type { MockActiveSession } from "@/lib/mocks/sessions";
 
 const dateFmt = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" });
 
@@ -19,6 +13,32 @@ function relativeLabel(iso: string): string {
   if (min < 1) return "Baru saja";
   if (min < 60) return `${min} mnt lalu`;
   return dateFmt.format(new Date(iso));
+}
+
+type ApiSessionItem = {
+  id: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  ip: string | null;
+  userAgent: string | null;
+  isCurrent: boolean;
+  device: string | null;
+  browser: string | null;
+  os: string | null;
+};
+
+function toMock(s: ApiSessionItem): MockActiveSession {
+  return {
+    id: s.id,
+    device: s.device ?? "Perangkat",
+    browser: s.browser ?? "Browser",
+    os: s.os ?? "Sistem",
+    ip: s.ip ?? "—",
+    location: undefined,
+    createdAt: s.createdAt,
+    lastActiveAt: s.lastUsedAt ?? s.createdAt,
+    isCurrent: s.isCurrent,
+  };
 }
 
 const DEVICE_ICONS: Record<string, React.ReactNode> = {
@@ -47,33 +67,47 @@ export default function SessionsPage() {
   const authed = useSessionGuard() !== null;
   const [sessions, setSessions] = useState<MockActiveSession[]>([]);
 
-  // Seed daftar sesi tiruan setelah guard lolos (sesi aktif hidup di localStorage).
+  // Daftar sesi aktif nyata dari GET /api/auth/sessions (tabel Session).
   useEffect(() => {
     if (!authed) return;
-    const seeded = ensureMockSessions(loadMockSessions());
-    saveMockSessions(seeded);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSessions(seeded);
+    let alive = true;
+    fetch("/api/auth/sessions")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Gagal memuat sesi."))))
+      .then((data: { items: ApiSessionItem[] }) => {
+        if (alive) setSessions(data.items.map(toMock));
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
   }, [authed]);
 
-  function handleLogoutOne(s: MockActiveSession) {
+  async function handleLogoutOne(s: MockActiveSession) {
     const msg = s.isCurrent
       ? "Logout dari sesi ini? Kamu akan kembali ke halaman login."
       : `Logout sesi ${s.device} (${s.browser} · ${s.ip})?`;
     if (!window.confirm(msg)) return;
 
-    const rest = sessions.filter((x) => x.id !== s.id);
-    saveMockSessions(rest);
-    setSessions(rest);
     if (s.isCurrent) {
+      await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
       clearMockSession();
       router.replace("/login");
+      return;
     }
+    const res = await fetch(`/api/auth/sessions/${encodeURIComponent(s.id)}`, {
+      method: "DELETE",
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      window.alert(data?.message ?? "Gagal mengakhiri sesi.");
+      return;
+    }
+    setSessions((prev) => prev.filter((x) => x.id !== s.id));
   }
 
-  function handleLogoutAll() {
+  async function handleLogoutAll() {
     if (!window.confirm("Logout dari semua perangkat (logout all devices)?")) return;
-    clearMockSessions();
+    await fetch("/api/auth/logout-all", { method: "POST" }).catch(() => undefined);
     clearMockSession();
     router.replace("/login");
   }
@@ -97,8 +131,7 @@ export default function SessionsPage() {
               <div>
                 <h1 className="text-xl font-bold tracking-tight">Perangkat yang Login</h1>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Kelola sesi aktif. Tampilan ini masih memakai data tiruan (mock) — backend nyata sudah
-                  tersedia (tabel Session + /api/auth/sessions).
+                  Kelola sesi aktif — data dari tabel Session (/api/auth/sessions).
                 </p>
               </div>
               <button

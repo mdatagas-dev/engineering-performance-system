@@ -45,6 +45,10 @@ const EXEMPT: Record<string, { category: "session-gate-auth" | "session-scope-us
     category: "session-gate-auth",
     reason: "daftar sesi sendiri (userId = session.sub di route); sesi valid cukup.",
   },
+  "/api/auth/sessions/r1": {
+    category: "session-gate-auth",
+    reason: "akhiri sesi milik sendiri; route memverifikasi userId dan melarang sesi saat ini.",
+  },
   "/api/notifications": {
     category: "session-scope-user",
     reason: "notifikasi per-recipient (recipientId = session.sub); tanpa data lintas-user.",

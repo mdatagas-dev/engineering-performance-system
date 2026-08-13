@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DateRangeFilter } from "@/components/date-range-filter";
 import { useSessionGuard } from "@/hooks/use-session-guard";
 import { useCountUp } from "@/components/use-count-up";
-import { loadSavedRecords, mockProductionRecords } from "@/lib/mocks/records";
+import { fetchAllRecords } from "@/lib/api/records";
+import type { MockProductionRecord } from "@/lib/mocks/records";
 import { round2 } from "@/lib/records/calculate";
 import { formatDecimal, formatNumber } from "@/lib/production-table/format";
 import {
@@ -20,7 +21,6 @@ import {
   type DashboardFilters,
 } from "@/lib/dashboard/filters";
 import { buildDashboardSummary, type ModelGroup } from "@/lib/dashboard/summary";
-import { withTrendVariants } from "@/lib/dashboard/trend";
 
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: "Super Admin",
@@ -243,17 +243,23 @@ const chipIdle =
 export default function DashboardPage() {
   const session = useSessionGuard("dashboard.view");
 
-  const [savedRecords] = useState(() =>
-    typeof window === "undefined" ? [] : loadSavedRecords(window.localStorage)
-  );
+  const [records, setRecords] = useState<MockProductionRecord[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filters, setFilters] = useState<DashboardFilters>(EMPTY_FILTERS);
 
-  const records = useMemo(() => {
-    const seed = withTrendVariants(mockProductionRecords);
-    return [...savedRecords, ...seed].sort(
-      (a, b) => b.date.localeCompare(a.date) || (a.shift ?? "").localeCompare(b.shift ?? "") || a.model.localeCompare(b.model)
-    );
-  }, [savedRecords]);
+  useEffect(() => {
+    let alive = true;
+    fetchAllRecords()
+      .then((rs) => {
+        if (alive) setRecords(rs);
+      })
+      .catch((err: unknown) => {
+        if (alive) setLoadError(err instanceof Error ? err.message : "Gagal memuat data.");
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const dates = useMemo(() => uniqueDates(records), [records]);
   const models = useMemo(() => uniqueModels(records), [records]);
@@ -330,7 +336,7 @@ export default function DashboardPage() {
               </span>
             </div>
             <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-              {dateContext.format(new Date())} · data tiruan (mock) + varian tanggal untuk tren, menunggu backend DB
+              {dateContext.format(new Date())} · data dari database{loadError ? ` · ${loadError}` : ""}
             </p>
           </div>
           <div className="flex items-center gap-3">

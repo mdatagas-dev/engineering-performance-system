@@ -415,6 +415,42 @@ export type ChangelogEntry = {
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "v1.4.0",
+    date: "2026-08-13",
+    features: {
+      id: [
+        "Data produksi terhubung ke API dan database live untuk input manual, input cepat, tabel produksi, dashboard, tren, impor, dan ekspor",
+        "Alur persetujuan dan penguncian record menggunakan workflow backend dengan validasi hak akses dan audit trail",
+        "Audit Trail dan Pengaturan KPI menggunakan API live, termasuk filter server-side serta CRUD KPI",
+        "Manajemen sesi menggunakan data Session nyata dengan logout per perangkat dan logout semua perangkat",
+      ],
+      en: [
+        "Production data now uses the live API and database for manual entry, quick entry, production tables, dashboards, trends, import, and export",
+        "Record approval and locking now use the backend workflow with permission validation and audit trails",
+        "Audit Trail and KPI Settings now use the live API, including server-side filters and KPI CRUD",
+        "Session management now uses real Session data with per-device logout and logout-all-devices",
+      ],
+      zh: [
+        "生产数据现已通过实时 API 和数据库支持手动录入、快速录入、生产表、仪表盘、趋势、导入和导出",
+        "记录审批和锁定现已使用带权限校验及审计追踪的后端工作流",
+        "审计追踪和 KPI 设置现已使用实时 API，包括服务端筛选和 KPI 增删改查",
+        "会话管理现已使用真实 Session 数据，支持按设备退出和退出所有设备",
+      ],
+      ko: [
+        "생산 데이터가 수동 입력, 빠른 입력, 생산 테이블, 대시보드, 추세, 가져오기 및 내보내기에 라이브 API와 데이터베이스를 사용합니다",
+        "레코드 검토 및 잠금이 권한 검증과 감사 추적을 포함한 백엔드 워크플로를 사용합니다",
+        "감사 추적과 KPI 설정이 서버 측 필터 및 KPI CRUD를 포함한 라이브 API를 사용합니다",
+        "세션 관리가 실제 Session 데이터를 사용하며 기기별 로그아웃과 전체 기기 로그아웃을 지원합니다",
+      ],
+      ja: [
+        "生産データを手動入力、クイック入力、生産テーブル、ダッシュボード、トレンド、インポート、エクスポートでライブ API とデータベースに接続",
+        "レコードの承認とロックを権限検証および監査証跡付きのバックエンドワークフローに移行",
+        "監査証跡と KPI 設定をサーバー側フィルターおよび KPI CRUD 対応のライブ API に移行",
+        "セッション管理で実際の Session データを使用し、端末ごとのログアウトと全端末ログアウトに対応",
+      ],
+    },
+  },
+  {
     version: "v1.3.2",
     date: "2026-08-13",
     features: {

@@ -1,15 +1,15 @@
 "use client";
 
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ImportHistory from "@/components/import-history";
 import ImportModal, { type ImportOutcome } from "@/components/import-modal";
 import { useSessionGuard } from "@/hooks/use-session-guard";
-import { createRecordsStore } from "@/lib/records/state";
-import { mockProductionRecords, type MockProductionRecord } from "@/lib/mocks/records";
+import { fetchAllRecords } from "@/lib/api/records";
+import type { MockProductionRecord } from "@/lib/mocks/records";
 import { buildMockRecordTotal } from "@/lib/mocks/records";
 import { formatDecimal, formatNumber } from "@/lib/production-table/format";
 import { buildCsv, buildTemplateCsv, toCsvDownload } from "@/lib/imports/csv";
-import { addImportHistory, loadImportHistory, type ImportHistoryEntry } from "@/lib/imports/history";
+import { type ImportHistoryEntry } from "@/lib/imports/history";
 import { mergeAndSortRecords, type DateSortOrder } from "@/lib/imports/records";
 import { CSV_COLUMNS, CSV_COLUMN_LABELS, type CsvFieldId } from "@/lib/imports/columns";
 
@@ -52,26 +52,54 @@ export default function ImportPage() {
   const session = useSessionGuard("import.run");
   const authed = session !== null;
 
-  const store = useMemo(
-    () =>
-      createRecordsStore({
-        storage: typeof window === "undefined" ? null : window.localStorage,
-      }),
-    []
-  );
-  const savedRecords = useSyncExternalStore(store.subscribe, store.getRecords, store.getRecords);
-
+  const [records, setRecords] = useState<MockProductionRecord[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<DateSortOrder>("desc");
   const [modalOpen, setModalOpen] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [history, setHistory] = useState<ImportHistoryEntry[]>(() =>
-    typeof window === "undefined" ? [] : loadImportHistory(window.localStorage)
-  );
+  const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [history, setHistory] = useState<ImportHistoryEntry[]>([]);
   const noticeTimer = useRef<number | null>(null);
 
-  const records = useMemo(
-    () => mergeAndSortRecords(savedRecords, mockProductionRecords, sortOrder),
-    [savedRecords, sortOrder]
+  const loadRecords = () =>
+    fetchAllRecords().then((rs) => setRecords(rs));
+
+  const loadHistory = () =>
+    fetch("/api/imports?perPage=100")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { items?: Array<{ id: string; fileName: string; rowsValid: number; rowsSkipped: number; createdAt: string; importedBy: { name: string }; status: string }> } | null) => {
+        if (!data?.items) return;
+        setHistory(
+          data.items.map((i) => ({
+            id: i.id,
+            fileName: i.fileName,
+            rowsImported: i.rowsValid,
+            rowsSkipped: i.rowsSkipped,
+            importedAt: i.createdAt,
+            importedBy: i.importedBy.name,
+            status: i.status.toLowerCase() as ImportHistoryEntry["status"],
+          }))
+        );
+      })
+      .catch(() => undefined);
+
+  useEffect(() => {
+    let alive = true;
+    fetchAllRecords()
+      .then((rs) => {
+        if (alive) setRecords(rs);
+      })
+      .catch((err: unknown) => {
+        if (alive) setLoadError(err instanceof Error ? err.message : "Gagal memuat data.");
+      });
+    loadHistory();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const recordsSorted = useMemo(
+    () => mergeAndSortRecords(records, [], sortOrder),
+    [records, sortOrder]
   );
   const total = useMemo(() => buildMockRecordTotal(records), [records]);
   const uniqueDates = new Set(records.map((r) => r.date)).size;
@@ -84,42 +112,43 @@ export default function ImportPage() {
     );
   }
 
-  const showNotice = (message: string) => {
-    setNotice(message);
+  const showNotice = (kind: "ok" | "err", message: string) => {
+    setNotice({ kind, text: message });
     if (noticeTimer.current) window.clearTimeout(noticeTimer.current);
     noticeTimer.current = window.setTimeout(() => setNotice(null), 4000);
   };
 
   const exportCsv = () => {
-    toCsvDownload(buildCsv(records), FILENAME_TODAY());
-    showNotice(`Ekspor ${records.length} record → ${FILENAME_TODAY()}`);
+    toCsvDownload(buildCsv(recordsSorted), FILENAME_TODAY());
+    showNotice("ok", `Ekspor ${records.length} record → ${FILENAME_TODAY()}`);
   };
 
   const downloadTemplate = () => {
     toCsvDownload(buildTemplateCsv(), TEMPLATE_FILENAME);
-    showNotice(`Template diunduh → ${TEMPLATE_FILENAME} (kolom input saja)`);
+    showNotice("ok", `Template diunduh → ${TEMPLATE_FILENAME} (kolom input saja)`);
   };
 
-  const handleImported = (outcome: ImportOutcome) => {
-    store.setRecords([...outcome.records, ...store.getRecords()]);
-    if (typeof window !== "undefined") {
-      const status = outcome.rowsImported > 0 ? (outcome.rowsSkipped > 0 ? "partial" : "success") : "failed";
-      const entry: ImportHistoryEntry = {
-        id: `imp_${Date.now()}`,
-        fileName: outcome.fileName,
-        rowsImported: outcome.rowsImported,
-        rowsSkipped: outcome.rowsSkipped,
-        importedAt: new Date().toISOString(),
-        importedBy: session.user.email,
-        status,
-      };
-      const next = addImportHistory(window.localStorage, entry);
-      setHistory(next);
+  // Impor via POST /api/import: server parse + validasi + simpan ke DB
+  // (transaction + audit IMPORT_COMPLETED), lalu tabel & riwayat di-refetch.
+  const handleImportFile = async (file: File): Promise<ImportOutcome> => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/import", { method: "POST", body: fd });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new Error(data?.message ?? `Impor gagal (${res.status}).`);
     }
+    await Promise.all([loadRecords(), loadHistory()]);
     showNotice(
-      `${outcome.rowsImported} baris berhasil diimpor` +
-        (outcome.rowsSkipped > 0 ? ` · ${outcome.rowsSkipped} dilewati` : "")
+      "ok",
+      `${data.summary.rowsValid} baris berhasil diimpor` +
+        (data.summary.rowsSkipped > 0 ? ` · ${data.summary.rowsSkipped} dilewati` : "")
     );
+    return {
+      fileName: data.summary.fileName,
+      rowsImported: data.summary.rowsValid,
+      rowsSkipped: data.summary.rowsSkipped,
+    };
   };
 
   return (
@@ -139,7 +168,8 @@ export default function ImportPage() {
                 </div>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   Impor file CSV (pemisah titik koma/koma), pratinjau &amp; validasi per baris, lalu ekspor
-                  kembali — format &quot;Excel&quot; tanpa library: BOM + desimal titik.
+                  kembali — format &quot;Excel&quot; tanpa library: BOM + desimal titik
+                  {loadError ? ` · ${loadError}` : ""}.
                 </p>
               </div>
               <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
@@ -148,8 +178,14 @@ export default function ImportPage() {
             </div>
 
             {notice && (
-              <div className="mt-4 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2.5 text-xs font-medium text-cyan-800 dark:text-cyan-300">
-                {notice}
+              <div
+                className={`mt-4 rounded-xl border px-4 py-2.5 text-xs font-medium ${
+                  notice.kind === "ok"
+                    ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-800 dark:text-cyan-300"
+                    : "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400"
+                }`}
+              >
+                {notice.text}
               </div>
             )}
 
@@ -234,7 +270,7 @@ export default function ImportPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {records.map((record) => (
+                  {recordsSorted.map((record) => (
                     <tr key={record.id} className="transition-colors hover:bg-cyan-500/[0.04]">
                       {CSV_COLUMNS.map((field) => {
                         const left = LEFT_FIELDS.includes(field);
@@ -268,7 +304,7 @@ export default function ImportPage() {
           onClose={() => setModalOpen(false)}
           existing={records}
           session={session}
-          onImported={handleImported}
+          onImportFile={handleImportFile}
         />
       </main>
   );
