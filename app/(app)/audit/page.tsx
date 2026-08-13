@@ -348,16 +348,6 @@ export default function AuditPage() {
                 </button>
               </div>
             </div>
-
-            <div className="mt-8 rounded-lg border border-amber-500/30 bg-amber-500/[0.07] px-4 py-3 text-[11px] leading-relaxed text-amber-800 dark:text-amber-400">
-              <p className="font-semibold">Catatan:</p>
-              <p>
-                Data tiruan (mock) — backend GET /api/audit sudah ada tapi butuh DB, jadi halaman ini membaca{" "}
-                <code className="rounded bg-amber-500/10 px-1 py-0.5 font-mono">eps_mock_audit</code> (localStorage).
-                Login mock menambah entri baru: coba logout lalu login dengan password salah berulang kali untuk
-                melihat LOGIN_FAILED & ACCOUNT_LOCKED muncul. Backend login belum mencatat audit (nanti fase backend).
-              </p>
-            </div>
           </div>
         </section>
       </main>
