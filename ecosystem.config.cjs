@@ -1,16 +1,24 @@
-// PM2 ecosystem — produksi (native di VPS).
-// Prasyarat server:
-//   1) npm i -g pm2 rsync
-//   2) mkdir -p /opt/eps/app /var/log/eps
-//   3) cp .env ke /opt/eps/app/.env (secret dibaca Next built-in dotenv,
-//      TIDAK di-hardcode di sini)
-//   4) npm ci && npx prisma generate && npx prisma migrate deploy
+// PM2 ecosystem — produksi (VPS Linux ATAU Windows/RDP).
+//
+// Prasyarat:
+//   Linux: npm i -g pm2 rsync; mkdir -p /opt/eps/app /var/log/eps
+//   Windows (RDP): install Node LTS + Git for Windows + `npm i -g pm2`;
+//                  deploy via scripts/deploy-windows.ps1 (git pull, npm ci,
+//                  build, pm2 restart) — TIDAK butuh SSH/rsync.
+//
+// .env berisi secret (AUTH_SECRET, DATABASE_URL) — TIDAK di-hardcode di sini.
+//
 // Cara pakai:
 //   pm2 start ecosystem.config.cjs --env production
-//   pm2 save            # simpan daftar proses utk startup systemd
-//   pm2 startup         # daftarkan PM2 sbg systemd service (ikuti output)
-//   pm2 reload ecosystem.config.cjs --update-env   # deploy: reload dgn env baru
-//   pm2 logs eps-v2     # lihat log
+//   pm2 save
+//   pm2 logs eps-v2        # lihat log
+//   Linux:  pm2 startup    # systemd auto-start
+//   Windows: pm2-windows-startup install   # auto-start via Task Scheduler
+//   Deploy ulang: pm2 reload ecosystem.config.cjs --update-env
+
+// Log: path Windows (folder .\logs di project) vs Linux (/var/log/eps).
+const IS_WIN = process.platform === "win32";
+const LOG_DIR = IS_WIN ? ".\\logs" : "/var/log/eps";
 
 module.exports = {
   apps: [
@@ -26,8 +34,8 @@ module.exports = {
       restart_delay: 3000,
       merge_logs: true,
       time: true,
-      out_file: "/var/log/eps/eps-v2-out.log",
-      error_file: "/var/log/eps/eps-v2-error.log",
+      out_file: `${LOG_DIR}/eps-v2-out.log`,
+      error_file: `${LOG_DIR}/eps-v2-error.log`,
       env: {
         NODE_ENV: "production",
         PORT: "3050",

@@ -419,26 +419,31 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
     date: "2026-08-13",
     features: {
       id: [
+        "Dukungan deploy Windows (RDP): script deploy-windows.ps1, PM2 log path otomatis per-OS, panduan di README",
         "Fix CI/CD: regenerate Prisma client di CI, perbaiki action ssh-deploy (v6), deploy otomatis nonaktif hingga secret SSH diset",
         "Halaman Manajemen Pengguna terintegrasi API live: daftar (GET /api/users), ubah peran (PATCH /api/users/[id]/role), toggle status aktif & edit profil (PATCH /api/users/[id]), tambah pengguna (POST /api/users) — dengan fallback otomatis ke data tiruan bila DB tidak tersedia",
         "CI/CD: deploy menghentikan PM2 sebelum upload agar .next tidak ditimpa saat proses lama berjalan (mencegah 500/ChunkLoadError pada aset statis)",
       ],
       en: [
+        "Windows (RDP) deploy support: deploy-windows.ps1 script, PM2 log paths auto per-OS, README guide",
         "CI/CD fix: regenerate Prisma client in CI, fixed ssh-deploy action (v6), auto-deploy disabled until SSH secrets are set",
         "User Management page integrated with the live API: list (GET /api/users), role change (PATCH /api/users/[id]/role), active-status toggle & profile edit (PATCH /api/users/[id]), create user (POST /api/users) — with automatic fallback to mock data when the DB is unavailable",
         "CI/CD: deploy stops PM2 before upload so .next is not overwritten while the old process is running (prevents 500/ChunkLoadError on static assets)",
       ],
       zh: [
+        "支持 Windows（RDP）部署：deploy-windows.ps1 脚本、PM2 日志路径按系统自动切换、README 指南",
         "CI/CD 修复：CI 中重新生成 Prisma 客户端，修复 ssh-deploy 操作（v6），在设置 SSH 机密前禁用自动部署",
         "用户管理页面已集成实时 API：列表（GET /api/users）、更改角色（PATCH /api/users/[id]/role）、切换启用状态与编辑资料（PATCH /api/users/[id]）、新建用户（POST /api/users）——数据库不可用时自动回退到模拟数据",
         "CI/CD：部署在上传前停止 PM2，避免旧进程运行时覆盖 .next（防止静态资源 500/ChunkLoadError）",
       ],
       ko: [
+        "Windows(RDP) 배포 지원: deploy-windows.ps1 스크립트, OS별 PM2 로그 경로 자동 처리, README 가이드",
         "CI/CD 수정: CI에서 Prisma 클라이언트 재생성, ssh-deploy 액션 수정(v6), SSH 비밀 설정 전 자동 배포 비활성화",
         "사용자 관리 페이지가 라이브 API와 통합됨: 목록(GET /api/users), 역할 변경(PATCH /api/users/[id]/role), 활성 상태 토글 및 프로필 편집(PATCH /api/users/[id]), 사용자 생성(POST /api/users) — DB를 사용할 수 없으면 자동으로 모의 데이터로 폴백",
         "CI/CD: 배포 시 업로드 전에 PM2를 중지해 이전 프로세스 실행 중 .next가 덮어써지지 않도록 함(정적 자산 500/ChunkLoadError 방지)",
       ],
       ja: [
+        "Windows（RDP）デプロイ対応：deploy-windows.ps1 スクリプト、PM2 ログパスを OS 別に自動切替、README ガイド",
         "CI/CD 修正：CI で Prisma クライアント再生成、ssh-deploy アクション修正（v6）、SSH シークレット設定前は自動デプロイ無効",
         "ユーザー管理ページをライブ API と統合：一覧（GET /api/users）、役割変更（PATCH /api/users/[id]/role）、有効状態トグルとプロフィール編集（PATCH /api/users/[id]）、ユーザー作成（POST /api/users）— DB が利用できない場合はモックデータに自動フォールバック",
         "CI/CD：デプロイ時、アップロード前に PM2 を停止し、旧プロセス稼働中に .next が上書きされないように（静的アセットの 500/ChunkLoadError を防止）",

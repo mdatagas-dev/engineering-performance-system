@@ -35,8 +35,9 @@ npm run build
 ## Deployment
 - **PM2 (VPS)**: `pm2 start ecosystem.config.cjs --env production`
 - **Docker**: `docker compose up -d --build`
+- **Windows (RDP)**: `powershell -ExecutionPolicy Bypass -File scripts\deploy-windows.ps1` — tanpa SSH/rsync; butuh Node LTS + Git for Windows + `npm i -g pm2` (+ `pm2-windows-startup install` utk auto-start)
 - **CI/CD**: GitHub Actions (`.github/workflows/ci.yml`, `deploy.yml` — deploy ke VPS via SSH/rsync, butuh secrets `SSH_HOST`, `SSH_USER`, `SSH_KEY`)
-- Prasyarat server: `npm i -g pm2 rsync`, `mkdir -p /opt/eps/app /var/log/eps`, salin `.env`, lalu `npm ci && npx prisma generate && npx prisma migrate deploy`
+- Prasyarat server Linux: `npm i -g pm2 rsync`, `mkdir -p /opt/eps/app /var/log/eps`, salin `.env`, lalu `npm ci && npx prisma generate && npx prisma migrate deploy`
 
 ## Backup otomatis (Monitoring & Backup)
 
