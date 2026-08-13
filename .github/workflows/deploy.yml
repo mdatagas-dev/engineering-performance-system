@@ -18,6 +18,10 @@ jobs:
   deploy:
     name: Build & Deploy ke VPS
     runs-on: ubuntu-latest
+    env:
+      # SSH aktif hanya bila ketiga secret ter-set (mencegah run merah saat
+      # secret belum dikonfigurasi di Settings → Secrets).
+      HAS_SSH: ${{ secrets.SSH_HOST != '' && secrets.SSH_USER != '' && secrets.SSH_KEY != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -58,7 +62,8 @@ jobs:
       # + kompresi, hanya file berubah yg dikirim. Syarat: rsync terpasang di
       # server. Baris SCRIPT_BEFORE menjalankan perintah remote sebelum upload.
       - name: Upload ke server (rsync)
-        uses: easingthemes/ssh-deploy@v5
+        if: env.HAS_SSH == 'true'
+        uses: easingthemes/ssh-deploy@v6
         with:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
@@ -89,6 +94,7 @@ jobs:
       # `pm2 reload ... || pm2 start ...`: reload utk update, start utk deploy
       # pertama kali.
       - name: Install, migrasi & reload PM2
+        if: env.HAS_SSH == 'true'
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -105,3 +111,7 @@ jobs:
             pm2 start ecosystem.config.cjs --env production || pm2 reload ecosystem.config.cjs --update-env
             pm2 save
             pm2 status
+
+      - name: Selesai (tanpa SSH)
+        if: env.HAS_SSH != 'true'
+        run: echo "Secret SSH belum diset — skip deploy ke VPS. Atur SSH_HOST, SSH_USER, SSH_KEY di Settings → Secrets."
