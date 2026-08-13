@@ -222,6 +222,10 @@ export default function Desktop(): ReactNode {
         setRunOpen(false);
         return;
       }
+      // Konami tidak boleh terpicu saat mengetik di input (terminal, Run, dll).
+      const t = e.target as HTMLElement | null;
+      const typing = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      if (typing) return;
       buff = [...buff, e.key.toLowerCase()].slice(-10);
       if (buff.join(",") === KONAMI.join(",")) {
         buff = [];

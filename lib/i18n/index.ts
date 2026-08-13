@@ -431,6 +431,32 @@ export function changelogKind(entry: Pick<ChangelogEntry, "kind">): ChangelogKin
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "v1.8.1",
+    date: "2026-08-14",
+    features: {
+      id: [
+        "Halaman utama pasca-login (/home) menjadi aplikasi desktop retro Windows 95: window dengan title bar, menu bar, toolbar, sidebar navigasi, status bar & jam, transisi Starting Application, stat cards, grid modul menuju Analytics/Detail/Input/Impor/Audit/KPI/Pengguna/Sesi/Pengaturan, tabel aktivitas, panel sistem & quick tools (tabs, checkbox, select), tooltip klasik",
+        "Perbaikan: Konami code di desktop tidak lagi terpicu saat mengetik di kolom input (terminal, Run, dll)",
+      ],
+      en: [
+        "The post-login home page (/home) is now a retro Windows 95 desktop application: window with title bar, menu bar, toolbar, sidebar navigation, status bar & clock, Starting Application transition, stat cards, module grid to Analytics/Detail/Input/Import/Audit/KPI/Users/Sessions/Settings, activity table, system panel & quick tools (tabs, checkbox, select), classic tooltips",
+        "Fix: the desktop Konami code no longer triggers while typing in input fields (terminal, Run, etc.)",
+      ],
+      zh: [
+        "登录后的主页（/home）变成复古 Windows 95 桌面应用：带标题栏、菜单栏、工具栏、侧边导航、状态栏与时钟的窗口，Starting Application 过渡、统计卡片、通往 Analytics/Detail/Input/Import/Audit/KPI/Users/Sessions/Settings 的模块网格、活动表格、系统面板与快速工具（标签页、复选框、下拉框）、经典悬停提示",
+        "修复：桌面 Konami 秘技不再因在输入框（终端、运行等）中打字而误触发",
+      ],
+      ko: [
+        "로그인 후 홈(/home)이 레트로 Windows 95 데스크톱 애플리케이션이 되었습니다: 제목 표시줄, 메뉴 표시줄, 도구 모음, 사이드바 탐색, 상태 표시줄과 시계가 있는 창, Starting Application 전환, 통계 카드, Analytics/Detail/Input/Import/Audit/KPI/Users/Sessions/Settings로 가는 모듈 그리드, 활동 테이블, 시스템 패널과 빠른 도구(탭, 체크박스, 선택 상자), 클래식 툴팁",
+        "수정: 데스크톱 Konami 코드가 입력 필드(터미널, 실행 등)에 입력하는 동안 더 이상 트리거되지 않습니다",
+      ],
+      ja: [
+        "ログイン後のホーム（/home）がレトロな Windows 95 デスクトップアプリに：タイトルバー、メニューバー、ツールバー、サイドバーナビゲーション、ステータスバーと時計付きウィンドウ、Starting Application のトランジション、統計カード、Analytics/Detail/Input/Import/Audit/KPI/Users/Sessions/Settings へのモジュールグリッド、アクティビティテーブル、システムパネルとクイックツール（タブ、チェックボックス、セレクト）、クラシックなツールチップ",
+        "修正：デスクトップのコナミコマンドが入力欄（ターミナル、実行など）でのタイピング中に誤発動しないように",
+      ],
+    },
+  },
+  {
     version: "v1.8.0",
     date: "2026-08-14",
     features: {

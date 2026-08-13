@@ -5,6 +5,7 @@ import "./win95-window.css";
 import "./win95-shell.css";
 import "./win95-apps.css";
 import "./win95-gate.css";
+import "./win95-app.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
