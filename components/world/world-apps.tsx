@@ -10,11 +10,11 @@ import pkg from "@/package.json";
 export function AboutApp() {
   return (
     <div>
-      <p className="text-[15px] font-semibold text-[#e6f0ff]">GAS ELECTRONIC — Engineering Production System</p>
-      <p className="mt-1 text-xs text-[#7c8db5]">v{pkg.version} · THE WORLD build · {new Date().getFullYear()}</p>
+      <p className="text-[15px] font-semibold text-black">GAS ELECTRONIC — Engineering Production System</p>
+      <p className="mt-1 text-xs text-[#404040]">v{pkg.version} · THE WORLD build · {new Date().getFullYear()}</p>
       <hr className="world-hr" />
       <p>
-        Ini bukan dashboard. Ini sebuah <span className="text-[#9fe8d8]">dunia</span> — arsip hidup dari
+        Ini bukan dashboard. Ini sebuah <span className="text-[#008080]">dunia</span> — arsip hidup dari
         sistem produksi yang mencatat setiap detak lini, setiap shift, setiap unit yang lahir.
       </p>
       <p className="mt-3">
@@ -22,9 +22,9 @@ export function AboutApp() {
         diseret, terminal yang bisa diajak bicara, dan arsip yang terus bertumbuh.
       </p>
       <hr className="world-hr" />
-      <ul className="flex flex-col gap-1.5 text-xs text-[#93a9d8]">
+      <ul className="flex flex-col gap-1.5 text-xs text-[#404040]">
         <li>▸ Tiap ikon di desktop membuka satu pintu.</li>
-        <li>▸ Terminal mengerti beberapa perintah — coba ketik <span className="text-[#9fe8d8]">help</span>.</li>
+        <li>▸ Terminal mengerti beberapa perintah — coba ketik <span className="text-[#008080]">help</span>.</li>
         <li>▸ Dunia ini menyimpan rahasia. Yang sabar akan menemukannya.</li>
       </ul>
     </div>
@@ -48,14 +48,14 @@ export function SystemApp() {
 
   return (
     <div>
-      <p className="text-[13px] font-semibold text-[#e6f0ff]">SISTEM — status dunia</p>
-      <p className="mt-0.5 text-xs text-[#7c8db5]">Telemetri waktu-nyata · simulasi lokal</p>
+      <p className="text-[13px] font-semibold text-black">SISTEM — status dunia</p>
+      <p className="mt-0.5 text-xs text-[#404040]">Telemetri waktu-nyata · simulasi lokal</p>
       <div className="mt-4 flex flex-col gap-3">
         {METERS.map((m, i) => (
           <div key={m.label}>
             <div className="mb-1 flex items-center justify-between text-[10.5px]">
-              <span className="font-mono tracking-wider text-[#7c8db5]">{m.label}</span>
-              <span className="font-mono text-[#c6d6f5]">{m.text}</span>
+              <span className="font-mono tracking-wider text-[#404040]">{m.label}</span>
+              <span className="font-mono text-black">{m.text}</span>
             </div>
             <div className="world-meter">
               <div className="world-meter__fill" style={{ width: `${drift[i]}%` }} />
@@ -65,21 +65,21 @@ export function SystemApp() {
       </div>
       <hr className="world-hr" />
       <dl className="grid grid-cols-2 gap-2 text-xs">
-        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
-          <dt className="text-[10px] tracking-wider text-[#5b6c94] uppercase">UPTIME</dt>
-          <dd className="mt-0.5 font-mono text-[#c6d6f5]">{formatUptime(tick)}</dd>
+        <div className="rounded-lg border border-[#808080] bg-[#d4d0c8] p-2.5">
+          <dt className="text-[10px] tracking-wider text-[#404040] uppercase">UPTIME</dt>
+          <dd className="mt-0.5 font-mono text-black">{formatUptime(tick)}</dd>
         </div>
-        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
-          <dt className="text-[10px] tracking-wider text-[#5b6c94] uppercase">WORLD CORE</dt>
-          <dd className="mt-0.5 font-mono text-[#9fe8d8]">ONLINE</dd>
+        <div className="rounded-lg border border-[#808080] bg-[#d4d0c8] p-2.5">
+          <dt className="text-[10px] tracking-wider text-[#404040] uppercase">WORLD CORE</dt>
+          <dd className="mt-0.5 font-mono text-[#008080]">ONLINE</dd>
         </div>
-        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
-          <dt className="text-[10px] tracking-wider text-[#5b6c94] uppercase">THREAT</dt>
-          <dd className="mt-0.5 font-mono text-[#4ade80]">NEGLIGIBLE</dd>
+        <div className="rounded-lg border border-[#808080] bg-[#d4d0c8] p-2.5">
+          <dt className="text-[10px] tracking-wider text-[#404040] uppercase">THREAT</dt>
+          <dd className="mt-0.5 font-mono text-[#008000]">NEGLIGIBLE</dd>
         </div>
-        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
-          <dt className="text-[10px] tracking-wider text-[#5b6c94] uppercase">CLEARANCE</dt>
-          <dd className="mt-0.5 font-mono text-[#fbbf24]">GUEST</dd>
+        <div className="rounded-lg border border-[#808080] bg-[#d4d0c8] p-2.5">
+          <dt className="text-[10px] tracking-wider text-[#404040] uppercase">CLEARANCE</dt>
+          <dd className="mt-0.5 font-mono text-[#808000]">GUEST</dd>
         </div>
       </dl>
     </div>
@@ -105,8 +105,8 @@ export function ArchiveApp() {
   const [selected, setSelected] = useState<string | null>(null);
   return (
     <div>
-      <p className="text-[13px] font-semibold text-[#e6f0ff]">ARSIP — digital archive</p>
-      <p className="mt-0.5 text-xs text-[#7c8db5]">
+      <p className="text-[13px] font-semibold text-black">ARSIP — digital archive</p>
+      <p className="mt-0.5 text-xs text-[#404040]">
         {FILES.length} entri · sebagian terkunci untuk guest
       </p>
       <div className="mt-3 flex flex-col gap-1.5">
@@ -124,8 +124,8 @@ export function ArchiveApp() {
         ))}
       </div>
       {selected && (
-        <p className="mt-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[11px] text-[#93a9d8]">
-          <span className="font-mono text-[#9fe8d8]">$ preview {selected}</span>
+        <p className="mt-3 rounded-lg border border-[#808080] bg-[#d4d0c8] px-3 py-2 text-[11px] text-[#404040]">
+          <span className="font-mono text-[#008080]">$ preview {selected}</span>
           {"\n"}Berkas terindeks. Konten penuh tersedia setelah verifikasi identitas di ACCESS TERMINAL.
         </p>
       )}
@@ -143,19 +143,19 @@ const DOC_SECTIONS = [
 export function DocumentApp() {
   return (
     <div>
-      <p className="text-[13px] font-semibold text-[#e6f0ff]">DOKUMEN — manual penjelajah</p>
-      <p className="mt-0.5 text-xs text-[#7c8db5]">edisi {new Date().getFullYear()} · bahasa: id</p>
+      <p className="text-[13px] font-semibold text-black">DOKUMEN — manual penjelajah</p>
+      <p className="mt-0.5 text-xs text-[#404040]">edisi {new Date().getFullYear()} · bahasa: id</p>
       <hr className="world-hr" />
       <div className="flex flex-col gap-3">
         {DOC_SECTIONS.map((s) => (
           <div key={s.h}>
-            <p className="text-xs font-semibold text-[#cfe0ff]">{s.h}</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-[#93a9d8]">{s.body}</p>
+            <p className="text-xs font-semibold text-black">{s.h}</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-[#404040]">{s.body}</p>
           </div>
         ))}
       </div>
       <hr className="world-hr" />
-      <p className="text-[11px] text-[#5b6c94]">
+      <p className="text-[11px] text-[#404040]">
         Catatan kecil: dunia ini menyukai yang penasaran. Beberapa hal tidak tertulis di manual.
       </p>
     </div>
@@ -324,22 +324,18 @@ export function AccessApp({ onEnter, delay }: AccessProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-6 text-center">
       <div
-        className="grid h-16 w-16 place-items-center rounded-2xl border border-cyan-300/40 bg-cyan-400/10 font-mono text-lg font-bold text-cyan-200 shadow-[0_0_30px_rgb(94_234_212/0.35)]"
+        className="world-icon__glyph h-16 w-16 !text-2xl"
         style={{ animation: "world-icon-pulse 2.4s ease-in-out infinite" }}
       >
         ⌘
       </div>
       <div>
-        <p className="text-sm font-semibold tracking-wide text-[#e6f0ff]">ACCESS TERMINAL</p>
-        <p className="mt-1 text-[11px] text-[#7c8db5]">Gerbang ke dunia dalam — verifikasi identitas dibutuhkan</p>
+        <p className="text-sm font-semibold tracking-wide text-black">ACCESS TERMINAL</p>
+        <p className="mt-1 text-[11px] text-[#404040]">Gerbang ke dunia dalam — verifikasi identitas dibutuhkan</p>
       </div>
 
       {state === "idle" && (
-        <button
-          type="button"
-          className="rounded-lg border border-cyan-300/40 bg-cyan-400/10 px-5 py-2.5 text-xs font-semibold tracking-widest text-cyan-100 uppercase transition hover:bg-cyan-400/20 hover:shadow-[0_0_24px_rgb(56_189_248/0.35)]"
-          onClick={() => setState("scanning")}
-        >
+        <button type="button" className="w95-btn px-5 py-2 text-xs font-semibold tracking-widest uppercase" onClick={() => setState("scanning")}>
           Mulai Verifikasi
         </button>
       )}
@@ -351,17 +347,13 @@ export function AccessApp({ onEnter, delay }: AccessProps) {
               style={{ width: "100%", animation: "world-access-scan 1.2s linear forwards" }}
             />
           </div>
-          <p className="font-mono text-[11px] text-[#9fe8d8]">memverifikasi identitas…</p>
+          <p className="font-mono text-[11px] text-[#008080]">memverifikasi identitas…</p>
         </div>
       )}
       {state === "granted" && (
         <div className="flex flex-col items-center gap-3">
-          <p className="font-mono text-xs text-[#4ade80]">✓ identitas diakui — pintu terbuka</p>
-          <button
-            type="button"
-            className="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-2.5 text-xs font-semibold tracking-widest text-white uppercase shadow-lg shadow-cyan-500/25 transition hover:brightness-110"
-            onClick={onEnter}
-          >
+          <p className="font-mono text-xs text-[#008000]">✓ identitas diakui — pintu terbuka</p>
+          <button type="button" className="w95-btn px-6 py-2 text-xs font-semibold tracking-widest uppercase" onClick={onEnter}>
             Masuk ke Dunia
           </button>
         </div>

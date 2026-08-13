@@ -431,6 +431,27 @@ export function changelogKind(entry: Pick<ChangelogEntry, "kind">): ChangelogKin
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "v1.6.1",
+    date: "2026-08-13",
+    features: {
+      id: [
+        "Homepage THE WORLD berganti tema Windows 95: desktop teal, chrome window bevel abu-abu, titlebar navy, tombol Start + start menu, boot screen ala Win95, ikon bergaya 3D klasik, dan menu Shutdown sebagai easter egg",
+      ],
+      en: [
+        "THE WORLD homepage restyled to a Windows 95 theme: teal desktop, gray beveled window chrome, navy titlebars, Start button + start menu, Win95-style boot screen, classic 3D icons, and a Shutdown easter egg",
+      ],
+      zh: [
+        "THE WORLD 首页改用 Windows 95 主题：青色桌面、灰色凸起窗口边框、藏青色标题栏、开始按钮与开始菜单、Win95 风格开机画面、经典 3D 图标，以及关机彩蛋",
+      ],
+      ko: [
+        "THE WORLD 홈페이지를 Windows 95 테마로 변경: 틸 데스크톱, 회색 베벨 창 프레임, 네이비 타이틀바, 시작 버튼과 시작 메뉴, Win95 스타일 부팅 화면, 클래식 3D 아이콘, 종료 이스터 에그",
+      ],
+      ja: [
+        "THE WORLD ホームページを Windows 95 テーマに変更：ティールのデスクトップ、グレーのベベル付きウィンドウ枠、ネイビーのタイトルバー、スタートボタンとスタートメニュー、Win95 風ブート画面、クラシックな 3D アイコン、シャットダウンのイースターエッグ",
+      ],
+    },
+  },
+  {
     version: "v1.6.0",
     date: "2026-08-13",
     features: {

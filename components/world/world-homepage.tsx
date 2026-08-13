@@ -62,7 +62,6 @@ export default function WorldHomepage() {
   const [glitchKey, setGlitchKey] = useState(0);
   const [rain, setRain] = useState(false);
   const [clock, setClock] = useState("");
-  const logoClicks = useRef(0);
   const konami = useRef<string[]>([]);
   const konamiSeq = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -240,15 +239,6 @@ export default function WorldHomepage() {
     setWindows((prev) => prev.map((win) => ({ ...win, focused: win.id === id })));
   }, []);
 
-  /* ---- Logo klik 3× = glitch + rain (easter egg) ---- */
-  const onLogoClick = () => {
-    logoClicks.current += 1;
-    if (logoClicks.current >= 3) {
-      logoClicks.current = 0;
-      triggerGlitch();
-    }
-  };
-
   const renderBody = (id: AppId) => {
     switch (id) {
       case "about":
@@ -267,6 +257,31 @@ export default function WorldHomepage() {
   };
 
   const openCount = windows.filter((win) => !win.minimized).length;
+  const [startOpen, setStartOpen] = useState(false);
+  const startRef = useRef<HTMLDivElement | null>(null);
+
+  // Klik di luar start menu menutupnya.
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (startOpen && startRef.current && !startRef.current.contains(e.target as Node)) {
+        setStartOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [startOpen]);
+
+  const startItem = (id: AppId) => {
+    setStartOpen(false);
+    openApp(id);
+  };
+
+  const shutdown = () => {
+    setStartOpen(false);
+    triggerGlitch();
+    setRain(true);
+    setTimeout(() => setRain(false), 6000);
+  };
 
   return (
     <div className="world">
@@ -319,8 +334,9 @@ export default function WorldHomepage() {
 
       {/* Taskbar */}
       <div className="world-taskbar">
-        <button type="button" className="world-taskbar__logo" onClick={onLogoClick} aria-label="Logo dunia">
-          GE
+        <button type="button" className="world-taskbar__logo" onClick={() => setStartOpen((v) => !v)} aria-label="Start">
+          <span className="world-taskbar__logo-flag" aria-hidden />
+          Start
         </button>
         <div className="world-taskbar__tasks">
           {windows.map((win) => (
@@ -343,7 +359,7 @@ export default function WorldHomepage() {
         </div>
         <div className="world-taskbar__status">
           <span className="world-taskbar__seg">
-            <span className="text-[#4ade80]">●</span> online
+            <span className="text-[#000000]">●</span> online
           </span>
           <span className="world-taskbar__seg">
             {openCount > 0 ? `${openCount} jendela` : "idle"}
@@ -351,6 +367,26 @@ export default function WorldHomepage() {
           <span className="world-taskbar__clock">{clock}</span>
         </div>
       </div>
+
+      {/* Start menu (Win95) */}
+      {startOpen && (
+        <div ref={startRef} className="world-start" role="menu">
+          <div className="world-start__rail">GE-OS</div>
+          <div className="world-start__list">
+            {ICON_ORDER.map((item) => (
+              <button key={item.id} type="button" className="world-start__item" role="menuitem" onClick={() => startItem(item.id)}>
+                <span aria-hidden>{item.glyph}</span>
+                {item.label}
+              </button>
+            ))}
+            <div className="world-start__sep" />
+            <button type="button" className="world-start__item" onClick={shutdown}>
+              <span aria-hidden>⏻</span>
+              Shutdown… (jangan benar-benar mati)
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* CRT overlay */}
       <div className="crt crt--flicker" aria-hidden />
