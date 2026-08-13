@@ -41,12 +41,21 @@ if (-not (Get-Command pm2 -ErrorAction SilentlyContinue)) {
   Write-Host "pm2 tidak ada di PATH — install global dulu"
   npm i -g pm2
 }
+# Pipe PM2 Windows (`\\.\pipe\rpc.sock`) satu namespace GLOBAL — nama pipe
+# hardcoded, tidak unik per akun (Unitech/pm2#2946). Daemon dari akun lain
+# (mis. deploy manual via RDP) atau zombie pipe memblokir nama → `connect
+# EPERM`. Bunuh dulu daemon milik akun ini (zombie) agar pipe bebas; proses
+# akun lain akan gagal di-Stop (access denied) & dilewati aman.
+Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue |
+  Where-Object { $_.CommandLine -match 'pm2|next start' } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+Start-Sleep -Seconds 2
 if (Get-Command pm2 -ErrorAction SilentlyContinue) {
-  pm2 start ecosystem.config.cjs --env production 2>$null
+  & pm2 start ecosystem.config.cjs --env production 2>$null
   if ($LASTEXITCODE -ne 0) {
-    pm2 reload ecosystem.config.cjs --update-env
+    & pm2 reload ecosystem.config.cjs --update-env
   }
-  pm2 save
+  & pm2 save
 } else {
   npx pm2 start ecosystem.config.cjs --env production 2>$null
   if ($LASTEXITCODE -ne 0) {
@@ -54,5 +63,8 @@ if (Get-Command pm2 -ErrorAction SilentlyContinue) {
   }
   npx pm2 save
 }
+# EPERM masih muncul? Daemon pm2 akun RDP masih pegang pipe — runner tidak bisa
+# membunuhnya (perbedaan akun). Bersihkan sekali di RDP: `pm2 kill` (atau
+# `taskkill /F /IM node.exe`), lalu deploy ulang. Detail: DEPLOYMENT.md §1.4.
 
 Write-Host "== Selesai. Cek: pm2 status / pm2 logs eps-v2 =="

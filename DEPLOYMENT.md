@@ -63,6 +63,25 @@ Expand-Archive -Path runner.zip -DestinationPath . -Force
 > runner bila belum ada di PATH-nya (pm2 yang di-install via RDP di akun admin
 > tidak terlihat oleh akun service runner).
 
+**Penting — akun PM2 (gagal `connect EPERM \\.\pipe\rpc.sock`):**
+Pipe IPC PM2 di Windows (`\\.\pipe\rpc.sock`) memakai **satu nama global**,
+tidak unik per akun (issue Unitech/pm2#2946). Jika ada daemon PM2 lama dari
+akun lain (mis. deploy manual §1.3 via RDP), daemon service runner tidak bisa
+dipakai — muncul `connect EPERM \\.\pipe\rpc.sock` di step "restart PM2".
+
+Solusi (pilih satu):
+1. **Daftarkan runner dengan akun yang sama** yang memakai PM2 (rekomendasi):
+   daftarkan runner via RDP dengan akun admin tsb, lalu `pm2` dipakai dari
+   akun yang sama → pipe tidak bertabrakan.
+2. **Bersihkan daemon lama sekali** (via RDP, akun lama):
+   ```powershell
+   pm2 kill   # atau bila macet: taskkill /F /IM node.exe
+   ```
+   lalu jalankan ulang workflow. Runner akan menciptakan daemonnya sendiri.
+
+> Script deploy-windows.ps1 otomatis membunuh daemon/zombie PM2 milik akun
+> yang berjalan sebelum start (aman dilewati bila dipakai akun lain).
+
 ### 1.5 Folder project di server
 Workflow Windows menjalankan `scripts\deploy-windows.ps1` dari hasil `actions/checkout`
 (di folder kerja runner). Supaya PM2 memakai project di `C:\apps\eps` (bukan salinan

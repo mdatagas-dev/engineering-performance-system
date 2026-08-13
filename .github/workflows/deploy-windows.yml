@@ -5,6 +5,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Satu deploy berjalan dalam satu waktu — jangan tumpuk (dua deploy bareng
+# saling bunuh daemon PM2 lewat pipe global).
+concurrency:
+  group: deploy-windows
+  cancel-in-progress: false
+
 jobs:
   deploy:
     if: vars.ENABLE_WINDOWS_DEPLOY == 'true'

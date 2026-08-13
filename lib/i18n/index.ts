@@ -415,6 +415,27 @@ export type ChangelogEntry = {
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "v1.4.1",
+    date: "2026-08-13",
+    features: {
+      id: [
+        "Fix deploy Windows: PM2 pipe global (\\\\.\\pipe\\rpc.sock) bentrok antar-akun → bersihkan daemon zombie sebelum start + concurrency guard; panduan akun PM2 di DEPLOYMENT.md §1.4",
+      ],
+      en: [
+        "Fix Windows deploy: PM2 global pipe (\\\\.\\pipe\\rpc.sock) collides across accounts → clear zombie daemon before start + concurrency guard; PM2 account guidance in DEPLOYMENT.md §1.4",
+      ],
+      zh: [
+        "修复 Windows 部署：PM2 全局管道（\\\\.\\pipe\\rpc.sock）跨账户冲突 → 启动前清理僵尸守护进程 + 并发保护；PM2 账户指南见 DEPLOYMENT.md §1.4",
+      ],
+      ko: [
+        "Windows 배포 수정: PM2 전역 파이프(\\\\.\\pipe\\rpc.sock) 계정 간 충돌 → 시작 전 좀비 데몬 정리 + 동시성 가드; PM2 계정 안내는 DEPLOYMENT.md §1.4",
+      ],
+      ja: [
+        "Windows デプロイを修正：PM2 グローバルパイプ（\\\\.\\pipe\\rpc.sock）がアカウント間で競合 → 起動前にゾンビデーモンをクリア＋同時実行ガード。PM2 アカウントの手順は DEPLOYMENT.md §1.4",
+      ],
+    },
+  },
+  {
     version: "v1.4.0",
     date: "2026-08-13",
     features: {
