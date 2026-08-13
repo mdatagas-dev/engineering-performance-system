@@ -323,7 +323,7 @@ export default function Desktop(): ReactNode {
 
   return (
     <div
-      className="win95-desktop"
+      className="win95-desktop win95-desktop--wallpaper"
       onContextMenu={(e) => {
         e.preventDefault();
         setStartOpen(false);

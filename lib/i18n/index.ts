@@ -431,6 +431,69 @@ export function changelogKind(entry: Pick<ChangelogEntry, "kind">): ChangelogKin
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "v1.7.3",
+    date: "2026-08-14",
+    features: {
+      id: [
+        "Wallpaper desktop homepage diganti dengan gambar wallpaperflare.com_wallpaper (file lokal public/wallpaper.jpg) sebagai latar desktop",
+      ],
+      en: [
+        "Homepage desktop wallpaper replaced with the wallpaperflare.com_wallpaper image (local file public/wallpaper.jpg) as the desktop background",
+      ],
+      zh: [
+        "首页桌面壁纸更换为 wallpaperflare.com_wallpaper 图片（本地文件 public/wallpaper.jpg）作为桌面背景",
+      ],
+      ko: [
+        "홈페이지 데스크톱 배경화면을 wallpaperflare.com_wallpaper 이미지(로컬 파일 public/wallpaper.jpg)로 교체했습니다",
+      ],
+      ja: [
+        "ホームページのデスクトップ壁紙を wallpaperflare.com_wallpaper 画像（ローカルファイル public/wallpaper.jpg）に変更",
+      ],
+    },
+  },
+  {
+    version: "v1.7.2",
+    date: "2026-08-14",
+    features: {
+      id: [
+        "Bendera tombol Start diganti dengan bendera Windows 95 asli (pixel-art: 4 panel merah-hijau-biru-kuning, outline hitam, tepi melambai)",
+      ],
+      en: [
+        "Start button flag replaced with the authentic Windows 95 flag (pixel art: 4 red-green-blue-yellow panes, black outline, waving edge)",
+      ],
+      zh: [
+        "开始按钮旗帜更换为原版 Windows 95 旗帜（像素画：红绿蓝黄四色块、黑色轮廓、飘动边缘）",
+      ],
+      ko: [
+        "시작 버튼 깃발을 원본 Windows 95 깃발로 교체했습니다(픽셀 아트: 빨강-초록-파랑-노랑 4색 패널, 검은 윤곽선, 물결치는 가장자리)",
+      ],
+      ja: [
+        "スタートボタンの旗を本物の Windows 95 の旗に変更（ピクセルアート：赤・緑・青・黄の4パネル、黒い輪郭、波打つエッジ）",
+      ],
+    },
+  },
+  {
+    version: "v1.7.1",
+    date: "2026-08-14",
+    features: {
+      id: [
+        "Semua ikon homepage diganti dengan ikon pixel-art Windows 95 asli (18 ikon SVG: My Computer, My Documents, Notepad, Calculator, Minesweeper, Command Prompt, System Info, Recycle Bin, About, Access Terminal, folder/file/drive/key/login/wrench) di desktop, titlebar, taskbar, start menu, dan aplikasi",
+      ],
+      en: [
+        "All homepage icons replaced with authentic Windows 95 pixel-art icons (18 SVGs: My Computer, My Documents, Notepad, Calculator, Minesweeper, Command Prompt, System Info, Recycle Bin, About, Access Terminal, folder/file/drive/key/login/wrench) across desktop, titlebars, taskbar, start menu, and apps",
+      ],
+      zh: [
+        "首页所有图标更换为原版 Windows 95 像素画图标（18 个 SVG：我的电脑、我的文档、记事本、计算器、扫雷、命令提示符、系统信息、回收站、关于、Access Terminal，以及文件夹/文件/驱动器/钥匙/登录/扳手），覆盖桌面、标题栏、任务栏、开始菜单与应用",
+      ],
+      ko: [
+        "홈페이지의 모든 아이콘을 원본 Windows 95 픽셀 아트 아이콘(18개 SVG: 내 컴퓨터, 내 문서, 메모장, 계산기, 지뢰찾기, 명령 프롬프트, 시스템 정보, 휴지통, 정보, Access Terminal, 폴더/파일/드라이브/열쇠/로그인/렌치)으로 교체했습니다 — 데스크톱, 제목 표시줄, 작업 표시줄, 시작 메뉴 및 앱 전체",
+      ],
+      ja: [
+        "ホームページの全アイコンを本物の Windows 95 ピクセルアートアイコン（18個のSVG：マイ コンピュータ、マイ ドキュメント、メモ帳、電卓、マインスイーパ、コマンドプロンプト、システム情報、ごみ箱、バージョン情報、Access Terminal、フォルダー/ファイル/ドライブ/鍵/ログイン/レンチ）に変更 — デスクトップ、タイトルバー、タスクバー、スタートメニュー、アプリ全体",
+      ],
+    },
+  },
+  {
     version: "v1.7.0",
     date: "2026-08-13",
     features: {

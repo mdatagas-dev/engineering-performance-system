@@ -34,6 +34,14 @@
   -webkit-user-select: none;
 }
 
+/* Wallpaper desktop (file wallpaperflare.com_wallpaper.jpg) */
+.win95-desktop--wallpaper {
+  background-image: url("/wallpaper.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .win95-windows {
   position: absolute;
   inset: 0;
