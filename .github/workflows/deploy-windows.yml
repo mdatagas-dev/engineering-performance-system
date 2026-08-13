@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploy
-        shell: pwsh
+        shell: powershell
         run: ./scripts/deploy-windows.ps1
         env:
           SERVER_PATH: ${{ vars.SERVER_PATH }}
