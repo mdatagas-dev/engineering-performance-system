@@ -48,3 +48,7 @@ next-env.d.ts
 /.claude/
 /.windsurf/
 /skills-lock.json
+
+# opencode local config (bukan bagian project)
+.opencode/
+opencode.json
