@@ -1,26 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { DateRangeFilter } from "@/components/date-range-filter";
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { useSessionGuard } from "@/hooks/use-session-guard";
-import { useCountUp } from "@/components/use-count-up";
-import { fetchAllRecords } from "@/lib/api/records";
-import type { MockProductionRecord } from "@/lib/mocks/records";
-import { round2 } from "@/lib/records/calculate";
-import { formatDecimal, formatNumber } from "@/lib/production-table/format";
 import {
-  applyFilters,
-  EMPTY_FILTERS,
-  isPresetActive,
-  presetLastNDays,
-  presetMonthToDate,
-  presetToday,
-  uniqueAreas,
-  uniqueDates,
-  uniqueModels,
-  type DashboardFilters,
-} from "@/lib/dashboard/filters";
-import { buildDashboardSummary, type ModelGroup } from "@/lib/dashboard/summary";
+  getDashboardData,
+  getSystemInfo,
+  type DashboardData,
+  type OutputTrend,
+  type ParetoItem,
+} from "@/lib/mocks/dashboard";
+import { formatDecimal, formatNumber } from "@/lib/production-table/format";
 
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: "Super Admin",
@@ -30,258 +20,190 @@ const ROLE_LABELS: Record<string, string> = {
   VIEWER: "Viewer",
 };
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
+const STATUS_COLOR: Record<string, string> = {
+  RUNNING: "#2e7d32",
+  STOP: "#c62828",
+  IDLE: "#757575",
+};
 
-const dateContext = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+const LEVEL_CLS: Record<string, string> = {
+  CRITICAL: "xwd-badge xwd-badge-critical",
+  WARNING: "xwd-badge xwd-badge-warning",
+  INFO: "xwd-badge xwd-badge-info",
+};
 
-const fmtSigned = (v: number): string => (v >= 0 ? `+${formatNumber(v)}` : formatNumber(v));
+const AXIS_TEXT = { fontSize: 10, fill: "#333", fontFamily: "Tahoma, Arial, sans-serif" } as const;
 
-const inputClass =
-  "w-full rounded-lg border border-slate-950/15 bg-white/70 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-cyan-600 focus:ring-2 focus:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/15 dark:bg-white/5 dark:text-slate-100 dark:placeholder-slate-500";
+const pct = (v: number) => `${formatDecimal(v)} %`;
 
-// GAP UPH & GAP OP: nilai positif = melampaui target (baik). GAP HC: nilai
-// negatif = HC aktual di bawah standar (baik). Warna konsisten dengan tabel
-// data entry (gapClass).
-function gapCls(v: number, lowerIsGood = false): string {
-  if (v === 0) return "text-slate-400 dark:text-slate-500";
-  const good = lowerIsGood ? v < 0 : v > 0;
-  return good ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400";
-}
-
-function GapCell({ value, lowerIsGood }: { value: number; lowerIsGood?: boolean }) {
-  return <span className={`font-medium tabular-nums ${gapCls(value, lowerIsGood)}`}>{formatDecimal(value)}</span>;
-}
-
-function UphBadge({ gap }: { gap: number }) {
-  const hit = gap >= 0;
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <span
-      className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap ${
-        hit
-          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-          : "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400"
-      }`}
-    >
-      {hit ? "Capai" : "Gagal"}
-    </span>
-  );
-}
-
-function HcBadge({ gap }: { gap: number }) {
-  const meta =
-    gap < 0
-      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-      : gap > 0
-        ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400"
-        : "border-slate-500/30 bg-slate-500/10 text-slate-700 dark:text-slate-400";
-  const label = gap < 0 ? "Hemat" : gap > 0 ? "Berlebih" : "Sesuai";
-  return (
-    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap ${meta}`}>
-      {label}
-    </span>
-  );
-}
-
-const TH_CLS =
-  "sticky top-0 z-10 whitespace-nowrap border-b border-slate-950/10 bg-slate-100/90 px-3 py-2 text-[10px] font-semibold tracking-wider text-slate-600 uppercase backdrop-blur-sm dark:border-white/10 dark:bg-[#111a24]/95 dark:text-slate-400";
-const TH_LEFT = TH_CLS;
-const TH_RIGHT = `${TH_CLS} text-right`;
-const TD = "px-3 py-2 text-xs whitespace-nowrap tabular-nums";
-const TD_LEFT = `${TD} text-left`;
-const TD_RIGHT = `${TD} text-right`;
-const ROW_CLS =
-  "odd:bg-slate-950/[0.02] transition-colors hover:bg-cyan-500/[0.05] dark:odd:bg-white/[0.02]";
-const TOTAL_ROW_CLS =
-  "bg-cyan-500/10 text-slate-800 dark:bg-cyan-500/[0.08] dark:text-cyan-100";
-
-const KPI_TONES = {
-  cyan: { value: "text-cyan-700 dark:text-cyan-400", strip: "from-cyan-500 to-blue-700" },
-  emerald: { value: "text-emerald-600 dark:text-emerald-400", strip: "from-emerald-500 to-teal-700" },
-  rose: { value: "text-rose-600 dark:text-rose-400", strip: "from-rose-500 to-red-700" },
-  slate: { value: "text-slate-800 dark:text-slate-100", strip: "from-slate-400 to-slate-600" },
-} as const;
-
-function KpiCard({
-  label,
-  value,
-  num,
-  suffix,
-  sub,
-  tone,
-}: {
-  label: string;
-  value: string;
-  num?: number;
-  suffix?: string;
-  sub?: string;
-  tone: keyof typeof KPI_TONES;
-}) {
-  const t = KPI_TONES[tone];
-  const animated = useCountUp(num ?? 0);
-  return (
-    <div className="glass-card relative overflow-hidden p-4">
-      <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${t.strip}`} />
-      <p className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase dark:text-slate-400">{label}</p>
-      <p className={`mt-1 text-xl font-bold tracking-tight tabular-nums ${t.value}`}>
-        {num !== undefined ? (
-          <>
-            {formatNumber(animated)}
-            {suffix}
-          </>
-        ) : (
-          value
-        )}
-      </p>
-      {sub && <p className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">{sub}</p>}
-    </div>
-  );
-}
-
-function EmptyNote({ text = "Tidak ada data pada rentang ini" }: { text?: string }) {
-  return (
-    <div className="grid place-items-center rounded-xl border border-dashed border-slate-950/15 py-8 text-center dark:border-white/15">
-      <p className="text-xs text-slate-500 dark:text-slate-400">{text}</p>
-    </div>
-  );
-}
-
-function TableCard({
-  title,
-  subtitle,
-  minW,
-  maxH = "max-h-72",
-  leftCols = 1,
-  empty,
-  headers,
-  children,
-  headerRight,
-}: {
-  title: string;
-  subtitle?: string;
-  minW: string;
-  maxH?: string;
-  leftCols?: number;
-  empty: boolean;
-  headers: string[];
-  children: React.ReactNode;
-  headerRight?: React.ReactNode;
-}) {
-  return (
-    <section className="glass-card flex min-h-0 flex-col p-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="text-[13px] font-semibold tracking-tight">{title}</h2>
-          {subtitle && <p className="mt-0.5 truncate text-[10px] text-slate-500 dark:text-slate-400">{subtitle}</p>}
-        </div>
-        {headerRight}
-      </div>
-      {empty ? (
-        <div className="mt-3">
-          <EmptyNote />
-        </div>
-      ) : (
-        <div className={`mt-3 overflow-auto rounded-lg border border-slate-950/5 dark:border-white/5 ${maxH}`}>
-          <table className={`w-full ${minW} border-collapse text-left`}>
-            <thead>
-              <tr>
-                {headers.map((h, i) => (
-                  <th key={h} className={i < leftCols ? TH_LEFT : TH_RIGHT}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>{children}</tbody>
-          </table>
-        </div>
-      )}
+    <section className="xw-panel xwd-panel">
+      <header className="xwd-section">
+        <h3>{title}</h3>
+      </header>
+      {children}
     </section>
   );
 }
 
-// Grup Daily Production per (tanggal, model, shift) — agregasi inline dari
-// record terfilter (summary hanya menyediakan per-tanggal dan per-model).
-type DailyGroup = {
-  date: string;
-  model: string;
-  shift: string | null;
-  plan: number;
-  output: number;
-  uphResult: number;
-  hcActual: number;
-};
-
-function buildDailyGroups(records: Parameters<typeof applyFilters>[0]): DailyGroup[] {
-  const m = new Map<string, DailyGroup>();
-  for (const r of records) {
-    const key = `${r.date}|${r.model}|${r.shift ?? ""}`;
-    const g = m.get(key) ?? { date: r.date, model: r.model, shift: r.shift, plan: 0, output: 0, uphResult: 0, hcActual: 0 };
-    g.plan += r.plan;
-    g.output += r.outputProd;
-    g.uphResult += r.uphResult;
-    g.hcActual += r.hcActual;
-    m.set(key, g);
-  }
-  return [...m.values()].sort(
-    (a, b) =>
-      b.date.localeCompare(a.date) || a.model.localeCompare(b.model) || (a.shift ?? "").localeCompare(b.shift ?? "")
+function Kpi({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="xw-kpi xwd-kpi">
+      <span className="xw-kpi__label xwd-kpi-label">{label}</span>
+      <span className="xw-kpi__value xwd-kpi-value">{value}</span>
+    </div>
   );
 }
 
-const chipBase = "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors";
-const chipActive = "border-cyan-500/40 bg-cyan-500/15 text-cyan-700 dark:text-cyan-400";
-const chipIdle =
-  "border-slate-950/15 text-slate-600 hover:bg-slate-950/5 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10";
+function TrendChart({ data }: { data: readonly OutputTrend[] }) {
+  const W = 640;
+  const H = 260;
+  const L = 48;
+  const R = 14;
+  const T = 18;
+  const B = 30;
+  const rawMax = Math.max(1, ...data.flatMap((d) => [d.plan, d.actual, d.target]));
+  const yMax = Math.ceil((rawMax * 1.1) / 100) * 100;
+  const iw = W - L - R;
+  const ih = H - T - B;
+  const x = (i: number) => L + (i / Math.max(1, data.length - 1)) * iw;
+  const y = (v: number) => T + ih - (v / yMax) * ih;
+  const poly = (key: "plan" | "actual" | "target") =>
+    data.map((d, i) => `${x(i).toFixed(1)},${y(d[key]).toFixed(1)}`).join(" ");
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => ({ v: yMax * f, y: y(yMax * f) }));
+  const series = [
+    { key: "plan", label: "Plan", color: "#00008b" },
+    { key: "actual", label: "Actual", color: "#008000" },
+    { key: "target", label: "Target", color: "#b00000" },
+  ] as const;
+
+  return (
+    <div>
+      <svg width="100%" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Output Trend (Daily)">
+        {ticks.map((t) => (
+          <g key={t.v}>
+            <line x1={L} y1={t.y} x2={W - R} y2={t.y} stroke="#c8c8c8" strokeWidth="1" />
+            <text x={L - 6} y={t.y + 4} textAnchor="end" style={AXIS_TEXT}>
+              {formatNumber(t.v)}
+            </text>
+          </g>
+        ))}
+        <line x1={L} y1={T + ih} x2={W - R} y2={T + ih} stroke="#555" />
+        <line x1={L} y1={T} x2={L} y2={T + ih} stroke="#555" />
+        {data.map((d, i) => (
+          <text key={d.date} x={x(i)} y={H - B + 14} textAnchor="middle" style={AXIS_TEXT}>
+            {i % 2 === 0 ? d.date.slice(5).replace("-", "/") : ""}
+          </text>
+        ))}
+        {series.map((s) => (
+          <polyline key={s.key} points={poly(s.key)} fill="none" stroke={s.color} strokeWidth="1.5" />
+        ))}
+      </svg>
+      <div className="xwd-legend">
+        {series.map((s) => (
+          <span key={s.key} className="xwd-legend-item">
+            <span className="xwd-legend-swatch" style={{ background: s.color }} />
+            {s.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ParetoChart({ items }: { items: readonly ParetoItem[] }) {
+  const W = 640;
+  const H = 260;
+  const L = 48;
+  const R = 48;
+  const T = 24;
+  const B = 34;
+  const iw = W - L - R;
+  const ih = H - T - B;
+  const total = items.reduce((a, it) => a + it.quantity, 0) || 1;
+  const qMax = Math.max(1, Math.ceil(Math.max(...items.map((it) => it.quantity), 1) / 10) * 10);
+  const slot = iw / items.length;
+  const bw = Math.min(56, slot * 0.55);
+  const yQ = (v: number) => T + ih - (v / qMax) * ih;
+  const yPct = (p: number) => T + ih - (p / 100) * ih;
+  const qTicks = [0, 0.25, 0.5, 0.75, 1].map((f) => qMax * f);
+  const cx = (i: number) => L + slot * i + slot / 2;
+  const cumPts = items.map((it, i) => ({
+    name: it.name,
+    pct: (items.slice(0, i + 1).reduce((a, x) => a + x.quantity, 0) / total) * 100,
+  }));
+
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Defect Pareto Chart (Top 5)">
+      {qTicks.map((v) => (
+        <g key={v}>
+          <line x1={L} y1={yQ(v)} x2={W - R} y2={yQ(v)} stroke="#c8c8c8" strokeWidth="1" />
+          <text x={L - 6} y={yQ(v) + 4} textAnchor="end" style={AXIS_TEXT}>
+            {Math.round(v)}
+          </text>
+        </g>
+      ))}
+      {[0, 25, 50, 75, 100].map((v) => (
+        <text key={v} x={W - R + 6} y={yPct(v) + 4} style={AXIS_TEXT}>
+          {v}%
+        </text>
+      ))}
+      <text x={L + 2} y={T - 5} style={AXIS_TEXT}>
+        PCS
+      </text>
+      <text x={W - R + 6} y={T - 5} style={AXIS_TEXT}>
+        %
+      </text>
+      <line x1={L} y1={T + ih} x2={W - R} y2={T + ih} stroke="#555" />
+      <line x1={L} y1={T} x2={L} y2={T + ih} stroke="#555" />
+      <line x1={W - R} y1={T} x2={W - R} y2={T + ih} stroke="#555" />
+      {items.map((it, i) => (
+        <g key={it.name}>
+          <rect
+            x={cx(i) - bw / 2}
+            y={yQ(it.quantity)}
+            width={bw}
+            height={Math.max(0, T + ih - yQ(it.quantity))}
+            fill="#3165c4"
+            stroke="#0a246a"
+          />
+          <text x={cx(i)} y={yQ(it.quantity) - 4} textAnchor="middle" style={AXIS_TEXT}>
+            {formatNumber(it.quantity)}
+          </text>
+          <text x={cx(i)} y={H - B + 14} textAnchor="middle" style={AXIS_TEXT}>
+            {i + 1}. {it.name}
+          </text>
+        </g>
+      ))}
+      <polyline
+        points={cumPts.map((c, i) => `${cx(i)},${yPct(c.pct)}`).join(" ")}
+        fill="none"
+        stroke="#b00000"
+        strokeWidth="1.5"
+      />
+      {cumPts.map((c, i) => (
+        <circle key={c.name} cx={cx(i)} cy={yPct(c.pct)} r="3" fill="#b00000" />
+      ))}
+    </svg>
+  );
+}
 
 export default function DashboardPage() {
   const session = useSessionGuard("dashboard.view");
-
-  const [records, setRecords] = useState<MockProductionRecord[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<DashboardFilters>(EMPTY_FILTERS);
+  const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
     let alive = true;
-    fetchAllRecords()
-      .then((rs) => {
-        if (alive) setRecords(rs);
-      })
-      .catch((err: unknown) => {
-        if (alive) setLoadError(err instanceof Error ? err.message : "Gagal memuat data.");
-      });
+    Promise.resolve(getDashboardData()).then((d) => {
+      if (alive) setData(d);
+    });
     return () => {
       alive = false;
     };
   }, []);
 
-  const dates = useMemo(() => uniqueDates(records), [records]);
-  const models = useMemo(() => uniqueModels(records), [records]);
-  const areas = useMemo(() => uniqueAreas(records), [records]);
-  const filtered = useMemo(() => applyFilters(records, filters), [records, filters]);
-  const summary = useMemo(() => buildDashboardSummary(filtered), [filtered]);
-  const dailyGroups = useMemo(() => buildDailyGroups(filtered), [filtered]);
-
-  // Working Hour & Setup Packing tidak ada di summary.byModel — agregasi
-  // inline per model, digabung dengan data summary.
-  const setupExtra = useMemo(() => {
-    const m = new Map<string, { workingHour: number; setupPacking: number }>();
-    for (const r of filtered) {
-      const e = m.get(r.model) ?? { workingHour: 0, setupPacking: 0 };
-      e.workingHour += r.workingHour;
-      e.setupPacking += r.totalSetupPacking;
-      m.set(r.model, e);
-    }
-    return m;
-  }, [filtered]);
-
-  if (!session) {
+  if (!session || !data) {
     return (
       <div className="grid flex-1 place-items-center">
         <div className="shimmer h-4 w-44 rounded-lg bg-slate-200/80 dark:bg-slate-800/80" />
@@ -291,358 +213,305 @@ export default function DashboardPage() {
 
   const { user } = session;
   const roleLabel = ROLE_LABELS[user.role.name] ?? user.role.name;
-  const noData = filtered.length === 0;
-
-  const now = new Date();
-  const presets = [
-    { key: "today", label: "Hari Ini", range: presetToday(now) },
-    { key: "week", label: "Minggu Ini", range: presetLastNDays(7, now) },
-    { key: "month", label: "Bulan Ini", range: presetMonthToDate(now) },
+  const info = getSystemInfo(user.name, roleLabel);
+  const infoRows: Array<[string, string]> = [
+    ["User", info.user],
+    ["Department", info.department],
+    ["Access Level", info.accessLevel],
+    ["Login Time", info.loginTime],
+    ["Server", info.server],
+    ["Database", info.database],
+    ["Version", info.version],
   ];
 
-  // Total tiap tabel dihitung DARI total (bukan jumlah gap per baris) — formula Excel.
-  const dailyTotal = {
-    output: dailyGroups.reduce((a, g) => a + g.output, 0),
-    uphResult: dailyGroups.reduce((a, g) => a + g.uphResult, 0),
-    hcActual: dailyGroups.reduce((a, g) => a + g.hcActual, 0),
-    plan: dailyGroups.reduce((a, g) => a + g.plan, 0),
-  };
-  const dailyGapOp = round2(dailyTotal.output - dailyTotal.plan);
-  const dailyUpph = dailyTotal.hcActual === 0 ? null : round2(dailyTotal.uphResult / dailyTotal.hcActual);
-
-  const setupTotal = { workingHour: 0, setupPacking: 0 };
-  for (const e of setupExtra.values()) {
-    setupTotal.workingHour += e.workingHour;
-    setupTotal.setupPacking += e.setupPacking;
-  }
-
-  const planPct = (plan: number, output: number) => (plan > 0 ? (output / plan) * 100 : 0);
-  const planPctTotal = planPct(summary.plan, summary.output);
-  const uphGapTotal = round2(summary.uphResult - summary.uphTarget);
-  const hcGapTotal = round2(summary.hcActual - summary.hcStandard);
-  const upphTotal = summary.hcActual === 0 ? null : round2(summary.uphResult / summary.hcActual);
-
   return (
-    <main className="flex min-h-0 w-full flex-1 flex-col gap-6 overflow-y-auto px-4 py-4 sm:px-6 lg:px-8">
-      {/* Judul halaman: subtitle tanggal + badge role/sesi */}
-      <section className="glass-card relative overflow-hidden p-4">
-        <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-cyan-500/20 blur-3xl" />
-        <div className="relative flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-lg font-bold tracking-tight">Dashboard Produksi</h1>
-              <span className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 font-mono text-[11px] font-semibold tracking-wider text-cyan-700 uppercase dark:text-cyan-400">
-                {roleLabel}
-              </span>
+    <main className="xwd-page">
+      <Section title="Production Overview">
+        <div className="xwd-kpi-row">
+          <Kpi label="Plan (PCS)" value={formatNumber(data.kpis.plan)} />
+          <Kpi label="Actual (PCS)" value={formatNumber(data.kpis.actual)} />
+          <Kpi label="Achievement (%)" value={pct(data.kpis.achievementPct)} />
+          <Kpi label="Remaining (PCS)" value={formatNumber(data.kpis.remaining)} />
+          <Kpi label="Defect (PCS)" value={formatNumber(data.kpis.defect)} />
+          <Kpi label="Defect Rate (%)" value={pct(data.kpis.defectRatePct)} />
+        </div>
+      </Section>
+
+      <Section title="Line Status Monitoring">
+        <div className="xwd-pad">
+          <table className="xw-table xwd-table">
+            <thead>
+              <tr>
+                <th>Line</th>
+                <th>Model</th>
+                <th>Status</th>
+                <th className="xwd-th-num">Plan (PCS)</th>
+                <th className="xwd-th-num">Actual (PCS)</th>
+                <th className="xwd-th-num">Achievement (%)</th>
+                <th className="xwd-th-num">Defect (PCS)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.lineStatus.map((r) => (
+                <tr key={r.line}>
+                  <td>{r.line}</td>
+                  <td>{r.model}</td>
+                  <td>
+                    <span className="xwd-status">
+                      <span className="xwd-dot" style={{ background: STATUS_COLOR[r.status] ?? "#888" }} />
+                      {r.status}
+                    </span>
+                  </td>
+                  <td className="xwd-num">{formatNumber(r.plan)}</td>
+                  <td className="xwd-num">{formatNumber(r.actual)}</td>
+                  <td className="xwd-num">{formatDecimal(r.achievementPct)}</td>
+                  <td className="xwd-num">{formatNumber(r.defect)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Section>
+
+      <div className="xwd-cols2">
+        <Section title="Output Trend (Daily)">
+          <div className="xwd-pad">
+            <TrendChart data={data.outputTrend} />
+          </div>
+        </Section>
+        <Section title="Defect Pareto Chart (Top 5)">
+          <div className="xwd-pad">
+            <ParetoChart items={data.pareto} />
+          </div>
+        </Section>
+      </div>
+
+      <div className="xwd-cols3">
+        <Section title="Alert Center">
+          <div className="xwd-pad">
+            <table className="xw-table xwd-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Level</th>
+                  <th>Message</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.alerts.map((a, i) => (
+                  <tr key={i}>
+                    <td className="xwd-num">{a.time}</td>
+                    <td>
+                      <span className={LEVEL_CLS[a.level] ?? "xwd-badge xwd-badge-info"}>{a.level}</span>
+                    </td>
+                    <td>{a.message}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+
+        <Section title="Document Center">
+          <div className="xwd-pad">
+            <table className="xw-table xwd-table">
+              <thead>
+                <tr>
+                  <th>Document Name</th>
+                  <th>Type</th>
+                  <th>Last Update</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.documents.map((d, i) => (
+                  <tr key={i}>
+                    <td>{d.name}</td>
+                    <td>{d.type}</td>
+                    <td className="xwd-num">{d.lastUpdate}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+
+        <Section title="System Information">
+          <div className="xwd-pad">
+            <div className="xwd-info">
+              {infoRows.map(([label, value]) => (
+                <div key={label} className="xwd-info-row">
+                  <span className="xwd-info-label">{label}</span>
+                  <span className="xwd-info-value">{value}</span>
+                </div>
+              ))}
             </div>
-            <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-              {dateContext.format(new Date())} · data dari database{loadError ? ` · ${loadError}` : ""}
-            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="hidden items-center gap-2 rounded-full border border-slate-950/10 py-1 pr-3 pl-1 sm:flex dark:border-white/10">
-              <span className="grid h-6 w-6 place-items-center rounded-full bg-cyan-500/20 font-mono text-[10px] font-bold text-cyan-600 dark:text-cyan-400">
-                {initials(user.name)}
-              </span>
-              <span className="text-xs font-medium">{user.name}</span>
-            </span>
-            <span className="rounded-full border border-slate-950/10 bg-slate-950/[0.03] px-3 py-1.5 text-xs font-semibold tabular-nums dark:border-white/10 dark:bg-white/[0.03]">
-              {records.length} record
-            </span>
-          </div>
-        </div>
-      </section>
+        </Section>
+      </div>
 
-      {/* Filter bar: rentang tanggal + model/area + chip cepat */}
-      <section className="glass-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold tracking-tight">Filter Data</h2>
-          <div className="flex flex-wrap items-center gap-2">
-            {presets.map((p) => (
-              <button
-                key={p.key}
-                type="button"
-                onClick={() => setFilters((f) => ({ ...f, from: p.range.from, to: p.range.to }))}
-                className={`${chipBase} ${isPresetActive(filters, p.range) ? chipActive : chipIdle}`}
-              >
-                {p.label}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setFilters((f) => ({ ...f, from: null, to: null }))}
-              className={`${chipBase} ${filters.from === null && filters.to === null ? chipActive : chipIdle}`}
-            >
-              Semua
-            </button>
-          </div>
-        </div>
-        <div className="mt-3 flex flex-wrap items-end gap-4">
-          <DateRangeFilter
-            value={{ from: filters.from, to: filters.to }}
-            minDate={dates[0] ?? ""}
-            maxDate={dates[dates.length - 1] ?? ""}
-            disabled={records.length === 0}
-            onChange={(range) => setFilters((f) => ({ ...f, ...range }))}
-          />
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase dark:text-slate-400">
-              Model
-            </span>
-            <select
-              value={filters.model ?? ""}
-              disabled={records.length === 0}
-              onChange={(e) => setFilters((f) => ({ ...f, model: e.target.value || null }))}
-              className={`${inputClass} min-w-40`}
-            >
-              <option value="">Semua Model</option>
-              {models.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase dark:text-slate-400">
-              Area
-            </span>
-            <select
-              value={filters.area ?? ""}
-              disabled={records.length === 0}
-              onChange={(e) => setFilters((f) => ({ ...f, area: e.target.value || null }))}
-              className={`${inputClass} min-w-44`}
-            >
-              <option value="">Semua Area</option>
-              {areas.map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            </select>
-          </label>
-          <p className="pb-2 text-[11px] text-slate-500 dark:text-slate-400">
-            Menampilkan <span className="font-semibold tabular-nums">{filtered.length}</span> dari{" "}
-            <span className="font-semibold tabular-nums">{records.length}</span> record
-          </p>
-        </div>
-      </section>
-
-      {/* Baris KPI — dihitung dari data, bukan hardcode */}
-      <section className="stagger grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-        <KpiCard label="Total Output" num={summary.output} value={formatNumber(summary.output)} sub={`${summary.count} record`} tone="cyan" />
-        <KpiCard
-          label="GAP OP"
-          num={summary.gapOp}
-          value={fmtSigned(summary.gapOp)}
-          sub="Σ Output − Σ Plan"
-          tone={summary.gapOp >= 0 ? "emerald" : "rose"}
-        />
-        <KpiCard
-          label="Rata-rata UPPH"
-          num={summary.upph ?? undefined}
-          value={formatDecimal(summary.upph)}
-          sub="Σ UPH Result ÷ Σ HC Actual"
-          tone="slate"
-        />
-        <KpiCard
-          label="Hit-rate UPH Target"
-          num={summary.hitRateUph}
-          suffix="%"
-          value={`${formatDecimal(summary.hitRateUph)}%`}
-          sub="record dgn GAP UPH ≥ 0"
-          tone="cyan"
-        />
-        <KpiCard label="Total Setup" num={summary.setup} suffix=" mnt" value={`${formatNumber(summary.setup)} mnt`} sub="Σ Setup" tone="slate" />
-      </section>
-
-      {/* Baris atas — 3 tabel sejajar */}
-      <section className="stagger grid grid-cols-1 gap-4 md:grid-cols-3">
-        {/* 1. Daily Production Table */}
-        <TableCard
-          title="Daily Production"
-          subtitle="Per tanggal · model · shift"
-          minW="min-w-[32rem]"
-          maxH="max-h-72"
-          leftCols={3}
-          empty={noData}
-          headers={["Tanggal", "Model", "Shift", "UPH Result", "Output", "GAP OP", "UPPH"]}
-        >
-          {dailyGroups.map((g) => (
-            <tr key={`${g.date}|${g.model}|${g.shift ?? ""}`} className={ROW_CLS}>
-              <td className={TD_LEFT}>{g.date}</td>
-              <td className={`${TD_LEFT} font-semibold`}>{g.model}</td>
-              <td className={TD_LEFT}>{g.shift ?? "—"}</td>
-              <td className={TD_RIGHT}>{formatNumber(g.uphResult)}</td>
-              <td className={TD_RIGHT}>{formatNumber(g.output)}</td>
-              <td className={TD_RIGHT}>
-                <GapCell value={round2(g.output - g.plan)} />
-              </td>
-              <td className={TD_RIGHT}>
-                {formatDecimal(g.hcActual === 0 ? null : round2(g.uphResult / g.hcActual))}
-              </td>
-            </tr>
-          ))}
-          <tr className={TOTAL_ROW_CLS}>
-            <td className="px-3 py-2 text-[10px] font-bold tracking-wider uppercase" colSpan={3}>
-              Total · {dailyGroups.length} grup
-            </td>
-            <td className={TD_RIGHT}>{formatNumber(dailyTotal.uphResult)}</td>
-            <td className={TD_RIGHT}>{formatNumber(dailyTotal.output)}</td>
-            <td className={`${TD_RIGHT} font-bold`}>
-              <GapCell value={dailyGapOp} />
-            </td>
-            <td className={`${TD_RIGHT} font-bold`}>{formatDecimal(dailyUpph)}</td>
-          </tr>
-        </TableCard>
-
-        {/* 2. Plan vs Output */}
-        <TableCard
-          title="Plan vs Output"
-          subtitle="Per model · % = Output ÷ Plan"
-          minW="min-w-[18rem]"
-          maxH="max-h-72"
-          empty={noData}
-          headers={["Model", "Plan", "Output", "GAP OP", "%"]}
-        >
-          {summary.byModel.map((m: ModelGroup) => {
-            const pct = planPct(m.plan, m.output);
-            return (
-              <tr key={m.model} className={ROW_CLS}>
-                <td className={`${TD_LEFT} font-semibold`}>{m.model}</td>
-                <td className={TD_RIGHT}>{formatNumber(m.plan)}</td>
-                <td className={TD_RIGHT}>{formatNumber(m.output)}</td>
-                <td className={TD_RIGHT}>
-                  <GapCell value={m.gapOp} />
-                </td>
-                <td className={`${TD_RIGHT} max-w-24`}>
-                  <div className="flex items-center justify-end gap-2">
-                    <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-950/10 dark:bg-white/10">
-                      <div
-                        className={`h-full rounded-full ${m.gapOp >= 0 ? "bg-emerald-500" : "bg-rose-500"}`}
-                        style={{ width: `${Math.min(100, pct)}%` }}
-                      />
-                    </div>
-                    <span className="text-[10px] font-semibold">{formatNumber(pct)}%</span>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-          <tr className={TOTAL_ROW_CLS}>
-            <td className="px-3 py-2 text-[10px] font-bold tracking-wider uppercase">Total</td>
-            <td className={TD_RIGHT}>{formatNumber(summary.plan)}</td>
-            <td className={TD_RIGHT}>{formatNumber(summary.output)}</td>
-            <td className={`${TD_RIGHT} font-bold`}>
-              <GapCell value={summary.gapOp} />
-            </td>
-            <td className={`${TD_RIGHT} font-bold`}>{formatNumber(planPctTotal)}%</td>
-          </tr>
-        </TableCard>
-
-        {/* 3. UPH Performance */}
-        <TableCard
-          title="UPH Performance"
-          subtitle="Per model · rata-rata Result vs Target"
-          minW="min-w-[18rem]"
-          maxH="max-h-72"
-          empty={noData}
-          headers={["Model", "UPH Target", "UPH Result", "GAP UPH", "Status"]}
-        >
-          {summary.byModel.map((m: ModelGroup) => (
-            <tr key={m.model} className={ROW_CLS}>
-              <td className={`${TD_LEFT} font-semibold`}>{m.model}</td>
-              <td className={TD_RIGHT}>{formatNumber(m.uphTargetAvg)}</td>
-              <td className={TD_RIGHT}>{formatNumber(m.uphResultAvg)}</td>
-              <td className={TD_RIGHT}>
-                <GapCell value={m.gapUphAvg} />
-              </td>
-              <td className={TD_RIGHT}>
-                <UphBadge gap={m.gapUphAvg} />
-              </td>
-            </tr>
-          ))}
-          <tr className={TOTAL_ROW_CLS}>
-            <td className="px-3 py-2 text-[10px] font-bold tracking-wider uppercase">Total</td>
-            <td className={TD_RIGHT}>{formatNumber(summary.uphTarget)}</td>
-            <td className={TD_RIGHT}>{formatNumber(summary.uphResult)}</td>
-            <td className={`${TD_RIGHT} font-bold`}>
-              <GapCell value={uphGapTotal} />
-            </td>
-            <td className={TD_RIGHT}>
-              <UphBadge gap={uphGapTotal} />
-            </td>
-          </tr>
-        </TableCard>
-      </section>
-
-      {/* Baris bawah — 2 tabel */}
-      <section className="stagger grid grid-cols-1 gap-4 md:grid-cols-2">
-        {/* 4. HC Performance */}
-        <TableCard
-          title="HC Performance"
-          subtitle="Per model · GAP HC negatif = hemat"
-          minW="min-w-[22rem]"
-          maxH="max-h-64"
-          empty={noData}
-          headers={["Model", "HC Std", "HC Act", "GAP HC", "Status"]}
-        >
-          {summary.byModel.map((m: ModelGroup) => (
-            <tr key={m.model} className={ROW_CLS}>
-              <td className={`${TD_LEFT} font-semibold`}>{m.model}</td>
-              <td className={TD_RIGHT}>{formatNumber(m.hcStandard)}</td>
-              <td className={TD_RIGHT}>{formatNumber(m.hcActual)}</td>
-              <td className={TD_RIGHT}>
-                <GapCell value={m.gapHc} lowerIsGood />
-              </td>
-              <td className={TD_RIGHT}>
-                <HcBadge gap={m.gapHc} />
-              </td>
-            </tr>
-          ))}
-          <tr className={TOTAL_ROW_CLS}>
-            <td className="px-3 py-2 text-[10px] font-bold tracking-wider uppercase">Total</td>
-            <td className={TD_RIGHT}>{formatNumber(summary.hcStandard)}</td>
-            <td className={TD_RIGHT}>{formatNumber(summary.hcActual)}</td>
-            <td className={`${TD_RIGHT} font-bold`}>
-              <GapCell value={hcGapTotal} lowerIsGood />
-            </td>
-            <td className={TD_RIGHT}>
-              <HcBadge gap={hcGapTotal} />
-            </td>
-          </tr>
-        </TableCard>
-
-        {/* 5. Setup & UPPH */}
-        <TableCard
-          title="Setup & UPPH"
-          subtitle="Per model · menit"
-          minW="min-w-[22rem]"
-          maxH="max-h-64"
-          empty={noData}
-          headers={["Model", "Total Setup", "Working Hour", "Setup Packing", "UPPH"]}
-        >
-          {summary.byModel.map((m: ModelGroup) => {
-            const extra = setupExtra.get(m.model) ?? { workingHour: 0, setupPacking: 0 };
-            return (
-              <tr key={m.model} className={ROW_CLS}>
-                <td className={`${TD_LEFT} font-semibold`}>{m.model}</td>
-                <td className={TD_RIGHT}>{formatNumber(m.setup)}</td>
-                <td className={TD_RIGHT}>{formatNumber(extra.workingHour)}</td>
-                <td className={TD_RIGHT}>{formatNumber(extra.setupPacking)}</td>
-                <td className={`${TD_RIGHT} font-medium`}>{formatDecimal(m.upph)}</td>
-              </tr>
-            );
-          })}
-          <tr className={TOTAL_ROW_CLS}>
-            <td className="px-3 py-2 text-[10px] font-bold tracking-wider uppercase">Total</td>
-            <td className={TD_RIGHT}>{formatNumber(summary.setup)}</td>
-            <td className={TD_RIGHT}>{formatNumber(setupTotal.workingHour)}</td>
-            <td className={TD_RIGHT}>{formatNumber(setupTotal.setupPacking)}</td>
-            <td className={`${TD_RIGHT} font-bold`}>{formatDecimal(upphTotal)}</td>
-          </tr>
-        </TableCard>
-      </section>
+      <style jsx>{`
+        .xwd-page {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 8px;
+          font-family: Tahoma, "Segoe UI", Arial, sans-serif;
+          font-size: 11px;
+          color: #1a1a1a;
+        }
+        .xwd-panel {
+          border: 1px solid #9c9c9c;
+          background: #fff;
+        }
+        .xwd-section {
+          background: linear-gradient(to bottom, #3165c4, #0a246a);
+          color: #fff;
+          padding: 4px 8px;
+          border-bottom: 1px solid #0a246a;
+        }
+        .xwd-section h3 {
+          margin: 0;
+          font-size: 11px;
+          font-weight: bold;
+          letter-spacing: 0.02em;
+        }
+        .xwd-pad {
+          padding: 8px;
+        }
+        .xwd-kpi-row {
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          gap: 6px;
+          padding: 8px;
+        }
+        .xwd-kpi {
+          border: 1px solid #a0a0a0;
+          background: #f2f0ea;
+          padding: 6px 8px;
+        }
+        .xwd-kpi-label {
+          display: block;
+          font-size: 10px;
+          color: #555;
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
+        }
+        .xwd-kpi-value {
+          display: block;
+          margin-top: 2px;
+          font-size: 16px;
+          font-weight: bold;
+          font-variant-numeric: tabular-nums;
+        }
+        .xwd-table {
+          border-collapse: collapse;
+          width: 100%;
+        }
+        .xwd-table th {
+          background: linear-gradient(to bottom, #f5f4ee, #d8d5cb);
+          border: 1px solid #919b9c;
+          border-bottom: 1px solid #6f7575;
+          padding: 3px 8px;
+          font-weight: bold;
+          text-align: left;
+          font-size: 11px;
+          white-space: nowrap;
+        }
+        .xwd-table td {
+          border: 1px solid #c0c0c0;
+          padding: 3px 8px;
+          font-size: 11px;
+        }
+        .xwd-th-num {
+          text-align: right;
+        }
+        .xwd-num {
+          text-align: right;
+          font-variant-numeric: tabular-nums;
+        }
+        .xwd-status {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-weight: bold;
+          color: #1a1a1a;
+        }
+        .xwd-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          border: 1px solid rgba(0, 0, 0, 0.3);
+          display: inline-block;
+        }
+        .xwd-badge {
+          display: inline-block;
+          padding: 0 6px;
+          border: 1px solid;
+          font-size: 10px;
+          font-weight: bold;
+          white-space: nowrap;
+        }
+        .xwd-badge-critical {
+          background: #e0392b;
+          color: #fff;
+          border-color: #a52318;
+        }
+        .xwd-badge-warning {
+          background: #ffdf80;
+          color: #4d3800;
+          border-color: #c8a13a;
+        }
+        .xwd-badge-info {
+          background: #cfe3ff;
+          color: #17408d;
+          border-color: #6f94d6;
+        }
+        .xwd-cols2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+        }
+        .xwd-cols3 {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 8px;
+        }
+        .xwd-legend {
+          display: flex;
+          gap: 16px;
+          margin-top: 4px;
+        }
+        .xwd-legend-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 11px;
+        }
+        .xwd-legend-swatch {
+          width: 12px;
+          height: 3px;
+          display: inline-block;
+        }
+        .xwd-info {
+          border: 1px solid #c0c0c0;
+        }
+        .xwd-info-row {
+          display: grid;
+          grid-template-columns: 128px 1fr;
+        }
+        .xwd-info-row + .xwd-info-row {
+          border-top: 1px solid #c0c0c0;
+        }
+        .xwd-info-label {
+          background: #ece9d8;
+          padding: 3px 8px;
+          font-weight: bold;
+          border-right: 1px solid #c0c0c0;
+        }
+        .xwd-info-value {
+          padding: 3px 8px;
+        }
+      `}</style>
     </main>
   );
 }

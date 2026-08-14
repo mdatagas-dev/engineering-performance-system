@@ -1815,7 +1815,33 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
     },
   },
   {
-    version: "v1.2.0",
+    version: "v1.10.0",
+    date: "2026-08-15",
+    features: {
+      id: [
+        "Chrome aplikasi diubah menjadi jendela aplikasi Windows XP enterprise: title bar, menu bar, toolbar, navigasi MAIN NAVIGATION, dan bar SYSTEM SHORTCUT",
+        "Dashboard produksi direkonstruksi mengikuti reference: KPI Production Overview, Line Status Monitoring, Output Trend, Defect Pareto, Alert Center, Document Center, dan System Information",
+      ],
+      en: [
+        "App chrome changed to a Windows XP enterprise application window: title bar, menu bar, toolbar, MAIN NAVIGATION navigation, and SYSTEM SHORTCUT bar",
+        "Production dashboard reconstructed following the reference: KPI Production Overview, Line Status Monitoring, Output Trend, Defect Pareto, Alert Center, Document Center, and System Information",
+      ],
+      zh: [
+        "应用外观改为 Windows XP 企业版应用窗口：标题栏、菜单栏、工具栏、MAIN NAVIGATION 导航和 SYSTEM SHORTCUT 栏",
+        "生产仪表盘按参考资料重构：KPI Production Overview、Line Status Monitoring、Output Trend、Defect Pareto、Alert Center、Document Center 和 System Information",
+      ],
+      ko: [
+        "앱 외관을 Windows XP 엔터프라이즈 애플리케이션 창으로 변경: 제목 표시줄, 메뉴 표시줄, 도구 모음, MAIN NAVIGATION 내비게이션 및 SYSTEM SHORTCUT 바",
+        "생산 대시보드를 참고 자료에 따라 재구성: KPI Production Overview, Line Status Monitoring, Output Trend, Defect Pareto, Alert Center, Document Center 및 System Information",
+      ],
+      ja: [
+        "アプリの外観を Windows XP エンタープライズのアプリケーションウィンドウに変更：タイトルバー、メニューバー、ツールバー、MAIN NAVIGATION ナビゲーション、SYSTEM SHORTCUT バー",
+        "生産ダッシュボードを参考資料に沿って再構築：KPI Production Overview、Line Status Monitoring、Output Trend、Defect Pareto、Alert Center、Document Center、System Information",
+      ],
+    },
+  },
+  {
+    version: "v1.1.0",
     date: "2026-08-13",
     features: {
       id: [
