@@ -431,6 +431,27 @@ export function changelogKind(entry: Pick<ChangelogEntry, "kind">): ChangelogKin
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "v1.8.2",
+    date: "2026-08-14",
+    features: {
+      id: [
+        "Animasi loading dibuat lebih natural ala Windows 95: bar boot/homepage, progress checking login, dan Starting Application kini memakai pita biru marquee kontinu satu arah dengan celah (seamless, offset = lebar siklus pola) — bukan bar bolak-balik atau lompat",
+      ],
+      en: [
+        "Loading animations are now more authentic to Windows 95: the homepage boot bar, login checking progress, and Starting Application now use a continuous one-way marquee ribbon with gaps (seamless, offset equals the pattern cycle width) — no more back-and-forth or jumping bars",
+      ],
+      zh: [
+        "加载动画更贴近 Windows 95 原版：首页开机条、登录检查进度和 Starting Application 现在使用带间隙、单向连续滚动的跑马灯缎带（无缝，偏移量等于图案周期宽度）——不再来回摆动或跳动",
+      ],
+      ko: [
+        "로딩 애니메이션을 Windows 95 원본처럼 더 자연스럽게: 홈페이지 부팅 바, 로그인 확인 진행률, Starting Application이 이제 간격이 있는 단방향 연속 마키 리본을 사용합니다(원활, 오프셋 = 패턴 주기 너비) — 더 이상 앞뒤로 흔들리거나 튀지 않습니다",
+      ],
+      ja: [
+        "ローディングアニメーションを Windows 95 らしく自然に：ホームページのブートバー、ログイン確認のプログレス、Starting Application が、隙間のある単方向連続マーキーリボン（シームレス、オフセット＝パターン周期幅）を使用 — 往復や飛び跳ねはなくなりました",
+      ],
+    },
+  },
+  {
     version: "v1.8.1",
     date: "2026-08-14",
     features: {

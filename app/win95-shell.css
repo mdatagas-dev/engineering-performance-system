@@ -598,14 +598,22 @@
 
 .win95-boot__bar {
   height: 100%;
-  width: 34%;
-  background: repeating-linear-gradient(90deg, #0000a0 0 10px, #0000e8 10px 22px);
-  animation: win95-boot-bar 0.7s linear infinite;
+  width: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    #0000a0 0 6px,
+    #1084d0 6px 14px,
+    transparent 14px 22px
+  );
+  background-size: 22px 100%;
+  animation: win95-boot-bar 0.5s linear infinite;
 }
 
+/* Offset animasi = lebar siklus pola (22px) → loop seamless, kontinu ke
+   kanan seperti boot bar Windows 95 asli. */
 @keyframes win95-boot-bar {
   to {
-    background-position: 44px 0;
+    background-position: 22px 0;
   }
 }
 
