@@ -17,14 +17,17 @@ const PERMISSION_KEYS = [
   "kpi.configure",
   "audit.view",
   "backup.view",
+  "quality.view",
+  "quality.record",
+  "quality.approve",
 ] as const;
 
 const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
   SUPER_ADMIN: [...PERMISSION_KEYS],
-  ADMIN: ["user.manage", "record.create", "record.approve", "record.lock", "dashboard.view", "import.run", "export.run", "kpi.configure", "audit.view", "backup.view"],
-  ENGINEERING_MANAGER: ["record.approve", "record.lock", "dashboard.view", "export.run", "kpi.configure", "backup.view"],
-  ENGINEERING_STAFF: ["record.create", "dashboard.view", "import.run", "export.run"],
-  VIEWER: ["dashboard.view", "export.run"],
+  ADMIN: ["user.manage", "record.create", "record.approve", "record.lock", "dashboard.view", "import.run", "export.run", "kpi.configure", "audit.view", "backup.view", "quality.view", "quality.record", "quality.approve"],
+  ENGINEERING_MANAGER: ["record.approve", "record.lock", "dashboard.view", "export.run", "kpi.configure", "backup.view", "quality.view", "quality.approve"],
+  ENGINEERING_STAFF: ["record.create", "dashboard.view", "import.run", "export.run", "quality.view", "quality.record"],
+  VIEWER: ["dashboard.view", "export.run", "quality.view"],
 };
 
 const ACCOUNTS: { email: string; password: string; name: string; role: RoleName }[] = [

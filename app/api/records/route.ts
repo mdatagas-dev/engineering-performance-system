@@ -16,6 +16,12 @@ import {
   DUPLICATE_MESSAGE,
 } from "@/lib/records/create";
 import { createVersionSnapshot } from "@/lib/records/versioning";
+import { calculateCalculated } from "@/lib/records/calculate";
+import {
+  evaluateAndCreateAlerts,
+  makeAlertDeps,
+  type AlertValue,
+} from "@/lib/notifications/alertService";
 import {
   badRequest,
   conflict,
@@ -158,6 +164,38 @@ export async function POST(req: Request) {
         changedBy: session.sub,
         action: "CREATED",
       });
+
+      const calculated = calculateCalculated({
+        uphTarget: payload.fields.uphTarget as number,
+        uphResult: payload.fields.uphResult as number,
+        hcStandard: payload.fields.hcStandard as number,
+        hcActual: payload.fields.hcActual as number,
+        plan: payload.fields.plan as number,
+        outputProd: payload.fields.outputProd as number,
+      });
+      const valuesByKey: Record<string, number | null> = {
+        gap_uph: calculated.gapUph,
+        gap_hc: calculated.gapHc,
+        gap_op: calculated.gapOp,
+        upph: calculated.upph,
+      };
+      const alertValues: AlertValue[] = [];
+      for (const [key, value] of Object.entries(valuesByKey)) {
+        if (typeof value === "number" && Number.isFinite(value)) {
+          alertValues.push({ key, value });
+        }
+      }
+      if (alertValues.length > 0) {
+        try {
+          await evaluateAndCreateAlerts(
+            { values: alertValues, recipientId: session.sub },
+            makeAlertDeps(tx)
+          );
+        } catch (err) {
+          // Best-effort: alert gagal tidak boleh menggagalkan pembuatan record.
+          console.error("Gagal membuat KPI alert:", err);
+        }
+      }
       return created;
     });
 

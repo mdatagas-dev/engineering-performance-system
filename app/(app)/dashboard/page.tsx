@@ -3,13 +3,16 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { useSessionGuard } from "@/hooks/use-session-guard";
+import { fetchAllRecords } from "@/lib/api/records";
 import {
   getDashboardData,
   getSystemInfo,
+  type Alert,
   type DashboardData,
   type OutputTrend,
   type ParetoItem,
 } from "@/lib/mocks/dashboard";
+import type { MockProductionRecord } from "@/lib/mocks/records";
 import { formatDecimal, formatNumber } from "@/lib/production-table/format";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -36,14 +39,167 @@ const AXIS_TEXT = { fontSize: 10, fill: "#333", fontFamily: "Tahoma, Arial, sans
 
 const pct = (v: number) => `${formatDecimal(v)} %`;
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+const MOCK_DATA: DashboardData = getDashboardData();
+
+type Source = "real" | "demo";
+
+type KpisView = {
+  plan: number;
+  actual: number;
+  achievementPct: number;
+  remaining: number;
+  defect: string;
+  defectRatePct: string;
+};
+
+type LineView = {
+  line: string;
+  model: string;
+  status: "RUNNING" | "STOP" | "IDLE";
+  plan: number;
+  actual: number;
+  achievementPct: number;
+  defect: string;
+};
+
+type NotificationItem = {
+  id?: string;
+  title?: string;
+  message?: string;
+  severity?: unknown;
+  createdAt?: unknown;
+};
+
+type TrendPointApi = {
+  date: string;
+  outputProd: number;
+  plan?: number;
+};
+
+const mockKpis = (): KpisView => ({
+  plan: MOCK_DATA.kpis.plan,
+  actual: MOCK_DATA.kpis.actual,
+  achievementPct: MOCK_DATA.kpis.achievementPct,
+  remaining: MOCK_DATA.kpis.remaining,
+  defect: formatNumber(MOCK_DATA.kpis.defect),
+  defectRatePct: pct(MOCK_DATA.kpis.defectRatePct),
+});
+
+const mockLines = (): LineView[] =>
+  MOCK_DATA.lineStatus.map((r) => ({
+    line: r.line,
+    model: r.model,
+    status: r.status,
+    plan: r.plan,
+    actual: r.actual,
+    achievementPct: r.achievementPct,
+    defect: formatNumber(r.defect),
+  }));
+
+function buildKpis(records: MockProductionRecord[]): KpisView {
+  const plan = records.reduce((s, r) => s + r.plan, 0);
+  const actual = records.reduce((s, r) => s + r.outputProd, 0);
+  return {
+    plan,
+    actual,
+    achievementPct: plan === 0 ? 0 : (actual / plan) * 100,
+    remaining: plan - actual,
+    defect: "—",
+    defectRatePct: "—",
+  };
+}
+
+function buildLines(records: MockProductionRecord[]): LineView[] {
+  const map = new Map<
+    string,
+    { model: string; plan: number; actual: number; gapOp: number; outputProd: number }
+  >();
+  for (const r of records) {
+    const key = r.area?.name ?? r.model;
+    const g = map.get(key) ?? { model: r.model, plan: 0, actual: 0, gapOp: 0, outputProd: 0 };
+    g.plan += r.plan;
+    g.actual += r.outputProd;
+    g.gapOp += r.gapOp;
+    g.outputProd += r.outputProd;
+    map.set(key, g);
+  }
+  return [...map.entries()].map(([key, g]) => ({
+    line: key,
+    model: g.model,
+    status: g.gapOp >= 0 ? "RUNNING" : g.outputProd === 0 ? "IDLE" : "STOP",
+    plan: g.plan,
+    actual: g.actual,
+    achievementPct: g.plan === 0 ? 0 : (g.actual / g.plan) * 100,
+    defect: "—",
+  }));
+}
+
+function deriveAlerts(records: MockProductionRecord[]): Alert[] {
+  return records
+    .filter((r) => r.gapOp < 0)
+    .map((r) => ({
+      time: "—",
+      level: "WARNING" as const,
+      message: `Gap produksi ${r.model} (${r.area?.name ?? r.date}): ${r.gapOp} pcs`,
+    }));
+}
+
+const fmtTime = (v: unknown): string => {
+  if (typeof v !== "string") return "—";
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+};
+
+const normLevel = (v: unknown): "INFO" | "WARNING" | "CRITICAL" => {
+  const s = String(v ?? "").toUpperCase();
+  if (s === "CRITICAL") return "CRITICAL";
+  if (s === "WARNING") return "WARNING";
+  return "INFO";
+};
+
+const srcChip = (src: Source, loading: boolean): string | undefined =>
+  loading ? undefined : src === "real" ? "Data real" : "Data demo";
+
+function Section({
+  title,
+  note,
+  children,
+}: {
+  title: string;
+  note?: string;
+  children: ReactNode;
+}) {
   return (
     <section className="xw-panel xwd-panel">
       <header className="xwd-section">
         <h3>{title}</h3>
+        {note ? <span className="xwd-src-note">{note}</span> : null}
       </header>
       {children}
     </section>
+  );
+}
+
+function BlockShimmer({ height }: { height: "sm" | "lg" }) {
+  return (
+    <div className="xwd-pad">
+      <div
+        className={`shimmer w-full rounded-lg bg-slate-200/80 dark:bg-slate-800/80 ${
+          height === "sm" ? "h-20" : "h-56"
+        }`}
+      />
+    </div>
+  );
+}
+
+function KpiRowShimmer() {
+  return (
+    <div className="xwd-kpi-row">
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="shimmer h-10 rounded-lg bg-slate-200/80 dark:bg-slate-800/80" />
+      ))}
+    </div>
   );
 }
 
@@ -191,19 +347,165 @@ function ParetoChart({ items }: { items: readonly ParetoItem[] }) {
 
 export default function DashboardPage() {
   const session = useSessionGuard("dashboard.view");
-  const [data, setData] = useState<DashboardData | null>(null);
+
+  const [records, setRecords] = useState<MockProductionRecord[]>([]);
+  const [kpis, setKpis] = useState<KpisView | null>(null);
+  const [kpisSrc, setKpisSrc] = useState<Source>("demo");
+  const [lines, setLines] = useState<readonly LineView[]>([]);
+  const [linesSrc, setLinesSrc] = useState<Source>("demo");
+  const [recsLoading, setRecsLoading] = useState(true);
+
+  const [trend, setTrend] = useState<readonly OutputTrend[]>([]);
+  const [trendSrc, setTrendSrc] = useState<Source>("demo");
+  const [trendLoading, setTrendLoading] = useState(true);
+
+  const [pareto, setPareto] = useState<readonly ParetoItem[]>([]);
+  const [paretoSrc, setParetoSrc] = useState<Source>("demo");
+  const [paretoLoading, setParetoLoading] = useState(true);
+
+  const [alerts, setAlerts] = useState<readonly Alert[]>([]);
+  const [alertsSrc, setAlertsSrc] = useState<Source>("demo");
+  const [alertsLoading, setAlertsLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
-    Promise.resolve(getDashboardData()).then((d) => {
-      if (alive) setData(d);
-    });
+    const load = async () => {
+      try {
+        const rs = await fetchAllRecords();
+        if (!alive) return;
+        setRecords(rs);
+        if (rs.length > 0) {
+          setKpis(buildKpis(rs));
+          setKpisSrc("real");
+          setLines(buildLines(rs));
+          setLinesSrc("real");
+        } else {
+          setKpis(mockKpis());
+          setKpisSrc("demo");
+          setLines(mockLines());
+          setLinesSrc("demo");
+        }
+      } catch {
+        if (!alive) return;
+        setKpis(mockKpis());
+        setKpisSrc("demo");
+        setLines(mockLines());
+        setLinesSrc("demo");
+      } finally {
+        if (alive) setRecsLoading(false);
+      }
+    };
+    load();
     return () => {
       alive = false;
     };
   }, []);
 
-  if (!session || !data) {
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      try {
+        const res = await fetch("/api/trends/series");
+        if (!res.ok) throw new Error(String(res.status));
+        const json = (await res.json()) as { points?: TrendPointApi[] };
+        const pts = json.points ?? [];
+        if (pts.length === 0) throw new Error("empty");
+        const planByDate = new Map(MOCK_DATA.outputTrend.map((d) => [d.date, d.plan]));
+        setTrend(
+          pts.map((p) => ({
+            date: p.date,
+            plan: planByDate.get(p.date) ?? 0,
+            actual: p.outputProd,
+            target: p.plan ?? 0,
+          }))
+        );
+        setTrendSrc("real");
+      } catch {
+        if (!alive) return;
+        setTrend(MOCK_DATA.outputTrend);
+        setTrendSrc("demo");
+      } finally {
+        if (alive) setTrendLoading(false);
+      }
+    };
+    load();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      try {
+        const res = await fetch("/api/quality/summary");
+        if (!res.ok) throw new Error(String(res.status));
+        const json = (await res.json()) as {
+          summary?: { pareto?: Array<{ defectName?: string; quantity?: number }> };
+        };
+        const rows = json.summary?.pareto ?? [];
+        if (rows.length === 0) throw new Error("empty");
+        setPareto(
+          rows.map((r) => ({ name: r.defectName ?? "—", quantity: r.quantity ?? 0 }))
+        );
+        setParetoSrc("real");
+      } catch {
+        if (!alive) return;
+        setPareto(MOCK_DATA.pareto);
+        setParetoSrc("demo");
+      } finally {
+        if (alive) setParetoLoading(false);
+      }
+    };
+    load();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      let list: readonly Alert[] = MOCK_DATA.alerts;
+      let src: Source = "demo";
+      try {
+        const res = await fetch("/api/notifications");
+        if (!res.ok) throw new Error(String(res.status));
+        const json = (await res.json()) as { items?: NotificationItem[] };
+        const items = json.items ?? [];
+        if (items.length > 0) {
+          list = items.map((n) => ({
+            time: fmtTime(n.createdAt),
+            level: normLevel(n.severity),
+            message: n.message || n.title || "—",
+          }));
+          src = "real";
+        } else {
+          const derived = deriveAlerts(records);
+          if (derived.length > 0) {
+            list = derived;
+            src = "real";
+          }
+        }
+      } catch {
+        const derived = deriveAlerts(records);
+        if (derived.length > 0) {
+          list = derived;
+          src = "real";
+        }
+      }
+      if (!alive) return;
+      setAlerts(list);
+      setAlertsSrc(src);
+      setAlertsLoading(false);
+    };
+    load();
+    return () => {
+      alive = false;
+    };
+  }, [records]);
+
+  if (!session) {
     return (
       <div className="grid flex-1 place-items-center">
         <div className="shimmer h-4 w-44 rounded-lg bg-slate-200/80 dark:bg-slate-800/80" />
@@ -226,93 +528,113 @@ export default function DashboardPage() {
 
   return (
     <main className="xwd-page">
-      <Section title="Production Overview">
-        <div className="xwd-kpi-row">
-          <Kpi label="Plan (PCS)" value={formatNumber(data.kpis.plan)} />
-          <Kpi label="Actual (PCS)" value={formatNumber(data.kpis.actual)} />
-          <Kpi label="Achievement (%)" value={pct(data.kpis.achievementPct)} />
-          <Kpi label="Remaining (PCS)" value={formatNumber(data.kpis.remaining)} />
-          <Kpi label="Defect (PCS)" value={formatNumber(data.kpis.defect)} />
-          <Kpi label="Defect Rate (%)" value={pct(data.kpis.defectRatePct)} />
-        </div>
+      <Section title="Production Overview" note={srcChip(kpisSrc, recsLoading)}>
+        {recsLoading || !kpis ? (
+          <KpiRowShimmer />
+        ) : (
+          <div className="xwd-kpi-row">
+            <Kpi label="Plan (PCS)" value={formatNumber(kpis.plan)} />
+            <Kpi label="Actual (PCS)" value={formatNumber(kpis.actual)} />
+            <Kpi label="Achievement (%)" value={pct(kpis.achievementPct)} />
+            <Kpi label="Remaining (PCS)" value={formatNumber(kpis.remaining)} />
+            <Kpi label="Defect (PCS)" value={kpis.defect} />
+            <Kpi label="Defect Rate (%)" value={kpis.defectRatePct} />
+          </div>
+        )}
       </Section>
 
-      <Section title="Line Status Monitoring">
-        <div className="xwd-pad">
-          <table className="xw-table xwd-table">
-            <thead>
-              <tr>
-                <th>Line</th>
-                <th>Model</th>
-                <th>Status</th>
-                <th className="xwd-th-num">Plan (PCS)</th>
-                <th className="xwd-th-num">Actual (PCS)</th>
-                <th className="xwd-th-num">Achievement (%)</th>
-                <th className="xwd-th-num">Defect (PCS)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.lineStatus.map((r) => (
-                <tr key={r.line}>
-                  <td>{r.line}</td>
-                  <td>{r.model}</td>
-                  <td>
-                    <span className="xwd-status">
-                      <span className="xwd-dot" style={{ background: STATUS_COLOR[r.status] ?? "#888" }} />
-                      {r.status}
-                    </span>
-                  </td>
-                  <td className="xwd-num">{formatNumber(r.plan)}</td>
-                  <td className="xwd-num">{formatNumber(r.actual)}</td>
-                  <td className="xwd-num">{formatDecimal(r.achievementPct)}</td>
-                  <td className="xwd-num">{formatNumber(r.defect)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Section>
-
-      <div className="xwd-cols2">
-        <Section title="Output Trend (Daily)">
-          <div className="xwd-pad">
-            <TrendChart data={data.outputTrend} />
-          </div>
-        </Section>
-        <Section title="Defect Pareto Chart (Top 5)">
-          <div className="xwd-pad">
-            <ParetoChart items={data.pareto} />
-          </div>
-        </Section>
-      </div>
-
-      <div className="xwd-cols3">
-        <Section title="Alert Center">
+      <Section title="Line Status Monitoring" note={srcChip(linesSrc, recsLoading)}>
+        {recsLoading ? (
+          <BlockShimmer height="sm" />
+        ) : (
           <div className="xwd-pad">
             <table className="xw-table xwd-table">
               <thead>
                 <tr>
-                  <th>Time</th>
-                  <th>Level</th>
-                  <th>Message</th>
+                  <th>Line</th>
+                  <th>Model</th>
+                  <th>Status</th>
+                  <th className="xwd-th-num">Plan (PCS)</th>
+                  <th className="xwd-th-num">Actual (PCS)</th>
+                  <th className="xwd-th-num">Achievement (%)</th>
+                  <th className="xwd-th-num">Defect (PCS)</th>
                 </tr>
               </thead>
               <tbody>
-                {data.alerts.map((a, i) => (
-                  <tr key={i}>
-                    <td className="xwd-num">{a.time}</td>
+                {lines.map((r) => (
+                  <tr key={r.line}>
+                    <td>{r.line}</td>
+                    <td>{r.model}</td>
                     <td>
-                      <span className={LEVEL_CLS[a.level] ?? "xwd-badge xwd-badge-info"}>{a.level}</span>
+                      <span className="xwd-status">
+                        <span className="xwd-dot" style={{ background: STATUS_COLOR[r.status] ?? "#888" }} />
+                        {r.status}
+                      </span>
                     </td>
-                    <td>{a.message}</td>
+                    <td className="xwd-num">{formatNumber(r.plan)}</td>
+                    <td className="xwd-num">{formatNumber(r.actual)}</td>
+                    <td className="xwd-num">{formatDecimal(r.achievementPct)}</td>
+                    <td className="xwd-num">{r.defect}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        )}
+      </Section>
+
+      <div className="xwd-cols2">
+        <Section title="Output Trend (Daily)" note={srcChip(trendSrc, trendLoading)}>
+          {trendLoading ? (
+            <BlockShimmer height="lg" />
+          ) : (
+            <div className="xwd-pad">
+              <TrendChart data={trend} />
+            </div>
+          )}
+        </Section>
+        <Section title="Defect Pareto Chart (Top 5)" note={srcChip(paretoSrc, paretoLoading)}>
+          {paretoLoading ? (
+            <BlockShimmer height="lg" />
+          ) : (
+            <div className="xwd-pad">
+              <ParetoChart items={pareto} />
+            </div>
+          )}
+        </Section>
+      </div>
+
+      <div className="xwd-cols3">
+        <Section title="Alert Center" note={srcChip(alertsSrc, alertsLoading)}>
+          {alertsLoading ? (
+            <BlockShimmer height="sm" />
+          ) : (
+            <div className="xwd-pad">
+              <table className="xw-table xwd-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Level</th>
+                    <th>Message</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {alerts.map((a, i) => (
+                    <tr key={i}>
+                      <td className="xwd-num">{a.time}</td>
+                      <td>
+                        <span className={LEVEL_CLS[a.level] ?? "xwd-badge xwd-badge-info"}>{a.level}</span>
+                      </td>
+                      <td>{a.message}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Section>
 
-        <Section title="Document Center">
+        <Section title="Document Center" note="Data demo">
           <div className="xwd-pad">
             <table className="xw-table xwd-table">
               <thead>
@@ -323,7 +645,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.documents.map((d, i) => (
+                {MOCK_DATA.documents.map((d, i) => (
                   <tr key={i}>
                     <td>{d.name}</td>
                     <td>{d.type}</td>
@@ -335,7 +657,7 @@ export default function DashboardPage() {
           </div>
         </Section>
 
-        <Section title="System Information">
+        <Section title="System Information" note="Data real">
           <div className="xwd-pad">
             <div className="xwd-info">
               {infoRows.map(([label, value]) => (
@@ -374,6 +696,12 @@ export default function DashboardPage() {
           font-size: 11px;
           font-weight: bold;
           letter-spacing: 0.02em;
+        }
+        .xwd-src-note {
+          margin-left: 8px;
+          font-size: 10px;
+          font-weight: normal;
+          opacity: 0.85;
         }
         .xwd-pad {
           padding: 8px;

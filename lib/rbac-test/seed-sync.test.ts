@@ -65,7 +65,7 @@ function extractMockAccounts(src: string): Account[] {
 }
 
 describe("seeder (prisma/seed.ts)", () => {
-  it("10 permission lengkap sesuai PRD (user.manage … backup.view)", async () => {
+  it("13 permission lengkap sesuai PRD (user.manage … quality.approve)", async () => {
     const seed = await readFile(SEED_FILE, "utf8");
     assert.deepEqual(extractPermissionKeys(seed).sort(), [
       "audit.view",
@@ -74,6 +74,9 @@ describe("seeder (prisma/seed.ts)", () => {
       "export.run",
       "import.run",
       "kpi.configure",
+      "quality.approve",
+      "quality.record",
+      "quality.view",
       "record.approve",
       "record.create",
       "record.lock",

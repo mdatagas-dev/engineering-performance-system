@@ -92,7 +92,16 @@ describe("changelog", () => {
 
   it("versi diurutkan menurun (terbaru dulu)", () => {
     const versions = CHANGELOG.map((e) => e.version);
-    const sorted = [...versions].sort().reverse();
+    const compare = (a: string, b: string) => {
+      const pa = a.replace(/^v/, "").split(".").map(Number);
+      const pb = b.replace(/^v/, "").split(".").map(Number);
+      for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+        const diff = (pb[i] ?? 0) - (pa[i] ?? 0);
+        if (diff !== 0) return diff;
+      }
+      return 0;
+    };
+    const sorted = [...versions].sort(compare);
     assert.deepEqual(versions, sorted);
   });
 

@@ -226,60 +226,131 @@
 }
 
 .xw-nav {
-  flex: 0 0 200px;
+  flex: 0 0 220px;
   position: sticky;
   left: 0;
-  padding: 4px 2px 8px;
+  padding: 4px 2px 10px;
   overflow-x: hidden;
   overflow-y: auto;
-  background: #ffffff;
+  background: #f7f7f7;
   border-right: 1px solid var(--xw-border-dark);
+  font-family: var(--xw-font);
+  font-size: 11px;
 }
 
 .xw-nav__head {
-  margin: 0 4px 4px;
-  padding: 3px 6px;
-  border: 1px solid #7f9db9;
-  border-radius: 0;
-  background: linear-gradient(90deg, #dbe5f1, #ffffff);
-  color: #215dc6;
+  margin: 0 4px 6px;
+  padding: 4px 8px;
+  border: 1px solid #a7abb3;
+  border-top-color: #ffffff;
+  border-left-color: #ffffff;
+  background: linear-gradient(180deg, #ffffff, #ecebe4);
+  box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #d0d2d6;
+  color: #0a246a;
+  font-size: 11px;
   font-weight: bold;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 }
 
 .xw-nav__group {
-  margin-top: 4px;
+  margin-top: 6px;
+}
+
+.xw-nav__group-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 4px 2px 2px;
+  min-height: 22px;
+  background: linear-gradient(180deg, #ffffff, #ecebe4);
+  border: 1px solid #c9ccd1;
+  border-top-color: #ffffff;
+  border-left-color: #ffffff;
+  box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #d0d2d6;
 }
 
 .xw-nav__group-label {
-  margin: 2px 6px 1px;
-  padding: 2px 4px;
   font-weight: bold;
+  color: #0a246a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xw-nav__expander {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #7f7f7f;
+  background: #ffffff;
   color: #000000;
+  font: 10px/10px "Courier New", monospace;
+  cursor: default;
+}
+
+.xw-nav__expander:hover {
+  background: #e5eefb;
+}
+
+.xw-nav__children {
+  margin-left: 16px;
+  border-left: 1px dotted #9aa0a6;
+  padding-bottom: 1px;
 }
 
 .xw-nav__item {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 5px;
-  margin: 0 2px;
-  padding: 2px 4px 2px 6px;
+  gap: 4px;
+  margin: 0 2px 0 4px;
+  padding: 2px 4px 2px 3px;
   border: 1px solid transparent;
   border-radius: 0;
+  min-height: 21px;
   text-decoration: none;
-  color: inherit;
+  color: #1a1a1a;
   white-space: nowrap;
   cursor: pointer;
 }
 
+/* tree connector tick: dari spine vertikal ke label */
+.xw-nav__children > .xw-nav__item::before {
+  content: "";
+  position: absolute;
+  left: -17px;
+  top: 50%;
+  width: 14px;
+  height: 1px;
+  background: #9aa0a6;
+  border-top: 1px dotted #9aa0a6;
+}
+
 .xw-nav__item:hover:not(.xw-nav__item--active) {
-  background: #dbe5f1;
+  background: #e5eefb;
 }
 
 .xw-nav__item--active {
   background: var(--xw-highlight);
-  border-color: #1e4a8f;
+  border-color: #24539b;
   color: #ffffff;
+}
+
+.xw-nav__icon {
+  display: inline-flex;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+.xw-nav__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .xw-content {
@@ -293,6 +364,36 @@
 }
 
 /* ---------- Shortcut bar ---------- */
+
+/* Workspace readability: semua panel/teks halaman di dalam chrome XP selalu
+   terang agar kontras dengan background beige — netralkan gaya gelap/Tailwind. */
+.xw-content .glass-card {
+  background: #ffffff;
+  border: 1px solid #a7abb3;
+  box-shadow: none;
+}
+
+.xw-content .glass-card,
+.xw-content p,
+.xw-content span,
+.xw-content td,
+.xw-content th,
+.xw-content label,
+.xw-content h1,
+.xw-content h2,
+.xw-content h3,
+.xw-content dt,
+.xw-content dd,
+.xw-content li {
+  color: #1a1a1a;
+}
+
+.xw-content input,
+.xw-content select,
+.xw-content textarea {
+  color: #1a1a1a;
+  background: #ffffff;
+}
 
 .xw-shortcutbar {
   display: flex;

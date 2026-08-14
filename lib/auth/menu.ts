@@ -17,6 +17,19 @@ const MENU_TREE: MenuNode[] = [
   { key: "dashboard", label: "Dashboard", href: "/dashboard", icon: "dashboard", permission: "dashboard.view" },
   { key: "trends", label: "Analisis Tren", href: "/analisis-tren", icon: "trend", permission: "dashboard.view" },
   {
+    key: "quality",
+    label: "Quality",
+    icon: "trend",
+    children: [
+      { key: "quality.dashboard", label: "Quality Dashboard", href: "/quality", permission: "quality.view" },
+      { key: "quality.inspection", label: "Inspection Data", href: "/quality/inspection", permission: "quality.record" },
+      { key: "quality.defects", label: "Defect Records", href: "/quality/defects", permission: "quality.view" },
+      { key: "quality.analysis", label: "Defect Analysis", href: "/quality/analysis", permission: "quality.view" },
+      { key: "quality.trend", label: "Quality Trend", href: "/quality/trend", permission: "quality.view" },
+      { key: "quality.report", label: "Quality Report", href: "/quality/report", permission: "quality.view" },
+    ],
+  },
+  {
     key: "data-entry",
     label: "Data Entry",
     icon: "entry",

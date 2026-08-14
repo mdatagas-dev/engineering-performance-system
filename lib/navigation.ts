@@ -12,7 +12,14 @@ export type Shortcut = {
 };
 
 export const NAV_TREE: NavItem[] = [
-  { key: "dashboard", label: "Dashboard", href: "/dashboard" },
+  {
+    key: "dashboard",
+    label: "Dashboard",
+    children: [
+      { key: "dashboard.main", label: "Main Dashboard", href: "/dashboard" },
+      { key: "dashboard.trend", label: "Trend Analysis", href: "/analisis-tren" },
+    ],
+  },
   {
     key: "production",
     label: "Production",
@@ -21,7 +28,18 @@ export const NAV_TREE: NavItem[] = [
       { key: "production.line", label: "Line Status", href: "/production/line-status" },
       { key: "production.output", label: "Output Report", href: "/production/output-report" },
       { key: "production.defect", label: "Defect Report", href: "/production/defect-report" },
-      { key: "production.cttakt", label: "CT & Takt Time", href: "/production/ct-takt-time" },
+    ],
+  },
+  {
+    key: "data-entry",
+    label: "Data Entry",
+    children: [
+      { key: "data-entry.manual", label: "Input Manual", href: "/data-entry/records" },
+      { key: "data-entry.table", label: "Production Table", href: "/production-table" },
+      { key: "data-entry.approvals", label: "Approvals", href: "/data-entry/approvals" },
+      { key: "data-entry.locks", label: "Lock Records", href: "/data-entry/locks" },
+      { key: "data-entry.import", label: "Import", href: "/import" },
+      { key: "data-entry.export", label: "Export", href: "/export" },
     ],
   },
   {
@@ -32,6 +50,8 @@ export const NAV_TREE: NavItem[] = [
       { key: "quality.defects", label: "Defect Analysis", href: "/quality/defects" },
       { key: "quality.pareto", label: "Pareto Chart", href: "/quality/analysis" },
       { key: "quality.trend", label: "Quality Trend", href: "/quality/trend" },
+      { key: "quality.dashboard", label: "Quality Dashboard", href: "/quality" },
+      { key: "quality.report", label: "Quality Report", href: "/quality/report" },
     ],
   },
   {
@@ -46,16 +66,6 @@ export const NAV_TREE: NavItem[] = [
     ],
   },
   {
-    key: "maintenance",
-    label: "Maintenance",
-    children: [
-      { key: "maintenance.machine", label: "Machine Status", href: "/maintenance/machine-status" },
-      { key: "maintenance.pm", label: "Preventive Maintenance", href: "/maintenance/preventive-maintenance" },
-      { key: "maintenance.cm", label: "Corrective Maintenance", href: "/maintenance/corrective-maintenance" },
-      { key: "maintenance.log", label: "Maintenance Log", href: "/maintenance/maintenance-log" },
-    ],
-  },
-  {
     key: "support",
     label: "Support",
     children: [
@@ -64,6 +74,17 @@ export const NAV_TREE: NavItem[] = [
       { key: "support.announcement", label: "Announcement", href: "/support/announcement" },
     ],
   },
+  {
+    key: "administration",
+    label: "Administration",
+    children: [
+      { key: "administration.kpi", label: "KPI Configuration", href: "/kpi" },
+      { key: "administration.users", label: "User Management", href: "/users" },
+      { key: "administration.audit", label: "Audit Trail", href: "/audit" },
+      { key: "administration.sessions", label: "Active Sessions", href: "/sessions" },
+    ],
+  },
+  { key: "settings", label: "Settings", href: "/settings" },
 ];
 
 export const SYSTEM_SHORTCUTS: Shortcut[] = [

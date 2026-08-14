@@ -94,6 +94,9 @@ model User {
   importHistories    ImportHistory[] @relation("ImportImportedBy")
   securityConfigs    SecurityConfig[] @relation("SecurityConfigUpdatedBy")
   sessions           Session[]
+  qualityChecksCreated  QualityCheck[] @relation("QualityCheckCreatedBy")
+  qualityChecksReviewed QualityCheck[] @relation("QualityCheckReviewedBy")
+  qualityChecksApproved QualityCheck[] @relation("QualityCheckApprovedBy")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
@@ -197,6 +200,7 @@ model Area {
   lineCode  String?  @unique @map("line_code")
   users     User[]
   productionRecords ProductionRecord[]
+  qualityChecks QualityCheck[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -488,4 +492,51 @@ model SlowQueryLog {
   @@index([createdAt])
   @@index([durationMs])
   @@map("slow_query_logs")
+}
+
+// quality inspection check — "Modul Quality", phase 2 backend (schema only).
+// date = TEXT (string YYYY-MM-DD, sama dengan model produksi fase impor);
+// workflow status reuse RecordStatus (DRAFT → SUBMITTED → REVIEWED → APPROVED →
+// LOCKED). Audit trail reuses AuditLog (entityType "QUALITY_CHECK").
+model QualityCheck {
+  id           String       @id @default(cuid())
+  date         String
+  model        String
+  shift        String?
+  areaId       String?    @map("area_id") @db.Uuid
+  inspectedQty Int
+  passedQty    Int
+  failedQty    Int
+  defectCount  Int
+  note         String?
+  status       RecordStatus @default(DRAFT)
+  version      Int          @default(1)
+  createdById  String?    @db.Uuid
+  reviewedById String?    @db.Uuid
+  approvedById String?    @db.Uuid
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  area         Area?        @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  createdBy    User?        @relation("QualityCheckCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewedBy   User?        @relation("QualityCheckReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  approvedBy   User?        @relation("QualityCheckApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  defects      QualityDefect[]
+
+  @@unique([date, model, shift, areaId])
+  @@index([date, model])
+  @@index([status])
+}
+
+// defect line item per check — "Modul Quality". CASCADE on check delete.
+model QualityDefect {
+  id         String       @id @default(cuid())
+  checkId    String
+  defectCode String
+  defectName String
+  quantity   Int
+  createdAt  DateTime     @default(now())
+  check      QualityCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
+
+  @@index([checkId])
+  @@index([defectCode])
 }

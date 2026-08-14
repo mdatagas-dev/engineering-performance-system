@@ -18,11 +18,11 @@ export const MOCK_RATE_LIMITED_MESSAGE = "Terlalu banyak percobaan";
 
 // Mirrors prisma/seed.ts ROLE_PERMISSIONS — seed akun untuk fallback login tiruan.
 const ROLE_PERMISSIONS: Record<string, string[]> = {
-  SUPER_ADMIN: ["user.manage", "record.create", "record.approve", "record.lock", "dashboard.view", "import.run", "export.run", "kpi.configure", "audit.view", "backup.view"],
-  ADMIN: ["user.manage", "record.create", "record.approve", "record.lock", "dashboard.view", "import.run", "export.run", "kpi.configure", "audit.view", "backup.view"],
-  ENGINEERING_MANAGER: ["record.approve", "record.lock", "dashboard.view", "export.run", "kpi.configure", "backup.view"],
-  ENGINEERING_STAFF: ["record.create", "dashboard.view", "import.run", "export.run"],
-  VIEWER: ["dashboard.view", "export.run"],
+  SUPER_ADMIN: ["user.manage", "record.create", "record.approve", "record.lock", "dashboard.view", "import.run", "export.run", "kpi.configure", "audit.view", "backup.view", "quality.view", "quality.record", "quality.approve"],
+  ADMIN: ["user.manage", "record.create", "record.approve", "record.lock", "dashboard.view", "import.run", "export.run", "kpi.configure", "audit.view", "backup.view", "quality.view", "quality.record", "quality.approve"],
+  ENGINEERING_MANAGER: ["record.approve", "record.lock", "dashboard.view", "export.run", "kpi.configure", "backup.view", "quality.view", "quality.approve"],
+  ENGINEERING_STAFF: ["record.create", "dashboard.view", "import.run", "export.run", "quality.view", "quality.record"],
+  VIEWER: ["dashboard.view", "export.run", "quality.view"],
 };
 
 type MockAccount = {

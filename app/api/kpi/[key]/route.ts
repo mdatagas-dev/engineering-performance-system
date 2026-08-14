@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { AUTH_CONFIG } from "@/lib/auth/config";
-import { getSession } from "@/lib/auth/session";
+import { getSession, requirePermission } from "@/lib/auth/session";
+import { forbidden } from "@/lib/http/api-error";
 import { validateKpiUpdate, buildSoftDelete } from "@/lib/kpi/validation";
 import { getClientIp } from "@/lib/auth/request-ip";
 
@@ -65,8 +66,15 @@ function auditFields(k: KpiAuditFields): KpiAuditFields {
 
 type Params = { params: Promise<{ key: string }> };
 
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(req: Request, { params }: Params) {
   const { key } = await params;
+
+  const token = (await cookies()).get(AUTH_CONFIG.cookieName)?.value;
+  const session = getSession(token);
+  if (!session) {
+    return NextResponse.json({ message: INVALID_MESSAGE }, { status: 401 });
+  }
+  if (!requirePermission(session, "kpi.configure")) return forbidden();
 
   const kpi = await prisma.kpiConfig.findUnique({ where: { key }, select: KPI_SELECT });
   if (!kpi || kpi.isDeleted) {
@@ -84,6 +92,7 @@ export async function PATCH(req: Request, { params }: Params) {
   if (!session) {
     return NextResponse.json({ message: INVALID_MESSAGE }, { status: 401 });
   }
+  if (!requirePermission(session, "kpi.configure")) return forbidden();
 
   const existing = await prisma.kpiConfig.findUnique({ where: { key }, select: KPI_SELECT });
   if (!existing || existing.isDeleted) {
@@ -146,6 +155,7 @@ export async function DELETE(req: Request, { params }: Params) {
   if (!session) {
     return NextResponse.json({ message: INVALID_MESSAGE }, { status: 401 });
   }
+  if (!requirePermission(session, "kpi.configure")) return forbidden();
 
   const existing = await prisma.kpiConfig.findUnique({ where: { key }, select: KPI_SELECT });
   if (!existing || existing.isDeleted) {

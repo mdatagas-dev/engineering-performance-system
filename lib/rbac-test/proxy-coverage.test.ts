@@ -9,7 +9,7 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { listApiRouteFiles, readProxyRules, type ApiRouteFile, type ProxyRule } from "./scan";
 
-// 10 permission yang di-seed (prisma/seed.ts PERMISSION_KEYS) — acuan valid.
+// 13 permission yang di-seed (prisma/seed.ts PERMISSION_KEYS) — acuan valid.
 const SEED_PERMISSIONS = [
   "user.manage",
   "record.create",
@@ -21,6 +21,9 @@ const SEED_PERMISSIONS = [
   "kpi.configure",
   "audit.view",
   "backup.view",
+  "quality.view",
+  "quality.record",
+  "quality.approve",
 ];
 
 // Route TANPA aturan eksplisit — kategorisasi & justifikasi (lihat laporan task):

@@ -22,15 +22,15 @@ export const metadata: Metadata = {
   description: "Manajemen Sesi — Engineering Production System",
 };
 
-// Default dark (industrial); script membatalkan jika user memilih light di localStorage.
-const themeInit = `try{var t=localStorage.getItem("eps-theme");if(t==="light"){document.documentElement.classList.remove("dark")}else{document.documentElement.classList.add("dark")}}catch(e){document.documentElement.classList.add("dark")}`;
+// XP chrome (dan seluruh halaman kerja) selalu light — tema gelap tidak dipakai.
+const themeInit = `try{document.documentElement.classList.remove("dark")}catch(e){}`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
       lang="id"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />

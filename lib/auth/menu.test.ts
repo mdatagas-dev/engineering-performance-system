@@ -8,7 +8,11 @@ describe("getMenuFor", () => {
     const menu = getMenuFor({ role: RoleName.SUPER_ADMIN, permissions: [] });
     assert.deepEqual(
       menu.map((m) => m.key),
-      ["dashboard", "trends", "data-entry", "transfer", "settings"]
+      ["dashboard", "trends", "quality", "data-entry", "transfer", "settings"]
+    );
+    assert.deepEqual(
+      menu.find((m) => m.key === "quality")?.children?.map((c) => c.key),
+      ["quality.dashboard", "quality.inspection", "quality.defects", "quality.analysis", "quality.trend", "quality.report"]
     );
     assert.deepEqual(
       menu.find((m) => m.key === "data-entry")?.children?.map((c) => c.key),

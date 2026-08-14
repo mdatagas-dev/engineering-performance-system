@@ -1360,6 +1360,37 @@ export function changelogKind(entry: Pick<ChangelogEntry, "kind">): ChangelogKin
 // Riwayat rilis produk (fitur-fitur sudah diterjemahkan per bahasa).
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "v1.10.0",
+    date: "2026-08-15",
+    features: {
+      id: [
+        "Chrome aplikasi diubah menjadi jendela aplikasi Windows XP enterprise: title bar, menu bar, toolbar, navigasi MAIN NAVIGATION, dan bar SYSTEM SHORTCUT",
+        "Dashboard produksi direkonstruksi mengikuti reference: KPI Production Overview, Line Status Monitoring, Output Trend, Defect Pareto, Alert Center, Document Center, dan System Information",
+        "Modul Quality diaktifkan kembali (inspection, defect, pareto, trend, report + workflow + RBAC quality.view/record/approve), modul Production (daily monitoring, line status, output report, defect report), Engineering (WI, BOM, drawing, change request, improvement), serta Support (document center, training material, announcement) dibangun sebagai halaman nyata",
+      ],
+      en: [
+        "App chrome changed to a Windows XP enterprise application window: title bar, menu bar, toolbar, MAIN NAVIGATION navigation, and SYSTEM SHORTCUT bar",
+        "Production dashboard reconstructed following the reference: KPI Production Overview, Line Status Monitoring, Output Trend, Defect Pareto, Alert Center, Document Center, and System Information",
+        "Quality module re-enabled (inspection, defect, pareto, trend, report + workflow + RBAC quality.view/record/approve), Production module (daily monitoring, line status, output report, defect report), Engineering (WI, BOM, drawing, change request, improvement), and Support (document center, training material, announcement) built as real pages",
+      ],
+      zh: [
+        "应用外观改为 Windows XP 企业版应用窗口：标题栏、菜单栏、工具栏、MAIN NAVIGATION 导航和 SYSTEM SHORTCUT 栏",
+        "生产仪表盘按参考资料重构：KPI Production Overview、Line Status Monitoring、Output Trend、Defect Pareto、Alert Center、Document Center 和 System Information",
+        "Quality 模块重新启用（inspection、defect、pareto、trend、report + workflow + RBAC quality.view/record/approve），Production 模块（daily monitoring、line status、output report、defect report）、Engineering（WI、BOM、drawing、change request、improvement）以及 Support（document center、training material、announcement）已构建为真实页面",
+      ],
+      ko: [
+        "앱 외관을 Windows XP 엔터프라이즈 애플리케이션 창으로 변경: 제목 표시줄, 메뉴 표시줄, 도구 모음, MAIN NAVIGATION 내비게이션 및 SYSTEM SHORTCUT 바",
+        "생산 대시보드를 참고 자료에 따라 재구성: KPI Production Overview, Line Status Monitoring, Output Trend, Defect Pareto, Alert Center, Document Center 및 System Information",
+        "Quality 모듈 재활성화(inspection, defect, pareto, trend, report + workflow + RBAC quality.view/record/approve), Production 모듈(daily monitoring, line status, output report, defect report), Engineering(WI, BOM, drawing, change request, improvement), Support(document center, training material, announcement)을 실제 페이지로 구축",
+      ],
+      ja: [
+        "アプリの外観を Windows XP エンタープライズのアプリケーションウィンドウに変更：タイトルバー、メニューバー、ツールバー、MAIN NAVIGATION ナビゲーション、SYSTEM SHORTCUT バー",
+        "生産ダッシュボードを参考資料に沿って再構築：KPI Production Overview、Line Status Monitoring、Output Trend、Defect Pareto、Alert Center、Document Center、System Information",
+        "Quality モジュールを再有効化（inspection、defect、pareto、trend、report + workflow + RBAC quality.view/record/approve）、Production モジュール（daily monitoring、line status、output report、defect report）、Engineering（WI、BOM、drawing、change request、improvement）、Support（document center、training material、announcement）を実ページとして構築",
+      ],
+    },
+  },
+  {
     version: "v1.9.0",
     date: "2026-08-14",
     features: {
@@ -1815,32 +1846,6 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
     },
   },
   {
-    version: "v1.10.0",
-    date: "2026-08-15",
-    features: {
-      id: [
-        "Chrome aplikasi diubah menjadi jendela aplikasi Windows XP enterprise: title bar, menu bar, toolbar, navigasi MAIN NAVIGATION, dan bar SYSTEM SHORTCUT",
-        "Dashboard produksi direkonstruksi mengikuti reference: KPI Production Overview, Line Status Monitoring, Output Trend, Defect Pareto, Alert Center, Document Center, dan System Information",
-      ],
-      en: [
-        "App chrome changed to a Windows XP enterprise application window: title bar, menu bar, toolbar, MAIN NAVIGATION navigation, and SYSTEM SHORTCUT bar",
-        "Production dashboard reconstructed following the reference: KPI Production Overview, Line Status Monitoring, Output Trend, Defect Pareto, Alert Center, Document Center, and System Information",
-      ],
-      zh: [
-        "应用外观改为 Windows XP 企业版应用窗口：标题栏、菜单栏、工具栏、MAIN NAVIGATION 导航和 SYSTEM SHORTCUT 栏",
-        "生产仪表盘按参考资料重构：KPI Production Overview、Line Status Monitoring、Output Trend、Defect Pareto、Alert Center、Document Center 和 System Information",
-      ],
-      ko: [
-        "앱 외관을 Windows XP 엔터프라이즈 애플리케이션 창으로 변경: 제목 표시줄, 메뉴 표시줄, 도구 모음, MAIN NAVIGATION 내비게이션 및 SYSTEM SHORTCUT 바",
-        "생산 대시보드를 참고 자료에 따라 재구성: KPI Production Overview, Line Status Monitoring, Output Trend, Defect Pareto, Alert Center, Document Center 및 System Information",
-      ],
-      ja: [
-        "アプリの外観を Windows XP エンタープライズのアプリケーションウィンドウに変更：タイトルバー、メニューバー、ツールバー、MAIN NAVIGATION ナビゲーション、SYSTEM SHORTCUT バー",
-        "生産ダッシュボードを参考資料に沿って再構築：KPI Production Overview、Line Status Monitoring、Output Trend、Defect Pareto、Alert Center、Document Center、System Information",
-      ],
-    },
-  },
-  {
     version: "v1.1.0",
     date: "2026-08-13",
     features: {
@@ -1868,82 +1873,6 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
         "本番デプロイ：PM2（ecosystem.config.cjs）、GitHub Actions CI/CD（ci.yml + deploy.yml で SSH 経由で VPS へデプロイ）、Docker コンテナオプション（Dockerfile + docker-compose）",
         ".env.example を提供；コンテナ向け standalone ビルド",
         "main ブランチへのプッシュで VPS に自動デプロイ",
-      ],
-    },
-  },
-  {
-    version: "v1.1.0",
-    date: "2026-08-13",
-    features: {
-      id: [
-        "Sidebar kiri berisi menu utama; dapat disembunyikan dengan animasi halus",
-        "Semua halaman fit-to-screen dan responsif di HP, tablet, dan PC",
-        "Dashboard: 5 tabel data mudah dibaca (Daily Production, Plan vs Output, UPH, HC, Setup & UPPH)",
-        "Halaman baru: Persetujuan record, Lock Records, dan KPI Config",
-        "Hub Pengaturan: keamanan & lockout, pengaturan 5 bahasa, info aplikasi + changelog",
-        "KPI Config, Users, Audit Log, dan Sesi Aktif dipindah ke dalam halaman Pengaturan (tidak lagi di sidebar)",
-        "Transisi antar halaman yang halus (menghormati prefers-reduced-motion)",
-        "Keamanan: proteksi CSRF, security headers, pencegahan CSV injection, endpoint buka kunci akun",
-        "Latar belakang aplikasi dengan animasi aurora bergerak ringan (realtime)",
-        "Audit log: aksi \"Pengaturan Keamanan Diubah\" terdaftar dan tampil di halaman Audit",
-        "Keamanan database: sslmode=require di produksi, nilai parameter query lambat diredaksi, log query hanya non-produksi",
-        "Bersihkan repo: hapus artefak template, README lengkap (panduan setup & deploy)",
-      ],
-      en: [
-        "Left sidebar with main menu; can be hidden with smooth animation",
-        "All pages fit-to-screen and responsive on mobile, tablet, and desktop",
-        "Dashboard: 5 easy-to-read data tables (Daily Production, Plan vs Output, UPH, HC, Setup & UPPH)",
-        "New pages: record approvals, lock records, and KPI config",
-        "Settings hub: security & lockout, 5-language settings, app info + changelog",
-        "KPI Config, Users, Audit Log, and Active Sessions moved into the Settings page (no longer in sidebar)",
-        "Smooth page transitions (respects prefers-reduced-motion)",
-        "Security: CSRF protection, security headers, CSV injection prevention, account unlock endpoint",
-        "App background with a light realtime-moving aurora animation",
-        "Audit log: \"Security settings changed\" action registered and shown on the Audit page",
-        "Database security: sslmode=require in production, slow-query parameter values redacted, query logs limited to non-production",
-        "Repo cleanup: removed template artifacts, full README (setup & deploy guide)",
-      ],
-      zh: [
-        "左侧边栏包含主菜单；可通过流畅动画隐藏",
-        "所有页面适配屏幕并在手机、平板和电脑上响应式显示",
-        "仪表盘：5 个易于阅读的数据表（每日生产、计划与产出、UPH、HC、Setup 与 UPPH）",
-        "新页面：记录审批、锁定记录和 KPI 配置",
-        "设置中心：安全与锁定、5 种语言设置、应用信息 + 更新日志",
-        "KPI 配置、用户、审计日志和活动会话已移至设置页面（不再位于侧边栏）",
-        "流畅的页面切换动画（尊重 prefers-reduced-motion）",
-        "安全：CSRF 防护、安全响应头、CSV 注入防护、账户解锁端点",
-        "应用背景带有轻柔的实时极光动画",
-        "审计日志：已注册并显示 \"安全设置已更改\" 操作",
-        "数据库安全：生产环境强制 sslmode=require，慢查询参数值脱敏，查询日志仅限非生产环境",
-        "仓库清理：删除模板文件，完善 README（安装与部署指南）",
-      ],
-      ko: [
-        "주 메뉴가 있는 왼쪽 사이드바; 부드러운 애니메이션으로 숨길 수 있음",
-        "모든 페이지가 화면에 맞고 모바일, 태블릿, PC에서 반응형으로 표시됨",
-        "대시보드: 읽기 쉬운 데이터 테이블 5개(일일 생산, 계획 대비 실적, UPH, HC, Setup 및 UPPH)",
-        "새 페이지: 기록 승인, 기록 잠금, KPI 구성",
-        "설정 허브: 보안 및 잠금, 5개 언어 설정, 앱 정보 + 변경 내역",
-        "KPI 구성, 사용자, 감사 로그, 활성 세션이 설정 페이지로 이동(더 이상 사이드바에 없음)",
-        "부드러운 페이지 전환 애니메이션(prefers-reduced-motion 준수)",
-        "보안: CSRF 보호, 보안 헤더, CSV 주입 방지, 계정 잠금 해제 엔드포인트",
-        "가볍게 실시간으로 움직이는 오로라 배경 애니메이션",
-        "감사 로그: \"보안 설정 변경\" 작업 등록 및 감사 페이지에 표시",
-        "데이터베이스 보안: 프로덕션에서 sslmode=require, 느린 쿼리 매개변수 값 마스킹, 쿼리 로그는 비프로덕션 전용",
-        "저장소 정리: 템플릿 파일 제거, README 완성(설정 및 배포 가이드)",
-      ],
-      ja: [
-        "メインメニュー付きの左サイドバー。滑らかなアニメーションで非表示にできます",
-        "すべてのページが画面にフィットし、スマホ・タブレット・PCでレスポンシブ表示",
-        "ダッシュボード：読みやすいデータテーブル5つ（日次生産、計画対実績、UPH、HC、Setup・UPPH）",
-        "新ページ：レコード承認、レコードロック、KPI設定",
-        "設定ハブ：セキュリティ＆ロックアウト、5言語設定、アプリ情報＋更新履歴",
-        "KPI設定・ユーザー・監査ログ・アクティブセッションを設定ページへ移動（サイドバーから削除）",
-        "スムーズなページ遷移アニメーション（prefers-reduced-motion 対応）",
-        "セキュリティ：CSRF対策、セキュリティヘッダー、CSVインジェクション防止、アカウントロック解除API",
-        "軽やかにリアルタイムで動くオーロラ背景アニメーション",
-        "監査ログ：「セキュリティ設定変更」アクションを登録し、監査ページに表示",
-        "データベースセキュリティ：本番で sslmode=require、低速クエリのパラメータ値をマスク、クエリログは非本番のみ",
-        "リポジトリ整理：テンプレートファイル削除、README 整備（セットアップ＆デプロイガイド）",
       ],
     },
   },

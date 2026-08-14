@@ -50,6 +50,18 @@ const ROUTE_PERMISSIONS: RoutePermission[] = [
   // yang sama dengan backup (backup.view), bukan dashboard.view.
   { pattern: /^\/api\/slow-queries$/, permission: "backup.view" },
   { pattern: /^\/api\/quality-score$/, permission: "dashboard.view" },
+  // Quality (modul baru) — GET daftar baca cukup quality.view (Viewer bisa
+  // lihat); tulis/ubah/hapus/ubah-status butuh quality.record. Rule tulis
+  // didahulukan supaya first-match-wins: subpath [id] dan [id]/status tidak
+  // tertangkap rule GET /api/quality saja.
+  {
+    pattern: /^\/api\/quality$/,
+    permission: (method) => (method === "GET" ? "quality.view" : "quality.record"),
+  },
+  { pattern: /^\/api\/quality\/defects$/, permission: "quality.view" },
+  { pattern: /^\/api\/quality\/summary$/, permission: "quality.view" },
+  { pattern: /^\/api\/quality\/[^/]+\/status$/, permission: "quality.record" },
+  { pattern: /^\/api\/quality\/[^/]+$/, permission: "quality.record" },
   // Unduh template ekspor (GET /api/export/template) — /^\/api\/export$/ tidak
   // match path trailing /template, jadi butuh rule terpisah (sama permission).
   { pattern: /^\/api\/export\/template$/, permission: "export.run" },

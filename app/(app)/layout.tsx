@@ -93,6 +93,15 @@ function Icon({ name }: { name: string }): ReactNode {
           <path d="M11 8h4M14 5.5l2.5 2.5L14 10.5" fill="none" stroke="#000080" strokeWidth="1.5" />
         </svg>
       );
+    case "monitor":
+      return (
+        <svg {...p}>
+          <rect x="1" y="2" width="14" height="10" fill="#0a246a" stroke="#000000" />
+          <rect x="2" y="3" width="12" height="8" fill="#1084d0" />
+          <rect x="6" y="12" width="4" height="2" fill="#c0c0c0" />
+          <rect x="4" y="14" width="8" height="1.5" fill="#808080" />
+        </svg>
+      );
     case "folder":
       return (
         <svg {...p}>
@@ -116,6 +125,7 @@ export default function AppLayout({ children }: Readonly<{ children: React.React
   const router = useRouter();
   const pathname = usePathname();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
   const [now, setNow] = useState<Date>(() => new Date());
   const [toastMsg, setToastMsg] = useState<{ text: string; id: number } | null>(null);
   const session = useSessionGuard();
@@ -207,6 +217,14 @@ export default function AppLayout({ children }: Readonly<{ children: React.React
   const navItemCls = (href?: string) =>
     `xw-nav__item${href && isActive(href) ? " xw-nav__item--active" : ""}`;
 
+  const toggleGroup = (key: string) =>
+    setCollapsed((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
   const nav = (
     <nav className="xw-nav" aria-label="Main navigation">
       <div className="xw-nav__head">MAIN NAVIGATION</div>
@@ -214,20 +232,43 @@ export default function AppLayout({ children }: Readonly<{ children: React.React
         if (!item.children) {
           return (
             <Link key={item.key} href={item.href ?? "#"} className={navItemCls(item.href)}>
-              <Icon name="home" />
-              <span>{item.label}</span>
+              <span className="xw-nav__icon" aria-hidden>
+                <Icon name="monitor" />
+              </span>
+              <span className="xw-nav__text">{item.label}</span>
             </Link>
           );
         }
+        const open = !collapsed.has(item.key);
         return (
           <div key={item.key} className="xw-nav__group">
-            <p className="xw-nav__group-label">{item.label}</p>
-            {item.children.map((child) => (
-              <Link key={child.key} href={child.href ?? "#"} className={navItemCls(child.href)}>
-                <Icon name="file" />
-                <span>{child.label}</span>
-              </Link>
-            ))}
+            <div className="xw-nav__group-row">
+              <button
+                type="button"
+                className="xw-nav__expander"
+                aria-expanded={open}
+                aria-label={`${open ? "Collapse" : "Expand"} ${item.label}`}
+                onClick={() => toggleGroup(item.key)}
+              >
+                {open ? "-" : "+"}
+              </button>
+              <span className="xw-nav__icon" aria-hidden>
+                <Icon name="folder" />
+              </span>
+              <span className="xw-nav__group-label">{item.label}</span>
+            </div>
+            {open && (
+              <div className="xw-nav__children" role="group">
+                {item.children.map((child) => (
+                  <Link key={child.key} href={child.href ?? "#"} className={navItemCls(child.href)}>
+                    <span className="xw-nav__icon" aria-hidden>
+                      <Icon name="file" />
+                    </span>
+                    <span className="xw-nav__text">{child.label}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         );
       })}
