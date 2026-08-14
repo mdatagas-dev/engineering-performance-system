@@ -1,0 +1,456 @@
+/* ============================================================
+   GE-OS — chrome halaman dalam (route group `(app)`)
+   Win95/98/2000 application window look.
+   Prefix: inner- (unik, tidak bentrok prefix lain)
+   Font: Tahoma / Courier New. Sudut persegi. Bevel 3D.
+   ============================================================ */
+
+.inner-root {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  background: #c0c0c0;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #000;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.inner-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  background: #000080;
+}
+
+.inner-boot__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 40px;
+  background: #c0c0c0;
+  border-top: 2px solid #dfdfdf;
+  border-left: 2px solid #dfdfdf;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+  font-weight: 700;
+  color: #000;
+}
+
+/* ---- Title bar ---- */
+.inner-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 4px 0 6px;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font: 700 11px Tahoma, "MS Sans Serif", sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  flex: none;
+}
+
+.inner-titlebar__icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  object-fit: cover;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+}
+
+.inner-titlebar__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inner-titlebar__btn {
+  flex: none;
+  width: 17px;
+  height: 15px;
+  margin-left: 2px;
+  display: grid;
+  place-items: center;
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+  font: 700 10px/1 Tahoma, "MS Sans Serif", sans-serif;
+  color: #000;
+  cursor: default;
+  padding: 0;
+}
+
+.inner-titlebar__btn:active {
+  border-top: 2px solid #404040;
+  border-left: 2px solid #404040;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+}
+
+.inner-titlebar__btn:focus-visible {
+  outline: 1px dotted #fff;
+  outline-offset: -3px;
+}
+
+.inner-titlebar__btn--close:hover {
+  background: #ff0000;
+  color: #fff;
+}
+
+/* ---- Menu bar ---- */
+.inner-menubar {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  height: 22px;
+  background: #c0c0c0;
+  border-bottom: 1px solid #808080;
+  flex: none;
+}
+
+.inner-menubar__wrap {
+  position: relative;
+  display: flex;
+}
+
+.inner-menubar__item {
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  font: 11px Tahoma, "MS Sans Serif", sans-serif;
+  color: #000;
+  cursor: default;
+}
+
+.inner-menubar__item--open,
+.inner-menubar__item:hover {
+  background: #000080;
+  color: #fff;
+}
+
+.inner-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 50;
+  min-width: 150px;
+  padding: 2px;
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+  box-shadow: 2px 2px 0 rgb(0 0 0 / 0.4);
+}
+
+.inner-menu__item {
+  display: block;
+  width: 100%;
+  padding: 4px 16px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  font: 11px Tahoma, "MS Sans Serif", sans-serif;
+  color: #000;
+  cursor: default;
+}
+
+.inner-menu__item:hover {
+  background: #000080;
+  color: #fff;
+}
+
+.inner-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+/* ---- Body: sidebar + main ---- */
+.inner-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.inner-side {
+  flex: none;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  background: #d4d0c8;
+  border-right: 2px solid;
+  border-color: #808080 #fff #fff #404040;
+  overflow: hidden;
+}
+
+.inner-side--closed {
+  width: 24px;
+}
+
+.inner-side__toggle {
+  flex: none;
+  align-self: flex-start;
+  margin: 3px;
+  width: 18px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+  font: 700 10px/1 Tahoma, "MS Sans Serif", sans-serif;
+  color: #000;
+  cursor: default;
+  padding: 0;
+}
+
+.inner-side__toggle:active {
+  border-top: 2px solid #404040;
+  border-left: 2px solid #404040;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+}
+
+.inner-side__head {
+  flex: none;
+  padding: 5px 8px 4px;
+  border-bottom: 1px solid #808080;
+}
+
+.inner-side__head-title {
+  display: block;
+  font-weight: 700;
+  color: #000;
+}
+
+.inner-side__head-role {
+  display: block;
+  font-size: 10px;
+  color: #404040;
+}
+
+.inner-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 2px 8px;
+}
+
+.inner-nav__group {
+  margin-bottom: 6px;
+}
+
+.inner-nav__group-label {
+  padding: 3px 6px 2px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #404040;
+  text-transform: uppercase;
+}
+
+.inner-nav__group-items {
+  display: flex;
+  flex-direction: column;
+}
+
+.inner-nav__link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  text-decoration: none;
+  font: 11px Tahoma, "MS Sans Serif", sans-serif;
+  color: #000;
+  cursor: default;
+}
+
+.inner-nav__link:hover {
+  background: #000080;
+  color: #fff;
+}
+
+.inner-nav__link--active {
+  background: #000080;
+  color: #fff;
+  box-shadow: inset 1px 1px 0 #404040;
+}
+
+.inner-nav__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+
+.inner-nav__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inner-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  background: #c0c0c0;
+}
+
+.inner-content {
+  min-height: 100%;
+  padding: 12px;
+}
+
+/* ---- Status bar ---- */
+.inner-statusbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 2px 4px;
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  box-shadow: inset 0 1px 0 #808080;
+}
+
+.inner-statusbar__item {
+  padding: 1px 8px;
+  background: #c0c0c0;
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inner-statusbar__spacer {
+  flex: 1;
+}
+
+.inner-statusbar__user {
+  max-width: 260px;
+}
+
+.inner-statusbar__clock {
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 700;
+  min-width: 64px;
+  text-align: center;
+}
+
+/* ---- Toast (pengganti dialog sementara) ---- */
+.inner-toast {
+  position: fixed;
+  right: 14px;
+  bottom: 34px;
+  z-index: 90;
+  max-width: 280px;
+  padding: 8px 14px;
+  background: #c0c0c0;
+  border-top: 2px solid #dfdfdf;
+  border-left: 2px solid #dfdfdf;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #808080,
+    2px 2px 0 #000;
+  font: 11px Tahoma, "MS Sans Serif", sans-serif;
+  color: #000;
+}
+
+/* ============================================================
+   Override umum halaman dalam — class `glass-card` (dipakai
+   banyak halaman) dijadikan Win95. Ditempatkan setelah definisi
+   asli & spesifisitas lebih tinggi agar menang apa pun urutan.
+   ============================================================ */
+.inner-root .glass-card,
+.inner-root .dark .glass-card {
+  border-radius: 0;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  outline: 1px solid #404040;
+  background: #c0c0c0;
+  color: #000;
+  box-shadow: 2px 2px 0 rgb(0 0 0 / 0.35);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition: none;
+  transform: none;
+}
+
+.inner-root .glass-card:hover,
+.inner-root .dark .glass-card:hover {
+  transform: none;
+  box-shadow: 2px 2px 0 rgb(0 0 0 / 0.35);
+  border-color: #ffffff #808080 #808080 #ffffff;
+}
+
+/* ============================================================
+   Scrollbar klasik Win95 (WebKit) untuk area dalam + glass-card
+   ============================================================ */
+.inner-root ::-webkit-scrollbar,
+.inner-root .glass-card::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+.inner-root ::-webkit-scrollbar-track,
+.inner-root .glass-card::-webkit-scrollbar-track {
+  background: #c0c0c0;
+}
+
+.inner-root ::-webkit-scrollbar-thumb,
+.inner-root .glass-card::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #ffffff #404040 #404040 #ffffff;
+}
+
+.inner-root ::-webkit-scrollbar-thumb:active,
+.inner-root .glass-card::-webkit-scrollbar-thumb:active {
+  border-color: #404040 #ffffff #ffffff #404040;
+}
+
+.inner-root ::-webkit-scrollbar-button,
+.inner-root .glass-card::-webkit-scrollbar-button {
+  width: 16px;
+  height: 16px;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #ffffff #404040 #404040 #ffffff;
+}
+
+.inner-root ::-webkit-scrollbar-corner,
+.inner-root .glass-card::-webkit-scrollbar-corner {
+  background: #c0c0c0;
+}
+
+/* ---- prefers-reduced-motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .inner-root,
+  .inner-menu,
+  .inner-toast {
+    animation: none !important;
+  }
+}

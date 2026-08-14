@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
+import { t, loadLang, type Lang } from "@/lib/i18n";
 
 export type LoginGateProps = {
   /** Kirim kredensial. Return null = sukses; string = pesan error (Access Denied). */
@@ -43,6 +44,7 @@ export default function LoginGate({
   initialMessage,
   alreadyIn,
 }: LoginGateProps): ReactNode {
+  const [lang] = useState<Lang>(() => (typeof window === "undefined" ? "id" : loadLang(window.localStorage)));
   const [phase, setPhase] = useState<Phase>(alreadyIn ? "idle" : "boot");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,7 +52,7 @@ export default function LoginGate({
   const [showPw, setShowPw] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [apiError, setApiError] = useState<string | null>(null);
-  const [status, setStatus] = useState("Checking Password...");
+  const [status, setStatus] = useState(() => t(lang, "gate.statusChecking"));
   const [shaking, setShaking] = useState(false);
 
   const emailRef = useRef<HTMLInputElement>(null);
@@ -114,16 +116,16 @@ export default function LoginGate({
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     const errs: { email?: string; password?: string } = {};
-    if (!email.trim()) errs.email = "Wajib diisi";
-    else if (!EMAIL_RE.test(email)) errs.email = "Format email tidak valid";
-    if (!password) errs.password = "Wajib diisi";
+    if (!email.trim()) errs.email = t(lang, "gate.errRequired");
+    else if (!EMAIL_RE.test(email)) errs.email = t(lang, "gate.errEmail");
+    if (!password) errs.password = t(lang, "gate.errRequired");
     setFieldErrors(errs);
     if (errs.email || errs.password) return;
 
     setApiError(null);
     setPhase("checking");
-    setStatus("Checking Password...");
-    later(() => setStatus("Loading User Profile..."), 900);
+    setStatus(t(lang, "gate.statusChecking"));
+    later(() => setStatus(t(lang, "gate.statusProfile")), 900);
 
     let error: string | null = null;
     try {
@@ -131,7 +133,7 @@ export default function LoginGate({
         ([r]) => r,
       );
     } catch (err) {
-      error = err instanceof Error ? err.message : "Terjadi kesalahan. Coba lagi.";
+      error = err instanceof Error ? err.message : t(lang, "gate.errGeneric");
     }
     if (!alive.current) return;
     if (error) {
@@ -166,10 +168,10 @@ export default function LoginGate({
         <div className="gate-row">
           <GateAvatar />
           <div>
-            <div className="gate-msg gate-msg--ok">Welcome Back</div>
-            <div className="gate-msg">System Ready</div>
+            <div className="gate-msg gate-msg--ok">{t(lang, "gate.titleBack")}</div>
+            <div className="gate-msg">{t(lang, "gate.systemReady")}</div>
             <div className="gate-msg">
-              Loading desktop...
+              {t(lang, "gate.loadingDesktop")}
               <span className="gate-blink">_</span>
             </div>
           </div>
@@ -183,13 +185,13 @@ export default function LoginGate({
           <div className="gate-row">
             <GateAvatar />
             <div>
-              <div className="gate-msg gate-msg--ok">Sudah masuk</div>
-              <div className="gate-msg">Sesi aktif terdeteksi. Lanjutkan ke desktop.</div>
+              <div className="gate-msg gate-msg--ok">{t(lang, "gate.alreadyIn")}</div>
+              <div className="gate-msg">{t(lang, "gate.alreadyInDesc")}</div>
             </div>
           </div>
           <div className="gate-actions">
             <button type="button" className="gate-btn gate-btn--default" onClick={onSuccess} autoFocus>
-              Lanjut
+              {t(lang, "gate.continue")}
             </button>
           </div>
         </>
@@ -204,16 +206,16 @@ export default function LoginGate({
         )}
         {denied && (
           <div className="gate-msg gate-msg--err" role="alert">
-            <div className="gate-msg__head">⚠ Access Denied</div>
-            <div>{apiError ?? "The password you typed is incorrect. Try again."}</div>
+            <div className="gate-msg__head">⚠ {t(lang, "gate.accessDenied")}</div>
+            <div>{apiError ?? t(lang, "gate.accessDeniedMsg")}</div>
           </div>
         )}
         <div className="gate-row">
           <GateAvatar />
-          <p className="gate-msg">Type a user name and password to log on.</p>
+          <p className="gate-msg">{t(lang, "gate.prompt")}</p>
         </div>
         <label className="gate-field" htmlFor="gate-user">
-          User name:
+          {t(lang, "gate.userName")}
           <input
             ref={emailRef}
             id="gate-user"
@@ -233,7 +235,7 @@ export default function LoginGate({
           )}
         </label>
         <label className="gate-field" htmlFor="gate-pass">
-          Password:
+          {t(lang, "gate.password")}
           <span className="gate-pwrow">
             <input
               ref={pwRef}
@@ -250,10 +252,10 @@ export default function LoginGate({
             <button
               type="button"
               className="gate-btn gate-btn--small"
-              title={showPw ? "Sembunyikan password" : "Tampilkan password"}
+              title={showPw ? t(lang, "gate.hideTitle") : t(lang, "gate.showTitle")}
               onClick={() => setShowPw((v) => !v)}
             >
-              {showPw ? "Hide" : "Show"}
+              {showPw ? t(lang, "gate.hide") : t(lang, "gate.show")}
             </button>
           </span>
           {fieldErrors.password && (
@@ -264,20 +266,20 @@ export default function LoginGate({
         </label>
         <label className="gate-check">
           <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-          Remember session
+          {t(lang, "gate.remember")}
         </label>
         <div className="gate-actions">
           {denied ? (
-            <button type="button" className="gate-btn gate-btn--default" onClick={resetToIdle} autoFocus title="Coba lagi">
-              Try Again
+            <button type="button" className="gate-btn gate-btn--default" onClick={resetToIdle} autoFocus title={t(lang, "gate.tryAgainTitle")}>
+              {t(lang, "gate.tryAgain")}
             </button>
           ) : (
-            <button type="submit" className="gate-btn gate-btn--default" title="Masuk">
-              OK
+            <button type="submit" className="gate-btn gate-btn--default" title={t(lang, "gate.okTitle")}>
+              {t(lang, "gate.ok")}
             </button>
           )}
-          <button type="button" className="gate-btn" onClick={resetToIdle} title="Batal">
-            Cancel
+          <button type="button" className="gate-btn" onClick={resetToIdle} title={t(lang, "gate.cancelTitle")}>
+            {t(lang, "gate.cancel")}
           </button>
         </div>
       </form>
@@ -286,27 +288,27 @@ export default function LoginGate({
 
   const dialogOpen = phase === "idle" || phase === "checking" || phase === "denied" || phase === "success";
   const title = alreadyIn
-    ? "THE GATE"
+    ? t(lang, "gate.titleTheGate")
     : phase === "success"
-      ? "Welcome Back"
-      : "Welcome to THE GATE";
+      ? t(lang, "gate.titleBack")
+      : t(lang, "gate.titleWelcome");
 
   return (
     <div className="gate-root">
       <div className="gate-icons" aria-hidden="true">
         <span className="gate-icon">
           <span className="gate-icon__glyph">🖥</span>
-          <span className="gate-icon__label">My Computer</span>
+          <span className="gate-icon__label">{t(lang, "gate.myComputer")}</span>
         </span>
         <span className="gate-icon">
           <span className="gate-icon__glyph">🗑</span>
-          <span className="gate-icon__label">Recycle Bin</span>
+          <span className="gate-icon__label">{t(lang, "gate.recycleBin")}</span>
         </span>
       </div>
 
       <div className="gate-taskbar">
-        <button type="button" className="gate-taskbar__start" title="Start" onClick={() => {}}>
-          Start
+        <button type="button" className="gate-taskbar__start" title={t(lang, "gate.start")} onClick={() => {}}>
+          {t(lang, "gate.start")}
         </button>
         <div className="gate-taskbar__spacer" />
         <div className="gate-tray">
@@ -315,10 +317,10 @@ export default function LoginGate({
       </div>
 
       {phase === "boot" && (
-        <div className="gate-boot" aria-label="Menyalakan sistem">
+        <div className="gate-boot" aria-label={t(lang, "gate.bootLabel")}>
           <div className="gate-boot__logo">GAS ELECTRONIC OS</div>
           <div className="gate-boot__status">
-            Loading THE GATE...
+            {t(lang, "gate.statusBoot")}
             <span className="gate-blink">_</span>
           </div>
         </div>

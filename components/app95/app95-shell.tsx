@@ -1,37 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { t, loadLang, type Lang } from "@/lib/i18n";
 
 export type App95MenuItem = { label: string; items?: string[] };
 export type App95ToolbarBtn = { label: string; icon?: string; action?: () => void };
 export type App95NavItem = { id: string; label: string; icon?: string; active?: boolean; onClick?: () => void };
 export type App95StatusItem = { label: string; value: string };
 
-const DEMO = "Fitur dalam mode demo.";
 const TOAST_MS = 2600;
 const BOOT_MS = 2000;
-
-const defaultMenu: App95MenuItem[] = [
-  { label: "File", items: ["Baru", "Buka", "Simpan", "Cetak", "Keluar"] },
-  { label: "Edit", items: ["Salin", "Tempel", "Hapus"] },
-  { label: "View", items: ["Sidebar", "Toolbar", "Status Bar"] },
-  { label: "Help", items: ["Tentang Aplikasi", "Panduan"] },
-];
-
-const defaultToolbar = (onLogout?: () => void): App95ToolbarBtn[] => [
-  { label: "Folder Baru", icon: "folder" },
-  { label: "Cetak", icon: "file" },
-  { label: "Keluar", icon: "key", action: onLogout },
-];
-
-const defaultNav: App95NavItem[] = [
-  { id: "home", label: "Beranda", icon: "app", active: true },
-  { id: "documents", label: "Dokumen", icon: "file" },
-  { id: "archive", label: "Arsip", icon: "folder" },
-  { id: "settings", label: "Pengaturan", icon: "gear" },
-];
-
-const defaultStatus: App95StatusItem[] = [{ label: "Siap", value: "Aplikasi berjalan" }];
 
 function Glyph({ name, size = 16 }: { name: string; size?: number }): ReactNode {
   const svgProps = {
@@ -113,11 +91,26 @@ export function App95Shell(props: {
   onLogout?: () => void;
   children: ReactNode;
 }): ReactNode {
+  const [lang] = useState<Lang>(() => (typeof window === "undefined" ? "id" : loadLang(window.localStorage)));
   const { title, icon, userLabel, onLogout, children } = props;
-  const menu = props.menu ?? defaultMenu;
-  const toolbar = props.toolbar ?? defaultToolbar(onLogout);
-  const navItems = props.navItems ?? defaultNav;
-  const status = props.status ?? defaultStatus;
+  const menu = props.menu ?? [
+    { label: t(lang, "suite.menuFile"), items: [t(lang, "suite.fileNew"), t(lang, "suite.fileOpen"), t(lang, "suite.fileSave"), t(lang, "suite.filePrint"), t(lang, "suite.fileExit")] },
+    { label: t(lang, "suite.menuEdit"), items: [t(lang, "suite.editCopy"), t(lang, "suite.editPaste"), t(lang, "suite.editDelete")] },
+    { label: t(lang, "suite.menuView"), items: [t(lang, "suite.viewSidebar"), t(lang, "suite.viewToolbar"), t(lang, "suite.viewStatusbar")] },
+    { label: t(lang, "suite.menuHelp"), items: [t(lang, "suite.helpAbout"), t(lang, "suite.helpGuide")] },
+  ];
+  const toolbar = props.toolbar ?? [
+    { label: t(lang, "suite.tbNewFolder"), icon: "folder" },
+    { label: t(lang, "suite.filePrint"), icon: "file" },
+    { label: t(lang, "suite.fileExit"), icon: "key", action: onLogout },
+  ];
+  const navItems = props.navItems ?? [
+    { id: "home", label: t(lang, "suite.navHome"), icon: "app", active: true },
+    { id: "documents", label: t(lang, "suite.navDocs"), icon: "file" },
+    { id: "archive", label: t(lang, "suite.navArchive"), icon: "folder" },
+    { id: "settings", label: t(lang, "suite.navSettings"), icon: "gear" },
+  ];
+  const status = props.status ?? [{ label: t(lang, "suite.statusReady"), value: t(lang, "suite.statusReadyValue") }];
 
   const [starting, setStarting] = useState(true);
   const [leaving, setLeaving] = useState(false);
@@ -167,9 +160,9 @@ export function App95Shell(props: {
       >
         <div className="app95-boot__panel">
           <Glyph name="app" size={48} />
-          <div className="app95-boot__title">Starting Application…</div>
-          <div className="app95-boot__sub">Loading GAS ELECTRONIC Suite...</div>
-          <div className="app95-progress app95-progress--boot" role="progressbar" aria-label="Memuat aplikasi">
+          <div className="app95-boot__title">{t(lang, "suite.bootTitle")}</div>
+          <div className="app95-boot__sub">{t(lang, "suite.bootSub")}</div>
+          <div className="app95-progress app95-progress--boot" role="progressbar" aria-label={t(lang, "suite.bootAria")}>
             <div className="app95-progress__bar" />
           </div>
         </div>
@@ -189,23 +182,23 @@ export function App95Shell(props: {
           <button
             type="button"
             className="app95-window__btn"
-            aria-label="Minimize"
-            onClick={() => toast("Jendela diminimalkan (demo).")}
+            aria-label={t(lang, "suite.winMin")}
+            onClick={() => toast(t(lang, "suite.winMinToast"))}
           >
             _
           </button>
           <button
             type="button"
             className="app95-window__btn"
-            aria-label="Maximize"
-            onClick={() => toast("Aplikasi sudah dalam mode layar penuh.")}
+            aria-label={t(lang, "suite.winMax")}
+            onClick={() => toast(t(lang, "suite.winMaxToast"))}
           >
             ▢
           </button>
           <button
             type="button"
             className="app95-window__btn app95-window__btn--close"
-            aria-label="Tutup aplikasi"
+            aria-label={t(lang, "suite.winClose")}
             onClick={() => onLogout?.()}
           >
             ✕
@@ -215,7 +208,7 @@ export function App95Shell(props: {
         <nav
           className="app95-menubar"
           role="menubar"
-          aria-label="Menu utama"
+          aria-label={t(lang, "suite.menubarAria")}
           onKeyDown={(e) => {
             if (e.key === "Escape") setOpenMenu(null);
           }}
@@ -242,7 +235,7 @@ export function App95Shell(props: {
                       className="app95-menu__item"
                       onClick={() => {
                         setOpenMenu(null);
-                        toast(DEMO);
+                        toast(t(lang, "suite.demo"));
                       }}
                     >
                       {it}
@@ -259,7 +252,7 @@ export function App95Shell(props: {
         )}
 
         {toolbar.length > 0 && (
-          <div className="app95-shell__toolbar" role="toolbar" aria-label="Toolbar">
+          <div className="app95-shell__toolbar" role="toolbar" aria-label={t(lang, "suite.toolbarAria")}>
             {toolbar.map((b) => (
               <button
                 key={b.label}
@@ -267,7 +260,7 @@ export function App95Shell(props: {
                 className="app95-toolbar__btn"
                 data-tip={b.label}
                 aria-label={b.label}
-                onClick={() => (b.action ? b.action() : toast(DEMO))}
+                onClick={() => (b.action ? b.action() : toast(t(lang, "suite.demo")))}
               >
                 {b.icon && (
                   <span className="app95-toolbar__icon" aria-hidden>
@@ -285,14 +278,14 @@ export function App95Shell(props: {
             <button
               type="button"
               className="app95-shell__side-toggle"
-              aria-label={navOpen ? "Sembunyikan sidebar" : "Tampilkan sidebar"}
+              aria-label={navOpen ? t(lang, "suite.sideHide") : t(lang, "suite.sideShow")}
               aria-expanded={navOpen}
               onClick={() => setNavOpen(!navOpen)}
             >
               {navOpen ? "«" : "☰"}
             </button>
             {navOpen && (
-              <nav className="app95-shell__nav" aria-label="Navigasi aplikasi">
+              <nav className="app95-shell__nav" aria-label={t(lang, "suite.navAria")}>
                 {navItems.map((n) => (
                   <button
                     key={n.id}

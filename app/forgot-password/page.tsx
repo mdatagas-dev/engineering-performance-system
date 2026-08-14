@@ -25,69 +25,92 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center px-4 py-10">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <span className="block h-12 w-12 overflow-hidden rounded-xl shadow-lg shadow-cyan-500/20">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Logo" className="h-full w-full object-cover" />
+    <div className="gate-root">
+      <div
+        className="gate-dialog gate-dialog--open gate-dialog--lg"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="fp-title"
+      >
+        <div className="gate-titlebar">
+          <span className="gate-titlebar__icon" aria-hidden="true">
+            🖥
           </span>
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">Lupa Password</h1>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Engineering Production System — reset password (tiruan)
-            </p>
-          </div>
+          <span id="fp-title">Recovery — GAS ELECTRONIC Suite</span>
         </div>
-
-        <form onSubmit={handleSubmit} noValidate className="glass-card flex flex-col gap-4 p-6">
+        <div className="gate-dialog__body">
           {sent ? (
-            <p role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-800 dark:text-emerald-400">
-              Jika email terdaftar, instruksi reset password telah dikirim ke inbox Anda.
-            </p>
-          ) : (
             <>
-              <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                Masukkan email akun Anda. Kami akan mengirim tautan untuk mereset password (alur tiruan — tidak ada email sungguhan yang dikirim).
-              </p>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="email" className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                  Email
-                </label>
+              <div className="gate-row">
+                <span className="gate-msg__glyph" aria-hidden="true">
+                  🖥
+                </span>
+                <div>
+                  <p className="gate-msg gate-msg--ok" role="status">
+                    Pesan terkirim
+                  </p>
+                  <p className="gate-msg">
+                    Jika email terdaftar, instruksi reset password telah dikirim ke inbox Anda.
+                  </p>
+                </div>
+              </div>
+              <div className="gate-actions">
+                <Link href="/login" className="gate-btn gate-btn--default gate-btn-link" title="Kembali ke login">
+                  OK
+                </Link>
+              </div>
+            </>
+          ) : (
+            <form onSubmit={handleSubmit} noValidate>
+              {error && (
+                <div className="gate-msg gate-msg--err" role="alert">
+                  <div className="gate-msg__head">⚠ Error</div>
+                  <div>{error}</div>
+                </div>
+              )}
+              <div className="gate-row">
+                <span className="gate-msg__glyph" aria-hidden="true">
+                  🖥
+                </span>
+                <p className="gate-msg">
+                  Masukkan email akun Anda. Instruksi reset password akan dikirim — alur tiruan,
+                  tidak ada email sungguhan yang dikirim.
+                </p>
+              </div>
+              <label className="gate-field" htmlFor="fp-email">
+                Email:
                 <input
-                  id="email"
+                  id="fp-email"
+                  className="gate-input"
                   type="email"
                   autoComplete="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError(null);
+                  }}
                   placeholder="nama@perusahaan.com"
                   aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? "email-error" : undefined}
-                  className="w-full rounded-lg border border-slate-950/15 bg-white/70 px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-cyan-600 focus:ring-2 focus:ring-cyan-500/30 dark:border-white/15 dark:bg-white/5 dark:text-slate-100 dark:placeholder-slate-500"
+                  aria-describedby={error ? "fp-error" : undefined}
                 />
                 {error && (
-                  <p id="email-error" role="alert" className="text-xs text-red-600 dark:text-red-400">
+                  <span id="fp-error" className="gate-field__error" role="alert">
                     {error}
-                  </p>
+                  </span>
                 )}
+              </label>
+              <div className="gate-actions">
+                <button type="submit" className="gate-btn gate-btn--default" title="Kirim instruksi reset">
+                  OK
+                </button>
               </div>
-              <button
-                type="submit"
-                className="mt-1 w-full rounded-lg bg-gradient-to-r from-cyan-600 to-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-600/25 transition hover:opacity-90"
-              >
-                Kirim Instruksi Reset
-              </button>
-            </>
+            </form>
           )}
-        </form>
-
-        <p className="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
-          Ingat password?{" "}
-          <Link href="/login" className="font-medium text-cyan-700 hover:underline dark:text-cyan-400">
-            Kembali ke login
-          </Link>
-        </p>
+        </div>
       </div>
+      <p className="gate-backlink">
+        <Link href="/login">← Kembali ke login</Link>
+      </p>
     </div>
   );
 }

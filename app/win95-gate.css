@@ -529,3 +529,89 @@
     animation: none;
   }
 }
+
+/* ============================================================
+   Recovery (forgot-password) & 404 (not-found)
+   Prefix: gate- reuse + nf- (hanya dua halaman ini)
+   ============================================================ */
+
+.gate-dialog--lg {
+  font-size: 12px;
+}
+
+.gate-msg__glyph {
+  flex: none;
+  font-size: 38px;
+  line-height: 1;
+  filter: drop-shadow(1px 1px 0 rgb(0 0 0 / 0.35));
+}
+
+.gate-btn-link {
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+  line-height: 20px;
+}
+
+.gate-backlink {
+  position: fixed;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  z-index: 40;
+  margin: 0;
+  font: 12px Tahoma, "MS Sans Serif", sans-serif;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.gate-backlink a {
+  color: #fff;
+}
+
+.gate-backlink a:hover {
+  text-decoration: underline;
+}
+
+/* ---- 404 (not-found) ---- */
+.nf-root {
+  position: fixed;
+  inset: 0;
+  background-image: url("/wallpaper.jpg");
+  background-size: cover;
+  background-position: center;
+  background-color: #008080;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 12px;
+  color: #000;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.nf-warn {
+  flex: none;
+  font-size: 44px;
+  line-height: 1;
+  filter: drop-shadow(1px 1px 0 rgb(0 0 0 / 0.4));
+}
+
+.nf-code {
+  margin: 0 0 6px;
+  font: 700 15px "Courier New", Courier, monospace;
+  color: #000;
+}
+
+.nf-alt {
+  margin: 14px 0 0;
+  text-align: center;
+}
+
+.nf-alt a {
+  color: #000080;
+  font-size: 11px;
+}
+
+.nf-alt a:hover {
+  text-decoration: underline;
+}
