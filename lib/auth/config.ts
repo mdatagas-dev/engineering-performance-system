@@ -24,8 +24,18 @@ export const AUTH_CONFIG = {
   loginAttemptRetentionMs: 24 * 60 * 60 * 1000,
 } as const;
 
+// JWT secret minimal 32 byte — secret pendek/tebakan mudah = JWT bisa
+// dipalsukan. Generator: `openssl rand -base64 32`.
+const MIN_JWT_SECRET_BYTES = 32;
+
 export function getJwtSecret(): string {
   const secret = process.env.AUTH_SECRET;
   if (!secret) throw new Error("AUTH_SECRET tidak di-set di environment");
+  if (Buffer.byteLength(secret, "utf8") < MIN_JWT_SECRET_BYTES) {
+    throw new Error(
+      `AUTH_SECRET terlalu pendek: minimal ${MIN_JWT_SECRET_BYTES} byte. ` +
+        "Generate dengan `openssl rand -base64 32`."
+    );
+  }
   return secret;
 }

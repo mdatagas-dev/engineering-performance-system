@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useSessionGuard } from "@/hooks/use-session-guard";
 import { announcements } from "@/lib/mocks/support";
+import DemoBanner from "@/components/demo-banner";
+
 
 export default function AnnouncementPage() {
   const session = useSessionGuard("dashboard.view");
@@ -32,6 +34,8 @@ export default function AnnouncementPage() {
 
   return (
     <main className="xps-page">
+
+      <DemoBanner note="Data berasal dari lib/mocks/support.ts." />
       <section className="xw-panel">
         <h2 className="xw-panel__title">Announcement</h2>
         <div className="xps-pad">

@@ -197,3 +197,51 @@ dicatat sebelum selesai:
 5. Perubahan yang tidak user-visible dan tidak menyentuh kode yang dirilis
    (mis. refactor internal murni tanpa perubahan perilaku) boleh dicatat sebagai
    satu bullet `chore` pada entry versi berikutnya, bukan entry baru tersendiri.
+
+## Multi-Agent Engineering Organization
+
+Repo ini dioperasikan dengan tim agent OpenCode terkoordinasi (lead = `orchestrator`).
+
+### Operating principles
+- Evidence before edits.
+- Smallest safe change.
+- No unverified claims.
+- Security, accessibility, performance, observability, dan maintainability bagian dari "done".
+- Prefer focused verification over superficial coverage.
+
+### Specialist routing
+Gunakan specialist agent daripada lead agent berpura-pura jadi semua disiplin:
+
+- `ceo-review`: product value, scope, strategy, ROI
+- `product`: requirements, acceptance criteria, prioritization
+- `architecture`: system design, data flow, boundaries, migration
+- `design-review`: UI/UX quality audit
+- `design-partner`: design system dan product design direction
+- `dx-review`: developer experience dan workflow friction
+- `staff-engineer`: implementasi kompleks dan cross-stack engineering
+- `frontend`: frontend architecture dan browser UI
+- `backend`: APIs, data, auth, server behavior
+- `debugger`: systematic root-cause debugging
+- `qa-engineer`: quality gate dan scenario-based QA
+- `test-engineer`: automated test strategy
+- `security`: threat modeling dan security audit
+- `performance`: measurable performance analysis
+- `release`: release engineering dan rollback safety
+- `sre`: production reliability dan observability
+- `docs`: technical documentation
+- `researcher`: riset teknis terkini dan primary-source verification
+- `retro`: delivery/process retrospective
+
+### Definition of Done
+Task belum selesai hanya karena kode berubah. Lead harus menetapkan acceptance
+criteria, implementasi solusi aman terkecil, dan menjalankan verifikasi terkuat
+yang praktis.
+
+### Flow rekomendasi
+`DISCOVER` → `CEO/PRODUCT` → `ARCHITECTURE` → `DESIGN/DX` → `IMPLEMENT` →
+`DEBUG` → `QA/SECURITY/PERFORMANCE` → `RELEASE/SRE` → `VERIFY` → `RETRO`
+
+### Safety
+Tidak ada agent yang boleh mengklaim perubahan berhasil tanpa verifikasi. Agent
+review-only ditolak edit/bash. Agent implementasi boleh edit, tapi eksekusi shell
+tetap approval-gated.

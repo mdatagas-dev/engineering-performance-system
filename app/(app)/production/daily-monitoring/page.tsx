@@ -6,6 +6,8 @@ import { getDashboardData, type DashboardData } from "@/lib/mocks/dashboard";
 import { mockProductionRecords, type MockProductionRecord } from "@/lib/mocks/records";
 import { fetchAllRecords } from "@/lib/api/records";
 import { formatDecimal, formatNumber } from "@/lib/production-table/format";
+import DemoBanner from "@/components/demo-banner";
+
 
 function Kpi({ label, value }: { label: string; value: string }) {
   return (
@@ -51,6 +53,8 @@ export default function DailyMonitoringPage() {
 
   return (
     <main className="xpp-page">
+
+      <DemoBanner note="KPI berasal dari lib/mocks/dashboard.ts." />
       <section className="xw-panel">
         <h2 className="xw-panel__title">Daily Monitoring</h2>
         <div className="xpp-kpi-row">

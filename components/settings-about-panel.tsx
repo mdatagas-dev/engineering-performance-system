@@ -2,10 +2,24 @@
 
 import pkg from "@/package.json";
 import { CHANGELOG, changelogKind, t, type Lang } from "@/lib/i18n";
+import { getSystemInfo } from "@/lib/mocks/dashboard";
 
 const STACK = ["Next.js 16 (App Router)", "React 19", "TypeScript", "Prisma 7", "Tailwind CSS v4"];
 
-export default function SettingsAboutPanel({ lang }: { lang: Lang }) {
+export default function SettingsAboutPanel({ lang, user }: { lang: Lang; user?: { name: string; role: string } }) {
+  const roleLabel = user?.role ?? "—";
+  const info = user ? getSystemInfo(user.name, roleLabel) : null;
+  const infoRows: Array<[string, string]> = info
+    ? [
+        ["User", info.user],
+        ["Department", info.department],
+        ["Access Level", info.accessLevel],
+        ["Login Time", info.loginTime],
+        ["Server", info.server],
+        ["Database", info.database],
+        ["Version", info.version],
+      ]
+    : [];
   return (
     <section className="glass-card relative overflow-hidden p-6 sm:p-8">
       <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-rose-500/15 blur-3xl" />
@@ -56,6 +70,29 @@ export default function SettingsAboutPanel({ lang }: { lang: Lang }) {
             </div>
           </div>
         </div>
+
+        {/* System Information — dipindah dari dashboard (audit: label jujur
+            "Data demo": user/role real dari sesi, server/database masih
+            hardcode di getSystemInfo). */}
+        {info && (
+          <div className="mt-6">
+            <h3 className="text-sm font-bold tracking-tight text-slate-800 dark:text-slate-100">
+              {t(lang, "about.systemInfo")}
+            </h3>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2">
+              {infoRows.map(([label, value]) => (
+                <div
+                  key={label}
+                  className="flex items-center justify-between rounded-xl border border-slate-950/10 bg-white/50 px-4 py-2.5 dark:border-white/10 dark:bg-white/5"
+                >
+                  <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{label}</span>
+                  <span className="font-mono text-[13px] font-semibold text-slate-700 dark:text-slate-200">{value}</span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-400">⚠ Data demo — server/database belum terhubung ke nilai nyata.</p>
+          </div>
+        )}
 
         <div className="mt-6">
           <h3 className="text-sm font-bold tracking-tight text-slate-800 dark:text-slate-100">{t(lang, "about.changelog")}</h3>

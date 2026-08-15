@@ -37,6 +37,7 @@ export function CalculatorApp(): ReactNode {
   const [op, setOp] = useState<string | null>(null);
   const [fresh, setFresh] = useState(true);
   const [menu, setMenu] = useState<string | null>(null);
+  const [mem, setMem] = useState(0);
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -92,7 +93,7 @@ export function CalculatorApp(): ReactNode {
 
   const setOperator = (o: string) => {
     if (op && !fresh && acc !== null) {
-      const r = apply(acc, parseFloat(display), op);
+    const r = apply(acc ?? 0, parseFloat(display), op);
       if (!Number.isFinite(r)) { setDisplay("Error"); setAcc(null); setOp(null); setFresh(true); return; }
       setAcc(r);
       setDisplay(norm(r));
@@ -104,8 +105,7 @@ export function CalculatorApp(): ReactNode {
   };
 
   const equals = () => {
-    if (op === null || acc === null) return;
-    const r = apply(acc, parseFloat(display), op);
+    const r = apply(acc ?? 0, parseFloat(display), op ?? "+");
     if (!Number.isFinite(r)) {
       setDisplay("Error");
       setAcc(null);
@@ -163,8 +163,15 @@ export function CalculatorApp(): ReactNode {
           </button>
         </MenuButton>
       </div>
-      <div className="win95-calc__display">{display}</div>
+      <div className="win95-calc__display">
+        <span className={`win95-calc__mem ${mem !== 0 ? "win95-calc__mem--on" : ""}`}>M</span>
+        {display}
+      </div>
       <div className="win95-calc__grid">
+        <Btn label="MC" onClick={() => setMem(0)} />
+        <Btn label="MR" onClick={() => setDisplay(String(mem))} />
+        <Btn label="M+" onClick={() => setMem(mem + parseFloat(display))} />
+        <Btn label="M−" onClick={() => setMem(mem - parseFloat(display))} />
         <Btn label="C" onClick={clearAll} />
         <Btn label="CE" onClick={clearEntry} />
         <Btn label="⌫" onClick={backspace} />

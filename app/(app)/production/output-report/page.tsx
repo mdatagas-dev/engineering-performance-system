@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useSessionGuard } from "@/hooks/use-session-guard";
 import { getDashboardData, type DashboardData, type OutputTrend } from "@/lib/mocks/dashboard";
 import { formatDecimal, formatNumber } from "@/lib/production-table/format";
+import DemoBanner from "@/components/demo-banner";
+
 
 const AXIS_TEXT = { fontSize: 10, fill: "#333", fontFamily: "Tahoma, Arial, sans-serif" } as const;
 
@@ -104,6 +106,8 @@ export default function OutputReportPage() {
 
   return (
     <main className="xpp-page">
+
+      <DemoBanner note="Data berasal dari lib/mocks/dashboard.ts." />
       <section className="xw-panel">
         <h2 className="xw-panel__title">Output Report</h2>
         <div className="xpp-toolbar">

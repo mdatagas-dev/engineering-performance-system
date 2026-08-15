@@ -100,7 +100,7 @@ export default function SettingsPage() {
           {activeTab === "security" && <SettingsSecurityPanel lang={lang} />}
           {activeTab === "modules" && <SettingsModulesPanel lang={lang} user={session.user} />}
           {activeTab === "language" && <SettingsLanguagePanel lang={lang} onSelect={handleLangSelect} />}
-          {activeTab === "about" && <SettingsAboutPanel lang={lang} />}
+          {activeTab === "about" && <SettingsAboutPanel lang={lang} user={{ name: session.user.name, role: session.user.role.name }} />}
         </div>
       </div>
     </main>

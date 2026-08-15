@@ -39,6 +39,17 @@ const ACCOUNTS: { email: string; password: string; name: string; role: RoleName 
 ];
 
 async function main() {
+  // Keamanan: jangan pernah seed akun default ke environment produksi.
+  // Password default (Superadmin123!, dll) ada di repo — menimpa hash
+  // akun yang sudah ada = reset password diam-diam. Di luar production,
+  // akun existing juga TIDAK direset (update: {} — passwordHash tidak disentuh).
+  if (process.env.NODE_ENV === "production" && !process.env.SEED_FORCE) {
+    throw new Error(
+      "Seed dilarang di NODE_ENV=production: akun default publik akan mengancam data.\n" +
+        "Set SEED_FORCE=1 hanya jika Anda benar-benar yakin (DB kosong/throwaway)."
+    );
+  }
+
   const permissions: Record<string, string> = {};
   for (const key of PERMISSION_KEYS) {
     const p = await prisma.permission.upsert({
@@ -65,9 +76,10 @@ async function main() {
   }
 
   for (const account of ACCOUNTS) {
+    // update: {} — akun existing dibiarkan, passwordHash tidak pernah ditimpa.
     const user = await prisma.user.upsert({
       where: { email: account.email },
-      update: { passwordHash: await hash(account.password) },
+      update: {},
       create: {
         email: account.email,
         passwordHash: await hash(account.password),
@@ -83,6 +95,7 @@ async function main() {
   }
 
   console.log("Seed done: 5 roles, 10 permissions, 5 accounts (superadmin/admin/manager/staff/viewer)");
+  console.log("Catatan: akun yang sudah ada TIDAK direset passwordnya (hash dibiarkan).");
 }
 
 main()

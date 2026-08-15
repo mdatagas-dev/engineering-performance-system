@@ -169,6 +169,7 @@
 
 .win95-calc__display {
   flex: none;
+  position: relative;
   background: #000;
   color: #fff;
   font-family: "Courier New", monospace;
@@ -182,6 +183,22 @@
   border-right-color: #dfdfdf;
   overflow: hidden;
   white-space: nowrap;
+}
+
+.win95-calc__mem {
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  font-weight: bold;
+  color: #333;
+  visibility: hidden;
+}
+
+.win95-calc__mem--on {
+  visibility: visible;
+  color: #ff5555;
 }
 
 .win95-calc__grid {

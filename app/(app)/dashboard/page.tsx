@@ -6,7 +6,6 @@ import { useSessionGuard } from "@/hooks/use-session-guard";
 import { fetchAllRecords } from "@/lib/api/records";
 import {
   getDashboardData,
-  getSystemInfo,
   type Alert,
   type DashboardData,
   type OutputTrend,
@@ -14,14 +13,6 @@ import {
 } from "@/lib/mocks/dashboard";
 import type { MockProductionRecord } from "@/lib/mocks/records";
 import { formatDecimal, formatNumber } from "@/lib/production-table/format";
-
-const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: "Super Admin",
-  ADMIN: "Admin",
-  ENGINEERING_MANAGER: "Engineering Manager",
-  ENGINEERING_STAFF: "Engineering Staff",
-  VIEWER: "Viewer",
-};
 
 const STATUS_COLOR: Record<string, string> = {
   RUNNING: "#2e7d32",
@@ -513,19 +504,6 @@ export default function DashboardPage() {
     );
   }
 
-  const { user } = session;
-  const roleLabel = ROLE_LABELS[user.role.name] ?? user.role.name;
-  const info = getSystemInfo(user.name, roleLabel);
-  const infoRows: Array<[string, string]> = [
-    ["User", info.user],
-    ["Department", info.department],
-    ["Access Level", info.accessLevel],
-    ["Login Time", info.loginTime],
-    ["Server", info.server],
-    ["Database", info.database],
-    ["Version", info.version],
-  ];
-
   return (
     <main className="xwd-page">
       <Section title="Production Overview" note={srcChip(kpisSrc, recsLoading)}>
@@ -654,19 +632,6 @@ export default function DashboardPage() {
                 ))}
               </tbody>
             </table>
-          </div>
-        </Section>
-
-        <Section title="System Information" note="Data real">
-          <div className="xwd-pad">
-            <div className="xwd-info">
-              {infoRows.map(([label, value]) => (
-                <div key={label} className="xwd-info-row">
-                  <span className="xwd-info-label">{label}</span>
-                  <span className="xwd-info-value">{value}</span>
-                </div>
-              ))}
-            </div>
           </div>
         </Section>
       </div>
@@ -819,25 +784,6 @@ export default function DashboardPage() {
           width: 12px;
           height: 3px;
           display: inline-block;
-        }
-        .xwd-info {
-          border: 1px solid #c0c0c0;
-        }
-        .xwd-info-row {
-          display: grid;
-          grid-template-columns: 128px 1fr;
-        }
-        .xwd-info-row + .xwd-info-row {
-          border-top: 1px solid #c0c0c0;
-        }
-        .xwd-info-label {
-          background: #ece9d8;
-          padding: 3px 8px;
-          font-weight: bold;
-          border-right: 1px solid #c0c0c0;
-        }
-        .xwd-info-value {
-          padding: 3px 8px;
         }
       `}</style>
     </main>

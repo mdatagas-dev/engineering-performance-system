@@ -1,4 +1,4 @@
-// Mock data untuk halaman Support (Document Center, Training Material,
+// Mock data untuk halaman Support (Document Center, Training Modul,
 // Announcement) — frontend-first, backend API belum ada. Data statis
 // dibekukan agar tidak termutasi, pola sama seperti lib/mocks/dashboard.ts.
 
@@ -233,7 +233,7 @@ export const announcements: readonly Announcement[] = Object.freeze([
     author: "Dept. HSE",
     pinned: false,
     content:
-      "Pendaftaran pelatihan \"Keselamatan Kerja Mesin Press\" (TR-001) dibuka hingga 20 Agustus 2026.\n\nPelatihan dilaksanakan dua sesi, peserta diwajibkan hadir minimal 90% dari durasi untuk mendapat sertifikat. Detail jadwal tersedia di halaman Training Material.",
+      "Pendaftaran pelatihan \"Keselamatan Kerja Mesin Press\" (TR-001) dibuka hingga 20 Agustus 2026.\n\nPelatihan dilaksanakan dua sesi, peserta diwajibkan hadir minimal 90% dari durasi untuk mendapat sertifikat. Detail jadwal tersedia di halaman Training Modul.",
   }),
   Object.freeze({
     id: "ANN-005",

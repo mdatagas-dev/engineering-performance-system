@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useSessionGuard } from "@/hooks/use-session-guard";
 import { getDashboardData, type DashboardData } from "@/lib/mocks/dashboard";
 import { formatDecimal, formatNumber } from "@/lib/production-table/format";
+import DemoBanner from "@/components/demo-banner";
+
 
 const STATUS_COLOR: Record<string, string> = {
   RUNNING: "#2e7d32",
@@ -52,6 +54,8 @@ export default function LineStatusPage() {
 
   return (
     <main className="xpp-page">
+
+      <DemoBanner note="Data berasal dari lib/mocks/dashboard.ts." />
       <section className="xw-panel">
         <h2 className="xw-panel__title">Line Status</h2>
         <div className="xpp-kpi-row">

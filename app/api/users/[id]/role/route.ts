@@ -66,9 +66,12 @@ export async function PATCH(req: Request, { params }: Params) {
 
   const beforeRole = target.userRoles[0]?.role.name ?? null;
 
+  // Keamanan: revoke semua sesi target — JWT membawa snapshot permission,
+  // demosi harus langsung efektif (bukan menunggu token expire).
   await prisma.$transaction([
     prisma.userRole.deleteMany({ where: { userId: target.id } }),
     prisma.userRole.create({ data: { userId: target.id, roleId: role.id } }),
+    prisma.session.deleteMany({ where: { userId: target.id } }),
     prisma.auditLog.create({
       data: {
         userId: session.sub,

@@ -24,7 +24,10 @@ cd C:\apps\eps
 # Salin .env dengan nilai nyata:
 #   AUTH_SECRET=<openssl rand -base64 32>
 #   DATABASE_URL=postgresql://USER:PASS@HOST:5432/DB?sslmode=require
+#   TRUSTED_PROXIES=<IP proxy tepercaya, koma>   # WAJIB: tanpa ini IP rate-limit mati
+#   COOKIE_SECURE=true                            # WAJIB di produksi (HTTPS)
 #   PORT=3050
+# (template lengkap: .env.example)
 ```
 
 ### 1.3 Deploy manual (update)

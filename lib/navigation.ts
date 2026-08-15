@@ -70,7 +70,7 @@ export const NAV_TREE: NavItem[] = [
     label: "Support",
     children: [
       { key: "support.document", label: "Document Center", href: "/support/document-center" },
-      { key: "support.training", label: "Training Material", href: "/support/training-material" },
+      { key: "support.training", label: "Training Modul", href: "/support/training-material" },
       { key: "support.announcement", label: "Announcement", href: "/support/announcement" },
     ],
   },

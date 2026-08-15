@@ -7,11 +7,12 @@ import PageTransition from "@/components/page-transition";
 import { useSessionGuard } from "@/hooks/use-session-guard";
 import { clearMockSession } from "@/lib/mocks/accounts";
 import { NAV_TREE, SYSTEM_SHORTCUTS } from "@/lib/navigation";
-import "../win95-inner.css";
 import "../winxp-dash.css";
+import pkg from "@/package.json";
 
 const APP_TITLE = "GAS ELECTRONIC - PRODUCTION MANAGEMENT SYSTEM";
-const APP_VERSION = "1.9.0";
+// Versi single-source dari package.json (Settings About baca yang sama).
+const APP_VERSION = pkg.version;
 const TOAST_MS = 2600;
 
 function Icon({ name }: { name: string }): ReactNode {

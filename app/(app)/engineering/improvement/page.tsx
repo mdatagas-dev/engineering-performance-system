@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSessionGuard } from "@/hooks/use-session-guard";
+import DemoBanner from "@/components/demo-banner";
 import {
+
   addItem,
   improvementSeed,
   loadCollection,
@@ -111,6 +113,8 @@ export default function ImprovementPage() {
 
   return (
     <main className="xpe-page">
+
+      <DemoBanner note="Data berasal dari lib/mocks/engineering.ts." />
       <section className="xw-panel">
         <div className="xpe-titlebar">
           <h3 className="xw-panel__title">Improvement</h3>

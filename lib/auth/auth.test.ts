@@ -108,23 +108,25 @@ describe("loginUser", () => {
     assert.equal(result.auditAction, "ACCOUNT_LOCKED");
   });
 
-  it("akun terkunci -> 403", async () => {
+  it("akun terkunci -> 401 seragam (tidak bocor status lock)", async () => {
     const { deps } = makeDeps({
       user: makeUser({ lockedUntil: new Date(NOW.getTime() + 60_000) }),
     });
     const result = await loginUser({ email: "staff@eps.local", password: "pw" }, deps);
     assert.equal(result.ok, false);
     if (result.ok) return;
-    assert.equal(result.status, 403);
+    assert.equal(result.status, 401);
+    assert.equal(result.message, "Email atau password salah.");
     assert.equal(result.auditAction, "LOGIN_FAILED");
   });
 
-  it("akun tidak aktif -> 403", async () => {
+  it("akun tidak aktif -> 401 seragam (tidak bocor status akun)", async () => {
     const { deps } = makeDeps({ user: makeUser({ isActive: false }) });
     const result = await loginUser({ email: "staff@eps.local", password: "pw" }, deps);
     assert.equal(result.ok, false);
     if (result.ok) return;
-    assert.equal(result.status, 403);
+    assert.equal(result.status, 401);
+    assert.equal(result.message, "Email atau password salah.");
   });
 });
 

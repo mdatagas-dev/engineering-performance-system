@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import WindowShell from "./window-shell";
-import Win95Icon, { type Win95IconName } from "./win95-icons";
+import WinXpIcon, { type WinXpIconName } from "./winxp-icons";
+import Taskbar from "./taskbar";
+import StartMenu from "./start-menu";
 import { MyComputerApp } from "./apps/my-computer";
 import { DocumentsApp } from "./apps/documents";
 import { NotepadApp } from "./apps/notepad";
@@ -14,18 +16,26 @@ import { SystemPropertiesApp } from "./apps/system-properties";
 import { RecycleBinApp } from "./apps/recycle-bin";
 import { AboutApp } from "./apps/about";
 import { AccessTerminalApp } from "./apps/access-terminal";
+import { InternetExplorerApp } from "./apps/internet-explorer";
+import { ControlPanelApp } from "./apps/control-panel";
+import { NetworkPlacesApp } from "./apps/network-places";
+import { GameHouseApp } from "./apps/game-house";
 
 type WinId =
   | "my-computer"
   | "my-documents"
+  | "recycle-bin"
   | "notepad"
   | "calculator"
-  | "minesweeper"
   | "command-prompt"
-  | "system-info"
-  | "recycle-bin"
+  | "minesweeper"
+  | "game-house"
+  | "internet-explorer"
+  | "control-panel"
+  | "network-places"
   | "about"
-  | "access-terminal";
+  | "access-terminal"
+  | "system-properties";
 
 type NotepadFile = { name: string; content: string };
 
@@ -41,48 +51,70 @@ type WinState = {
 
 type ToastItem = { id: number; msg: string };
 
-type WinMeta = { title: string; icon: Win95IconName; w: number; h: number };
+type WinMeta = { title: string; icon: WinXpIconName; w: number; h: number };
 
 const APP_META: Record<WinId, WinMeta> = {
   "my-computer": { title: "My Computer", icon: "my-computer", w: 560, h: 400 },
   "my-documents": { title: "My Documents", icon: "my-documents", w: 540, h: 400 },
+  "recycle-bin": { title: "Recycle Bin", icon: "recycle-bin", w: 520, h: 400 },
   notepad: { title: "Notepad", icon: "notepad", w: 480, h: 420 },
   calculator: { title: "Calculator", icon: "calculator", w: 300, h: 340 },
-  minesweeper: { title: "Minesweeper", icon: "minesweeper", w: 280, h: 400 },
   "command-prompt": { title: "Command Prompt", icon: "command-prompt", w: 620, h: 420 },
-  "system-info": { title: "System Info", icon: "system-info", w: 460, h: 440 },
-  "recycle-bin": { title: "Recycle Bin", icon: "recycle-bin", w: 520, h: 400 },
-  about: { title: "About", icon: "about", w: 430, h: 330 },
-  "access-terminal": { title: "ACCESS TERMINAL", icon: "access-terminal", w: 460, h: 380 },
+  minesweeper: { title: "Minesweeper", icon: "minesweeper", w: 280, h: 400 },
+  "game-house": { title: "Game House", icon: "game-house", w: 460, h: 420 },
+  "internet-explorer": { title: "Internet Explorer", icon: "internet-explorer", w: 640, h: 460 },
+  "control-panel": { title: "Control Panel", icon: "control-panel", w: 560, h: 420 },
+  "network-places": { title: "Network Places", icon: "network-places", w: 540, h: 400 },
+  about: { title: "About GE-XP", icon: "help", w: 430, h: 330 },
+  "access-terminal": { title: "ACCESS TERMINAL", icon: "command-prompt", w: 460, h: 380 },
+  "system-properties": { title: "System Properties", icon: "control-panel", w: 460, h: 440 },
 };
 
-const DESKTOP_ICONS: { id: WinId; label: string; icon: Win95IconName; accent?: boolean }[] = [
-  { id: "my-computer", label: "My Computer", icon: "my-computer" },
-  { id: "my-documents", label: "My Documents", icon: "my-documents" },
-  { id: "notepad", label: "Notepad", icon: "notepad" },
-  { id: "calculator", label: "Calculator", icon: "calculator" },
-  { id: "minesweeper", label: "Minesweeper", icon: "minesweeper" },
-  { id: "command-prompt", label: "Command Prompt", icon: "command-prompt" },
-  { id: "system-info", label: "System Info", icon: "system-info" },
-  { id: "recycle-bin", label: "Recycle Bin", icon: "recycle-bin" },
-  { id: "access-terminal", label: "ACCESS TERMINAL", icon: "access-terminal", accent: true },
+type IconKind =
+  | { type: "app"; win: WinId }
+  | { type: "shortcut" }
+  | { type: "none"; itemType: "folder" | "text" | "shortcut" };
+
+type IconEntry = { id: string; label: string; icon: WinXpIconName; kind: IconKind };
+
+const BASE_ICONS: IconEntry[] = [
+  { id: "internet-explorer", label: "Internet Explorer", icon: "internet-explorer", kind: { type: "app", win: "internet-explorer" } },
+  { id: "minesweeper", label: "Minesweeper", icon: "minesweeper", kind: { type: "app", win: "minesweeper" } },
+  { id: "my-computer", label: "My Computer", icon: "my-computer", kind: { type: "app", win: "my-computer" } },
+  { id: "notepad", label: "Notepad", icon: "notepad", kind: { type: "app", win: "notepad" } },
+  { id: "recycle-bin", label: "Recycle Bin", icon: "recycle-bin", kind: { type: "app", win: "recycle-bin" } },
+  { id: "calculator", label: "Calculator", icon: "calculator", kind: { type: "app", win: "calculator" } },
+  { id: "command-prompt", label: "Command Prompt", icon: "command-prompt", kind: { type: "app", win: "command-prompt" } },
+  { id: "game-house", label: "Game House", icon: "game-house", kind: { type: "app", win: "game-house" } },
+  { id: "my-documents", label: "My Documents", icon: "my-documents", kind: { type: "app", win: "my-documents" } },
+  { id: "network-places", label: "Network Places", icon: "network-places", kind: { type: "app", win: "network-places" } },
+  { id: "control-panel", label: "Control Panel", icon: "control-panel", kind: { type: "app", win: "control-panel" } },
+  { id: "document-center", label: "Document Center", icon: "document-center", kind: { type: "shortcut" } },
 ];
 
-const SUB_PROGRAMS: { label: string; id: WinId }[] = [
-  { label: "Notepad", id: "notepad" },
-  { label: "Calculator", id: "calculator" },
-  { label: "Minesweeper", id: "minesweeper" },
-  { label: "Command Prompt", id: "command-prompt" },
-  { label: "My Computer", id: "my-computer" },
-];
-
-const BOOT_STATUSES = ["Loading THE WORLD...", "Memeriksa drive...", "Memuat desktop..."];
+const BOOT_STATUSES = ["Loading THE WORLD...", "Memeriksa drive...", "Memuat desktop XP..."];
+const BUSINESS_IDS = new Set([
+  "gas-pms",
+  "document-center",
+  "production",
+  "quality",
+  "engineering",
+  "maintenance",
+]);
 const KONAMI = [
   "arrowup", "arrowup", "arrowdown", "arrowdown",
   "arrowleft", "arrowright", "arrowleft", "arrowright",
   "b", "a",
 ];
-const DOW = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+const POS_KEY = "eps_desktop_icons_pos_v2";
+const GRID_ROWS = 9;
+const GRID_W = 96;
+const GRID_H = 110;
+
+type CtxMenu = { x: number; y: number };
+type IconCtxMenu = { id: string; x: number; y: number };
+type ConfirmState = { kind: "delete" | "logoff" | "turnoff"; id?: string };
+type SortBy = "name" | "size" | "type" | "modified";
 
 export default function Desktop(): ReactNode {
   const router = useRouter();
@@ -91,23 +123,55 @@ export default function Desktop(): ReactNode {
   const [bootStatus, setBootStatus] = useState(BOOT_STATUSES[0]);
   const bootDone = useRef(false);
   const [windows, setWindows] = useState<WinState[]>([]);
-  const [selected, setSelected] = useState<WinId | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const [notepadFile, setNotepadFile] = useState<NotepadFile | null>(null);
   const [startOpen, setStartOpen] = useState(false);
-  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
+  const [ctx, setCtx] = useState<CtxMenu | null>(null);
+  const [iconCtx, setIconCtx] = useState<IconCtxMenu | null>(null);
   const [runOpen, setRunOpen] = useState(false);
   const [bsod, setBsod] = useState(false);
   const [glitchKey, setGlitchKey] = useState(0);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
+  const [icons, setIcons] = useState<IconEntry[]>(BASE_ICONS);
+  const [deleted, setDeleted] = useState<IconEntry[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [iconPos, setIconPos] = useState<Record<string, { x: number; y: number }>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = localStorage.getItem(POS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, { x: number; y: number }>;
+        if (parsed && Object.keys(parsed).length > 0) return parsed;
+      }
+    } catch {
+      /* abaikan data korup */
+    }
+    return {};
+  });
+  const [iconSize, setIconSize] = useState<"large" | "small">("large");
+  const [autoArrange, setAutoArrange] = useState(false);
+  const [sortBy, setSortBy] = useState<SortBy>("name");
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [renameId, setRenameId] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<ConfirmState | null>(null);
+  const [propsTarget, setPropsTarget] = useState<string | null>(null);
+  const [desktopProps, setDesktopProps] = useState(false);
+
   const zRef = useRef(10);
   const cascade = useRef(0);
   const toastId = useRef(0);
+  const customId = useRef(0);
   const bsodTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const startRef = useRef<HTMLDivElement | null>(null);
-  const startBtnRef = useRef<HTMLButtonElement | null>(null);
   const ctxRef = useRef<HTMLDivElement | null>(null);
+  const iconCtxRef = useRef<HTMLDivElement | null>(null);
+  const startRef = useRef<HTMLDivElement | null>(null);
+  const taskbarRef = useRef<HTMLDivElement | null>(null);
   const runInput = useRef<HTMLInputElement | null>(null);
+  const dragRef = useRef<{ id: string; start: { x: number; y: number }; sx: number; sy: number; moved: boolean } | null>(null);
+  const iconRefs = useRef(new Map<string, HTMLDivElement | null>());
+  const suppressClick = useRef(false);
+  const renameCancel = useRef(false);
 
   const toast = useCallback((msg: string) => {
     const id = ++toastId.current;
@@ -127,7 +191,9 @@ export default function Desktop(): ReactNode {
   }, []);
 
   const goLogin = useCallback(() => router.push("/login"), [router]);
+  const goLoginReplace = useCallback(() => router.replace("/login"), [router]);
 
+  /* ---- Window manager ---- */
   const openWin = useCallback((id: WinId, file?: NotepadFile) => {
     if (file) setNotepadFile(file);
     setWindows((prev) => {
@@ -140,7 +206,7 @@ export default function Desktop(): ReactNode {
       const meta = APP_META[id];
       const off = (cascade.current++ % 7) * 24;
       const x = Math.min(96 + off, Math.max(8, window.innerWidth - meta.w - 12));
-      const y = Math.min(48 + off, Math.max(8, window.innerHeight - meta.h - 52));
+      const y = Math.min(48 + off, Math.max(8, window.innerHeight - meta.h - 64));
       return [
         ...prev,
         {
@@ -186,7 +252,7 @@ export default function Desktop(): ReactNode {
     setFading(true);
     setTimeout(() => setBooted(true), 300);
     if (note) toast(note);
-    else if (skipped) toast("Boot dilompati — desktop siap.");
+    else if (skipped) toast("Boot dilompati - desktop siap.");
   }, [toast]);
 
   /* ---- Boot sequence ---- */
@@ -203,6 +269,36 @@ export default function Desktop(): ReactNode {
     };
   }, [finishBoot]);
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration gate: konten interaktif hanya dirender di client
+    setMounted(true);
+  }, []);
+
+  /* ---- Icon positions: localStorage (persist) ---- */
+  useEffect(() => {
+    // First load: susun icon rapi di kiri layar (grid deterministik, tidak
+    // menumpuk). lazy useState tidak jalan ulang saat hydration, jadi diisi
+    // lewat efek; posisi tetap bisa di-drag bebas setelahnya.
+    if (Object.keys(iconPos).length === 0) {
+      const next: Record<string, { x: number; y: number }> = {};
+      BASE_ICONS.forEach((ic, i) => {
+        const col = Math.floor(i / GRID_ROWS);
+        const row = i % GRID_ROWS;
+        next[ic.id] = { x: 8 + col * GRID_W, y: 8 + row * GRID_H };
+      });
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration: lazy useState tidak jalan ulang di client (halaman di-prerender)
+      setIconPos(next);
+    }
+  }, [iconPos]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(POS_KEY, JSON.stringify(iconPos));
+    } catch {
+      /* storage penuh / diblokir */
+    }
+  }, [iconPos]);
+
   /* ---- Global keys: Ctrl+Alt+Del BSOD, Konami, Escape ---- */
   useEffect(() => {
     let buff: string[] = [];
@@ -218,11 +314,15 @@ export default function Desktop(): ReactNode {
       }
       if (e.key === "Escape") {
         setStartOpen(false);
-        setCtxMenu(null);
+        setCtx(null);
+        setIconCtx(null);
         setRunOpen(false);
+        setRenameId(null);
+        setConfirm(null);
+        setPropsTarget(null);
+        setDesktopProps(false);
         return;
       }
-      // Konami tidak boleh terpicu saat mengetik di input (terminal, Run, dll).
       const t = e.target as HTMLElement | null;
       const typing = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
       if (typing) return;
@@ -236,25 +336,45 @@ export default function Desktop(): ReactNode {
     return () => window.removeEventListener("keydown", onKey);
   }, [bsod, showBsod, glitchFx]);
 
-  /* ---- Close menus on outside click ---- */
+  /* ---- Icon drag (pointer capture di icon, move/up global) ---- */
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const d = dragRef.current;
+      if (!d) return;
+      const nx = d.start.x + (e.clientX - d.sx);
+      const ny = d.start.y + (e.clientY - d.sy);
+      if (Math.abs(e.clientX - d.sx) + Math.abs(e.clientY - d.sy) > 4) d.moved = true;
+      setIconPos((prev) => ({ ...prev, [d.id]: { x: Math.max(0, nx), y: Math.max(0, ny) } }));
+    };
+    const onUp = () => {
+      const d = dragRef.current;
+      if (!d) return;
+      dragRef.current = null;
+      if (d.moved) suppressClick.current = true;
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, []);
+
+  /* ---- Tutup menu saat klik di luar ---- */
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
-      if (
-        startOpen &&
-        startRef.current &&
-        !startRef.current.contains(e.target as Node) &&
-        startBtnRef.current &&
-        !startBtnRef.current.contains(e.target as Node)
-      ) {
-        setStartOpen(false);
-      }
-      if (ctxMenu && ctxRef.current && !ctxRef.current.contains(e.target as Node)) {
-        setCtxMenu(null);
-      }
+      const t = e.target as Node;
+      if (ctxRef.current && ctxRef.current.contains(t)) return;
+      setCtx(null);
+      if (iconCtxRef.current && iconCtxRef.current.contains(t)) return;
+      setIconCtx(null);
+      if (startRef.current && startRef.current.contains(t)) return;
+      if (taskbarRef.current && taskbarRef.current.contains(t)) return;
+      setStartOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
-  }, [startOpen, ctxMenu]);
+  }, []);
 
   useEffect(() => {
     if (runOpen) {
@@ -263,28 +383,166 @@ export default function Desktop(): ReactNode {
     }
   }, [runOpen]);
 
-  const startGo = (id: WinId) => {
-    setStartOpen(false);
-    openWin(id);
+  /* ---- Icon helpers ---- */
+  const gridPos = useCallback(
+    (i: number) => {
+      const col = Math.floor(i / GRID_ROWS);
+      const row = i % GRID_ROWS;
+      return { x: 8 + col * GRID_W, y: 8 + row * GRID_H };
+    },
+    []
+  );
+
+  const iconType = useCallback((ic: IconEntry) => {
+    switch (ic.kind.type) {
+      case "app":
+        return "Aplikasi";
+      case "shortcut":
+        return "Pintasan";
+      case "none":
+        return ic.kind.itemType === "folder" ? "Folder" : ic.kind.itemType === "text" ? "Dokumen Teks" : "Pintasan";
+    }
+  }, []);
+
+  const iconMeta = useCallback(
+    (ic: IconEntry) => {
+      const size = ((ic.label.length * 733) % 9000) + 512;
+      const mod = new Date(2006, (ic.id.length * 7) % 12, ((ic.id.length * 3) % 27) + 1);
+      return { size, mod };
+    },
+    []
+  );
+
+  const orderedIcons = useMemo(() => {
+    const arr = [...icons];
+    switch (sortBy) {
+      case "name":
+        arr.sort((a, b) => a.label.localeCompare(b.label, "id"));
+        break;
+      case "size": {
+        const m = (x: IconEntry) => ((x.label.length * 733) % 9000) + 512;
+        arr.sort((a, b) => m(b) - m(a));
+        break;
+      }
+      case "type":
+        arr.sort(
+          (a, b) => iconType(a).localeCompare(iconType(b), "id") || a.label.localeCompare(b.label, "id")
+        );
+        break;
+      case "modified": {
+        const d = (x: IconEntry) => new Date(2006, (x.id.length * 7) % 12, ((x.id.length * 3) % 27) + 1).getTime();
+        arr.sort((a, b) => d(b) - d(a));
+        break;
+      }
+    }
+    return arr;
+  }, [icons, sortBy, iconType]);
+
+  const handleIconsKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
+      const len = orderedIcons.length;
+      if (len === 0) return;
+      e.preventDefault();
+      const cur = selected ? orderedIcons.findIndex((ic) => ic.id === selected) : -1;
+      const base = cur === -1 ? 0 : cur;
+      let idx = base;
+      if (e.key === "ArrowRight") idx = Math.min(len - 1, base + GRID_ROWS);
+      else if (e.key === "ArrowLeft") idx = Math.max(0, base - GRID_ROWS);
+      else if (e.key === "ArrowDown" && base % GRID_ROWS < GRID_ROWS - 1) idx = base + 1;
+      else if (e.key === "ArrowUp" && base % GRID_ROWS > 0) idx = base - 1;
+      const next = orderedIcons[idx];
+      setSelected(next.id);
+      iconRefs.current.get(next.id)?.focus();
+    },
+    [orderedIcons, selected]
+  );
+
+  const openIcon = useCallback(
+    (id: string) => {
+      const ic = icons.find((x) => x.id === id);
+      if (!ic) return;
+      if (ic.kind.type === "app") openWin(ic.kind.win);
+      else if (ic.kind.type === "shortcut") goLogin();
+      else toast("Item ini belum bisa dibuka.");
+    },
+    [icons, openWin, goLogin, toast]
+  );
+
+  const restoreIcon = useCallback(
+    (id: string) => {
+      const item = deleted.find((x) => x.id === id);
+      if (!item) return;
+      setIcons((prev) => [...prev, item]);
+      setDeleted((prev) => prev.filter((x) => x.id !== id));
+    },
+    [deleted]
+  );
+
+  const startIconDrag = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>, id: string, i: number) => {
+      if (e.button !== 0 || autoArrange) return;
+      e.preventDefault();
+      setSelected(id);
+      const start = iconPos[id] ?? gridPos(i);
+      dragRef.current = { id, start, sx: e.clientX, sy: e.clientY, moved: false };
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    },
+    [autoArrange, iconPos, gridPos]
+  );
+
+  const commitRename = (id: string, value: string) => {
+    if (renameCancel.current) {
+      renameCancel.current = false;
+      setRenameId(null);
+      return;
+    }
+    setIcons((prev) => prev.map((x) => (x.id === id ? { ...x, label: value.trim() || x.label } : x)));
+    setRenameId(null);
   };
 
-  const startToast = (msg: string) => {
-    setStartOpen(false);
-    toast(msg);
-  };
-
-  const ctxAction = (action: "arrange" | "refresh" | "folder" | "props") => {
-    setCtxMenu(null);
-    if (action === "refresh") glitchFx("Desktop disegarkan.");
-    else if (action === "folder") toast("Folder baru 'Folder Baru' dibuat di desktop. (tidak benar-benar)");
-    else if (action === "arrange") toast("Ikon diatur rapi.");
-    else openWin("system-info");
+  const newIcon = (itemType: "folder" | "text" | "shortcut") => {
+    const id = `custom-${++customId.current}`;
+    const label =
+      itemType === "folder" ? "Folder Baru" : itemType === "text" ? "Dokumen Teks Baru" : "Pintasan Baru";
+    const icon: WinXpIconName = itemType === "folder" ? "folder" : itemType === "text" ? "file" : "run";
+    setIcons((prev) => [...prev, { id, label, icon, kind: { type: "none", itemType } }]);
+    setSelected(id);
+    setCtx(null);
+    toast("Item baru dibuat di desktop.");
   };
 
   const doRun = () => {
+    const v = (runInput.current?.value ?? "").trim().toLowerCase();
     setRunOpen(false);
-    openWin("command-prompt");
+    switch (v) {
+      case "calc":
+      case "calculator":
+        openWin("calculator");
+        break;
+      case "notepad":
+        openWin("notepad");
+        break;
+      case "minesweeper":
+        openWin("minesweeper");
+        break;
+      case "ie":
+      case "internet":
+        openWin("internet-explorer");
+        break;
+      case "cmd":
+      case "command":
+        openWin("command-prompt");
+        break;
+      case "mycomputer":
+        openWin("my-computer");
+        break;
+      default:
+        toast("Program tidak ditemukan.");
+    }
   };
+
+  const closeCtx = () => setCtx(null);
 
   const bootClicks = useRef(0);
   const bootClickT = useRef(0);
@@ -299,11 +557,60 @@ export default function Desktop(): ReactNode {
   };
 
   const topZ = windows.reduce((m, w) => Math.max(m, w.z), 0);
+  const activeId = windows.find((w) => w.z === topZ && !w.minimized)?.id ?? null;
+
+  const taskbarWindows = useMemo(
+    () =>
+      windows.map((w) => ({
+        id: w.id,
+        title: APP_META[w.id].title,
+        minimized: w.minimized,
+      })),
+    [windows]
+  );
+
+  const handleToggleStart = useCallback(() => {
+    setCtx(null);
+    setIconCtx(null);
+    setStartOpen((v) => !v);
+  }, []);
+
+  const handleWindowButton = useCallback(
+    (id: string) => {
+      setStartOpen(false);
+      const win = windows.find((w) => w.id === id);
+      if (!win) return;
+      if (win.minimized || win.id !== activeId) openWin(win.id as WinId);
+      else minimizeWin(win.id as WinId);
+    },
+    [windows, activeId, openWin, minimizeWin]
+  );
+
+  const handleLaunch = useCallback(
+    (id: string) => {
+      setStartOpen(false);
+      if (id in APP_META) openWin(id as WinId);
+      else if (icons.some((x) => x.id === id && x.kind.type === "shortcut")) goLogin();
+      else toast("Aplikasi tidak ditemukan.");
+    },
+    [icons, openWin, goLogin, toast]
+  );
+
+  const handleNavigate = useCallback(
+    (id: string) => {
+      setStartOpen(false);
+      if (id in APP_META) openWin(id as WinId);
+      else if (BUSINESS_IDS.has(id)) goLogin();
+      else if (icons.some((x) => x.id === id && x.kind.type === "shortcut")) goLogin();
+      else toast("Item tidak ditemukan.");
+    },
+    [icons, openWin, goLogin, toast]
+  );
 
   const renderBody = (id: WinId) => {
     switch (id) {
       case "my-computer":
-        return <MyComputerApp onOpenNotepad={openNotepad} />;
+        return <MyComputerApp />;
       case "my-documents":
         return <DocumentsApp onOpenNotepad={openNotepad} />;
       case "notepad":
@@ -314,30 +621,150 @@ export default function Desktop(): ReactNode {
         return <MinesweeperApp />;
       case "command-prompt":
         return <CommandPromptApp onLogin={goLogin} />;
-      case "system-info":
+      case "system-properties":
         return <SystemPropertiesApp />;
       case "recycle-bin":
-        return <RecycleBinApp />;
+        return (
+          <RecycleBinApp
+            deleted={deleted}
+            onRestore={restoreIcon}
+            onEmpty={() => setDeleted([])}
+          />
+        );
       case "about":
         return <AboutApp onClose={() => closeWin("about")} />;
       case "access-terminal":
         return <AccessTerminalApp onLogin={goLogin} />;
+      case "internet-explorer":
+        return <InternetExplorerApp />;
+      case "control-panel":
+        return <ControlPanelApp />;
+      case "network-places":
+        return <NetworkPlacesApp />;
+      case "game-house":
+        return <GameHouseApp />;
     }
   };
 
+  const confirmTarget = confirm?.id ? icons.find((x) => x.id === confirm.id) : null;
+  const ctxIcon = iconCtx ? icons.find((x) => x.id === iconCtx.id) : null;
+  const propsIcon = propsTarget ? icons.find((x) => x.id === propsTarget) : null;
+
   return (
     <div
-      className="win95-desktop win95-desktop--wallpaper"
-      onContextMenu={(e) => {
-        e.preventDefault();
-        setStartOpen(false);
-        setCtxMenu({ x: e.clientX, y: e.clientY });
-      }}
+      className="winxp-desktop"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) setSelected(null);
       }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setStartOpen(false);
+        setIconCtx(null);
+        setCtx({ x: e.clientX, y: e.clientY });
+      }}
     >
-      <div className="win95-windows" onContextMenu={(e) => e.stopPropagation()}>
+      <div className="winxp-wallpaper" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="winxp-wallpaper__img"
+          src="/wallpaper-xp.jpg"
+          alt=""
+          draggable={false}
+        />
+      </div>
+
+      {/* Interaktif desktop hanya dirender setelah mount di client (server
+          hanya render wallpaper) agar tidak ada hydration mismatch (posisi
+          icon acak, jam realtime, dll). */}
+      {mounted && (
+        <>
+      {/* Desktop icons */}
+      <div
+        key={refreshKey}
+        className={`winxp-icons ${autoArrange ? "winxp-icons--arrange" : ""}`}
+        role="listbox"
+        aria-label="Ikon desktop"
+        onKeyDown={handleIconsKeyDown}
+      >
+        {orderedIcons.map((ic, i) => {
+          const pos = iconPos[ic.id] ?? gridPos(i);
+          const renaming = renameId === ic.id;
+          return (
+            <div
+              key={ic.id}
+              ref={(el) => {
+                iconRefs.current.set(ic.id, el);
+              }}
+              role="option"
+              tabIndex={0}
+              className={`winxp-icon ${iconSize === "small" ? "winxp-icon--small" : ""} ${
+                selected === ic.id ? "winxp-icon--selected" : ""
+              }`}
+              style={autoArrange ? undefined : { left: pos.x, top: pos.y }}
+              aria-label={ic.label}
+              aria-selected={selected === ic.id}
+              title={`${ic.label} - klik dua kali untuk membuka`}
+              onPointerDown={(e) => startIconDrag(e, ic.id, i)}
+              onClick={() => {
+                if (suppressClick.current) {
+                  suppressClick.current = false;
+                  return;
+                }
+                setSelected(ic.id);
+              }}
+              onDoubleClick={() => {
+                if (suppressClick.current) {
+                  suppressClick.current = false;
+                  return;
+                }
+                setSelected(null);
+                openIcon(ic.id);
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setSelected(ic.id);
+                setCtx(null);
+                setIconCtx({ id: ic.id, x: e.clientX, y: e.clientY });
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSelected(null);
+                  openIcon(ic.id);
+                }
+              }}
+            >
+              <span className="winxp-icon__glyph" aria-hidden>
+                <WinXpIcon name={ic.icon} size={iconSize === "small" ? 32 : 48} />
+              </span>
+              {renaming ? (
+                <input
+                  className="winxp-icon__rename"
+                  defaultValue={ic.label}
+                  autoFocus
+                  onFocus={(e) => e.target.select()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") e.currentTarget.blur();
+                    if (e.key === "Escape") {
+                      renameCancel.current = true;
+                      e.currentTarget.blur();
+                    }
+                  }}
+                  onBlur={(e) => commitRename(ic.id, e.target.value)}
+                  aria-label={`Ganti nama ${ic.label}`}
+                />
+              ) : (
+                <span className="winxp-icon__label">{ic.label}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Windows */}
+      <div className="winxp-windows" onContextMenu={(e) => e.stopPropagation()}>
         {windows.map((win) => {
           const focused = win.z === topZ && !win.minimized;
           return (
@@ -345,7 +772,7 @@ export default function Desktop(): ReactNode {
               key={win.id}
               id={win.id}
               title={APP_META[win.id].title}
-              icon={<Win95Icon name={APP_META[win.id].icon} size={16} />}
+              icon={<WinXpIcon name={APP_META[win.id].icon} size={16} />}
               focused={focused}
               minimized={win.minimized}
               maximized={win.maximized}
@@ -364,258 +791,361 @@ export default function Desktop(): ReactNode {
         })}
       </div>
 
-      {/* Desktop icons */}
-      <div className="win95-icons" role="listbox" aria-label="Ikon desktop">
-        {DESKTOP_ICONS.map((ic) => (
-          <button
-            key={ic.id}
-            type="button"
-            role="option"
-            aria-selected={selected === ic.id}
-            aria-label={`Buka ${ic.label}`}
-            title={`${ic.label} — klik dua kali untuk membuka`}
-            className={`win95-icon ${selected === ic.id ? "win95-icon--selected" : ""} ${ic.accent ? "win95-icon--accent" : ""}`}
-            onClick={() => setSelected(ic.id)}
-            onDoubleClick={() => {
-              setSelected(null);
-              openWin(ic.id);
-            }}
-          >
-            <span className="win95-icon__glyph" aria-hidden>
-              <Win95Icon name={ic.icon} size={32} />
-            </span>
-            <span className="win95-icon__label">{ic.label}</span>
-          </button>
-        ))}
+      {/* Start menu */}
+      <div ref={startRef}>
+        <StartMenu
+          open={startOpen}
+          onClose={() => setStartOpen(false)}
+          onNavigate={handleNavigate}
+          onRun={() => {
+            setStartOpen(false);
+            setRunOpen(true);
+          }}
+          onLogOff={() => {
+            setStartOpen(false);
+            setConfirm({ kind: "logoff" });
+          }}
+          onTurnOff={() => {
+            setStartOpen(false);
+            setConfirm({ kind: "turnoff" });
+          }}
+          userName="Tamu"
+        />
       </div>
 
-      {/* Start menu */}
-      {startOpen && (
-        <div ref={startRef} className="win95-startmenu" role="menu" aria-label="Menu Start">
-          <div className="win95-startmenu__rail" aria-hidden>
-            <span className="win95-startmenu__rail-text">GE-OS</span>
-          </div>
-          <div className="win95-startmenu__list">
-            <div className="win95-menu-item" role="menuitem" aria-haspopup="menu">
-              <span aria-hidden>
-                <Win95Icon name={APP_META["my-computer"].icon} size={16} />
-              </span>
-              Program
-              <span className="win95-menu-item__arrow" aria-hidden>
-                ▸
-              </span>
-              <div className="win95-submenu" role="menu" aria-label="Program">
-                {SUB_PROGRAMS.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    role="menuitem"
-                    className="win95-menu-item"
-                    onClick={() => startGo(p.id)}
-                  >
-                    <span aria-hidden>
-                      <Win95Icon name={APP_META[p.id].icon} size={16} />
-                    </span>
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <button type="button" role="menuitem" className="win95-menu-item" onClick={() => startGo("my-documents")}>
-              <span aria-hidden>
-                <Win95Icon name={APP_META["my-documents"].icon} size={16} />
-              </span>
-              Documents
-            </button>
-            <button type="button" role="menuitem" className="win95-menu-item" onClick={() => startGo("system-info")}>
-              <span aria-hidden>
-                <Win95Icon name={APP_META["system-info"].icon} size={16} />
-              </span>
-              Settings
-            </button>
-            <button type="button" role="menuitem" className="win95-menu-item" onClick={() => startToast("Find: pencarian lokal tidak tersedia di GE-OS.")}>
-              <span aria-hidden>⌖</span>
-              Find…
-            </button>
-            <button type="button" role="menuitem" className="win95-menu-item" onClick={() => startGo("about")}>
-              <span aria-hidden>
-                <Win95Icon name={APP_META.about.icon} size={16} />
-              </span>
-              Help
-            </button>
-            <button type="button" role="menuitem" className="win95-menu-item" onClick={() => { setStartOpen(false); setRunOpen(true); }}>
-              <span aria-hidden>▣</span>
-              Run…
-            </button>
-            <div className="win95-menu-sep" aria-hidden />
-            <button type="button" role="menuitem" className="win95-menu-item" onClick={() => startGo("access-terminal")}>
-              <span aria-hidden>
-                <Win95Icon name={APP_META["access-terminal"].icon} size={16} />
-              </span>
-              Log On GAS ELECTRONIC…
-            </button>
-            <button type="button" role="menuitem" className="win95-menu-item" onClick={() => { setStartOpen(false); showBsod(); }}>
-              <span aria-hidden>◙</span>
-              Shut Down…
-            </button>
-          </div>
-        </div>
+      {/* Taskbar */}
+      <div ref={taskbarRef} className="winxp-taskbar-anchor">
+        <Taskbar
+          windows={taskbarWindows}
+          activeId={activeId}
+          startOpen={startOpen}
+          onToggleStart={handleToggleStart}
+          onWindowButton={handleWindowButton}
+          onLaunch={handleLaunch}
+        />
+      </div>
+        </>
       )}
 
       {/* Desktop context menu */}
-      {ctxMenu && (
+      {ctx && (
         <div
           ref={ctxRef}
-          className="win95-contextmenu"
+          className="winxp-menu winxp-menu--ctx"
           role="menu"
           aria-label="Menu konteks desktop"
-          style={{
-            left: Math.min(ctxMenu.x, window.innerWidth - 190),
-            top: Math.min(ctxMenu.y, window.innerHeight - 160),
-          }}
+          style={{ left: Math.min(ctx.x, window.innerWidth - 210), top: Math.min(ctx.y, window.innerHeight - 260) }}
         >
-          <button type="button" role="menuitem" className="win95-menu-item" onClick={() => ctxAction("arrange")}>
-            <span aria-hidden>◫</span>
-            Arrange Icons
-          </button>
-          <button type="button" role="menuitem" className="win95-menu-item" onClick={() => ctxAction("refresh")}>
-            <span aria-hidden>⟳</span>
-            Refresh
-          </button>
-          <button type="button" role="menuitem" className="win95-menu-item" onClick={() => ctxAction("folder")}>
-            <span aria-hidden>▣</span>
-            New Folder
-          </button>
-          <div className="win95-menu-sep" aria-hidden />
-          <button type="button" role="menuitem" className="win95-menu-item" onClick={() => ctxAction("props")}>
-            <span aria-hidden>
-              <Win95Icon name={APP_META["system-info"].icon} size={16} />
-            </span>
-            Properties
-          </button>
+          <MenuItem label="View" icon="folder-open">
+            <MenuItem
+              label="Large Icons"
+              checked={iconSize === "large"}
+              onSelect={() => {
+                setIconSize("large");
+                closeCtx();
+              }}
+            />
+            <MenuItem
+              label="Small Icons"
+              checked={iconSize === "small"}
+              onSelect={() => {
+                setIconSize("small");
+                closeCtx();
+              }}
+            />
+            <div className="winxp-menu-sep" />
+            <MenuItem
+              label="Auto Arrange"
+              checked={autoArrange}
+              onSelect={() => {
+                setAutoArrange((v) => !v);
+                closeCtx();
+              }}
+            />
+          </MenuItem>
+          <MenuItem label="Sort By" icon="file">
+            <MenuItem
+              label="Name"
+              checked={sortBy === "name"}
+              onSelect={() => {
+                setSortBy("name");
+                closeCtx();
+              }}
+            />
+            <MenuItem
+              label="Size"
+              checked={sortBy === "size"}
+              onSelect={() => {
+                setSortBy("size");
+                closeCtx();
+              }}
+            />
+            <MenuItem
+              label="Type"
+              checked={sortBy === "type"}
+              onSelect={() => {
+                setSortBy("type");
+                closeCtx();
+              }}
+            />
+            <MenuItem
+              label="Modified"
+              checked={sortBy === "modified"}
+              onSelect={() => {
+                setSortBy("modified");
+                closeCtx();
+              }}
+            />
+          </MenuItem>
+          <div className="winxp-menu-sep" />
+          <MenuItem
+            label="Refresh"
+            icon="search"
+            onSelect={() => {
+              setRefreshKey((k) => k + 1);
+              closeCtx();
+            }}
+          />
+          <MenuItem label="Paste" icon="file" onSelect={() => toast("Tidak ada item")} />
+          <MenuItem label="Paste Shortcut" icon="file" onSelect={() => toast("Tidak ada item")} />
+          <div className="winxp-menu-sep" />
+          <MenuItem label="New" icon="folder">
+            <MenuItem label="Folder" icon="folder" onSelect={() => newIcon("folder")} />
+            <MenuItem label="Text Document" icon="file" onSelect={() => newIcon("text")} />
+            <MenuItem label="Shortcut" icon="run" onSelect={() => newIcon("shortcut")} />
+          </MenuItem>
+          <div className="winxp-menu-sep" />
+          <MenuItem
+            label="Properties"
+            icon="file"
+            onSelect={() => {
+              setDesktopProps(true);
+              closeCtx();
+            }}
+          />
+        </div>
+      )}
+
+      {/* Icon context menu */}
+      {iconCtx && ctxIcon && (
+        <div
+          ref={iconCtxRef}
+          className="winxp-menu winxp-menu--ctx"
+          role="menu"
+          aria-label={`Menu konteks ${ctxIcon.label}`}
+          style={{ left: Math.min(iconCtx.x, window.innerWidth - 190), top: Math.min(iconCtx.y, window.innerHeight - 160) }}
+        >
+          <MenuItem
+            label="Open"
+            icon={ctxIcon.icon}
+            onSelect={() => {
+              setIconCtx(null);
+              openIcon(iconCtx.id);
+            }}
+          />
+          <MenuItem
+            label="Rename"
+            icon="file"
+            onSelect={() => {
+              setRenameId(iconCtx.id);
+              setIconCtx(null);
+            }}
+          />
+          <MenuItem
+            label="Delete"
+            icon="recycle-bin"
+            onSelect={() => {
+              setIconCtx(null);
+              setConfirm({ kind: "delete", id: iconCtx.id });
+            }}
+          />
+          <div className="winxp-menu-sep" />
+          <MenuItem
+            label="Properties"
+            icon="file"
+            onSelect={() => {
+              setPropsTarget(iconCtx.id);
+              setIconCtx(null);
+            }}
+          />
         </div>
       )}
 
       {/* Run dialog */}
       {runOpen && (
-        <div className="win95-run" role="dialog" aria-modal="true" aria-label="Run">
-          <div className="win95-run__bar">
-            <span aria-hidden>▤</span>
-            Run
-          </div>
-          <div className="win95-run__body">
-            <p>Ketik nama program, folder, dokumen, atau sumber Internet, lalu buka.</p>
-            <div className="win95-run__field">
-              <span>Open:</span>
-              <input
-                ref={runInput}
-                type="text"
-                className="win95-field"
-                defaultValue="cmd"
-                aria-label="Perintah yang akan dijalankan"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") doRun();
-                  if (e.key === "Escape") setRunOpen(false);
-                }}
-              />
+        <div className="winxp-overlay" onMouseDown={(e) => e.stopPropagation()}>
+          <div className="winxp-dialog winxp-dialog--run" role="dialog" aria-modal="true" aria-label="Run">
+            <div className="winxp-dialog__title">
+              <span aria-hidden>
+                <WinXpIcon name="run" size={16} />
+              </span>
+              Run
             </div>
-            <div className="win95-run__btns">
-              <button type="button" className="win95-btn" onClick={doRun}>
-                OK
-              </button>
-              <button type="button" className="win95-btn" onClick={() => setRunOpen(false)}>
-                Cancel
-              </button>
+            <div className="winxp-dialog__body">
+              <div className="winxp-run__row">
+                <span aria-hidden>
+                  <WinXpIcon name="run" size={28} />
+                </span>
+                <p>
+                  Ketik nama program, folder, dokumen, atau sumber Internet, lalu Windows akan
+                  membukanya untuk Anda.
+                </p>
+              </div>
+              <div className="winxp-run__field">
+                <label htmlFor="xp-run-input">Open:</label>
+                <input
+                  id="xp-run-input"
+                  ref={runInput}
+                  type="text"
+                  defaultValue="cmd"
+                  aria-label="Perintah yang akan dijalankan"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") doRun();
+                    if (e.key === "Escape") setRunOpen(false);
+                  }}
+                />
+              </div>
+              <div className="winxp-dialog__actions">
+                <button type="button" className="winxp-btn" onClick={doRun}>
+                  OK
+                </button>
+                <button type="button" className="winxp-btn" onClick={() => setRunOpen(false)}>
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Taskbar */}
-      <div className="win95-taskbar" role="toolbar" aria-label="Taskbar">
-        <div className="win95-taskbar__left">
-          <button
-            ref={startBtnRef}
-            type="button"
-            className={`win95-start-btn ${startOpen ? "win95-start-btn--down" : ""}`}
-            aria-label="Menu Start"
-            aria-haspopup="menu"
-            aria-expanded={startOpen}
-            onClick={() => setStartOpen((v) => !v)}
-          >
-            <Win95Icon name="windows-flag" size={16} />
-            <span>Start</span>
-          </button>
-          <div className="win95-taskbar__tasks" role="group" aria-label="Jendela terbuka">
-            {windows.map((win) => {
-              const active = win.z === topZ && !win.minimized;
-              return (
-                <button
-                  key={win.id}
-                  type="button"
-                  className={`win95-task ${active ? "win95-task--active" : ""}`}
-                  title={APP_META[win.id].title}
-                  aria-label={`${APP_META[win.id].title} — ${win.minimized ? "diminimalkan" : "terbuka"}`}
-                  onClick={() => {
-                    if (win.minimized || !active) openWin(win.id);
-                    else minimizeWin(win.id);
-                  }}
-                >
-                  <span aria-hidden>
-                    <Win95Icon name={APP_META[win.id].icon} size={16} />
-                  </span>
-                  <span>{APP_META[win.id].title}</span>
-                </button>
-              );
-            })}
+      {/* Confirm dialog (delete / logoff / turnoff) */}
+      {confirm && (
+        <XpDialog
+          title={confirm.kind === "delete" ? "Confirm File Delete" : "Shut Down Windows"}
+          icon={confirm.kind === "delete" ? "recycle-bin" : "shutdown"}
+          okLabel={confirm.kind === "delete" ? "Yes" : "OK"}
+          onOk={() => {
+            const kind = confirm.kind;
+            const id = confirm.id;
+            setConfirm(null);
+            if (kind === "delete") {
+              const item = id ? icons.find((x) => x.id === id) : null;
+              if (item) {
+                setDeleted((prev) => [...prev, item]);
+                setIcons((prev) => prev.filter((x) => x.id !== id));
+              }
+              toast(`${confirmTarget?.label ?? "Item"} dipindahkan ke Recycle Bin.`);
+            } else {
+              toast(kind === "logoff" ? "Sesi ditutup. Sampai jumpa." : "Windows sedang dimatikan...");
+              setTimeout(() => goLoginReplace(), 700);
+            }
+          }}
+          onCancel={() => setConfirm(null)}
+        >
+          {confirm.kind === "delete" ? (
+            <p>
+              Apakah Anda yakin ingin menghapus {`"${confirmTarget?.label ?? "item ini"}"`} dari
+              desktop?
+            </p>
+          ) : confirm.kind === "logoff" ? (
+            <p>Apakah Anda yakin ingin log off?</p>
+          ) : (
+            <p>Apakah Anda yakin ingin mematikan komputer?</p>
+          )}
+        </XpDialog>
+      )}
+
+      {/* Icon properties dialog */}
+      {propsIcon && (
+        <XpDialog
+          title={`${propsIcon.label} Properties`}
+          icon={propsIcon.icon}
+          onOk={() => setPropsTarget(null)}
+          onCancel={() => setPropsTarget(null)}
+        >
+          <div className="winxp-props">
+            <span className="winxp-props__icon" aria-hidden>
+              <WinXpIcon name={propsIcon.icon} size={40} />
+            </span>
+            <div className="winxp-props__rows">
+              <p>
+                <strong>{propsIcon.label}</strong>
+              </p>
+              <p>Type: {iconType(propsIcon)}</p>
+              <p>Location: Desktop</p>
+              <p>Size: {iconMeta(propsIcon).size} bytes</p>
+              <p>Modified: {iconMeta(propsIcon).mod.toLocaleDateString("id-ID")}</p>
+            </div>
           </div>
-        </div>
-        <WinClock />
-      </div>
+        </XpDialog>
+      )}
+
+      {/* Desktop properties dialog */}
+      {desktopProps && (
+        <XpDialog
+          title="Display Properties"
+          icon="control-panel"
+          onOk={() => setDesktopProps(false)}
+          onCancel={() => setDesktopProps(false)}
+        >
+          <div className="winxp-props">
+            <span className="winxp-props__icon" aria-hidden>
+              <WinXpIcon name="control-panel" size={40} />
+            </span>
+            <div className="winxp-props__rows">
+              <p>Theme: Windows XP (Luna)</p>
+              <p>Wallpaper: Bliss</p>
+              <p>Screen resolution: 1024 x 768 pixels</p>
+              <p>Font: Tahoma 11px</p>
+              <p>GAS ELECTRONIC Engineering Production System</p>
+            </div>
+          </div>
+        </XpDialog>
+      )}
 
       {/* Toasts */}
-      <div className="win95-toasts" aria-live="polite">
+      <div className="winxp-toasts" aria-live="polite">
         {toasts.map((t) => (
-          <div key={t.id} className="win95-toast">
+          <div key={t.id} className="winxp-toast">
             {t.msg}
           </div>
         ))}
       </div>
 
       {/* Glitch flash */}
-      {glitchKey > 0 && <div key={glitchKey} className="win95-glitch" aria-hidden />}
+      {glitchKey > 0 && <div key={glitchKey} className="winxp-glitch" aria-hidden />}
 
       {/* BSOD */}
       {bsod && (
-        <div className="win95-bsod" role="alert" aria-label="Layar biru" onClick={() => setBsod(false)}>
-          <div className="win95-bsod__main">
+        <div className="winxp-bsod" role="alert" aria-label="Layar biru" onClick={() => setBsod(false)}>
+          <div className="winxp-bsod__main">
             {`A fatal exception 0E has occurred at 0028:C0001E7F in VXD THEWORLD(01) + 00000F30.
 The current application will be terminated.`}
           </div>
-          <div className="win95-bsod__msg">* THE WORLD is nostalgic.</div>
-          <div className="win95-bsod__hint">Press any key to continue</div>
+          <div className="winxp-bsod__msg">* THE WORLD is nostalgic.</div>
+          <div className="winxp-bsod__hint">Press any key to continue</div>
         </div>
       )}
 
       {/* Boot overlay */}
       {!booted && (
         <div
-          className={`win95-boot ${fading ? "win95-boot--fade" : ""}`}
+          className={`winxp-boot ${fading ? "winxp-boot--fade" : ""}`}
           role="dialog"
-          aria-label="Boot GE-OS"
+          aria-label="Boot GE-XP"
           onClick={() => finishBoot(true)}
         >
-          <div className="win95-boot__logo" onClick={onLogoClick} title="GAS ELECTRONIC">
+          <div className="winxp-boot__logo" onClick={onLogoClick} title="GAS ELECTRONIC">
             GAS ELECTRONIC
           </div>
-          <div className="win95-boot__sub">Engineering Production System · GE-OS v1.0</div>
-          <div className="win95-boot__track" aria-hidden>
-            <div className="win95-boot__bar" />
+          <div className="winxp-boot__sub">Engineering Production System - Windows XP Edition</div>
+          <div className="winxp-boot__track" aria-hidden>
+            <div className="winxp-boot__bar" />
           </div>
-          <div className="win95-boot__status" role="status" aria-live="polite">
+          <div className="winxp-boot__status" role="status" aria-live="polite">
             {bootStatus}
           </div>
-          <div className="win95-boot__hint">klik untuk melewati boot…</div>
+          <div className="winxp-boot__hint">klik untuk melewati boot...</div>
         </div>
       )}
     </div>
@@ -623,77 +1153,132 @@ The current application will be terminated.`}
 }
 
 /* ============================================================
-   Taskbar clock + kalender (DBLCLICK jam → popup).
+   XP context menu item (submenu hover-open, checkmarks, icons).
    ============================================================ */
-function WinClock() {
-  const [now, setNow] = useState(() => new Date());
-  const [cal, setCal] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
+function MenuItem({
+  label,
+  icon,
+  checked,
+  onSelect,
+  children,
+}: {
+  label: string;
+  icon?: WinXpIconName;
+  checked?: boolean;
+  onSelect?: () => void;
+  children?: ReactNode;
+}): ReactNode {
+  const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 30000);
-    return () => clearInterval(t);
-  }, []);
-
-  useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      if (cal && ref.current && !ref.current.contains(e.target as Node)) setCal(false);
-    };
-    const onEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setCal(false);
-    };
-    document.addEventListener("mousedown", onDown);
-    window.addEventListener("keydown", onEsc);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      window.removeEventListener("keydown", onEsc);
-    };
-  }, [cal]);
-
-  const time = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDow = new Date(year, month, 1).getDay();
-  const monthName = now.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+  if (children) {
+    return (
+      <div
+        className={`winxp-menu-item winxp-menu-item--sub ${open ? "winxp-menu-item--open" : ""}`}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
+        <button type="button" role="menuitem" aria-haspopup="menu" onClick={() => setOpen((v) => !v)}>
+          <span className="winxp-menu-item__icon" aria-hidden>
+            {icon ? <WinXpIcon name={icon} size={16} /> : null}
+          </span>
+          <span className="winxp-menu-item__label">{label}</span>
+          <span className="winxp-menu-item__arrow" aria-hidden />
+        </button>
+        {open && <div className="winxp-menu winxp-menu--sub" role="menu">{children}</div>}
+      </div>
+    );
+  }
 
   return (
-    <div className="win95-tray" ref={ref}>
-      <span className="win95-tray__icon" title="Volume" aria-hidden>
-        ◙
+    <button
+      type="button"
+      role="menuitem"
+      className="winxp-menu-item"
+      onClick={onSelect}
+    >
+      <span className="winxp-menu-item__icon" aria-hidden>
+        {icon ? <WinXpIcon name={icon} size={16} /> : null}
       </span>
-      <button
-        type="button"
-        className="win95-clock"
-        title="Klik dua kali: kalender"
-        aria-label={`Jam — ${time}. Klik dua kali untuk membuka kalender`}
-        onDoubleClick={() => setCal((v) => !v)}
-      >
-        {time}
-      </button>
-      {cal && (
-        <div className="win95-calendar" role="dialog" aria-label={`Kalender ${monthName}`}>
-          <div className="win95-calendar__title">{monthName}</div>
-          <div className="win95-calendar__grid">
-            {DOW.map((d) => (
-              <div key={d} className="win95-calendar__dow">
-                {d}
-              </div>
-            ))}
-            {Array.from({ length: firstDow }).map((_, i) => (
-              <div key={`b${i}`} className="win95-calendar__blank" />
-            ))}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const d = i + 1;
-              return (
-                <div key={d} className={`win95-calendar__day ${d === now.getDate() ? "win95-calendar__day--today" : ""}`}>
-                  {d}
-                </div>
-              );
-            })}
+      <span className="winxp-menu-item__label">{label}</span>
+      <span className="winxp-menu-item__check" aria-hidden>
+        {checked ? <span className="winxp-menu-item__checkmark" /> : null}
+      </span>
+    </button>
+  );
+}
+
+/* ============================================================
+   XP-style inline modal dialog (bevel, title gradient, OK/Cancel).
+   ============================================================ */
+function XpDialog({
+  title,
+  icon,
+  okLabel = "OK",
+  onOk,
+  onCancel,
+  children,
+}: {
+  title: string;
+  icon: WinXpIconName;
+  okLabel?: string;
+  onOk: () => void;
+  onCancel: () => void;
+  children: ReactNode;
+}): ReactNode {
+  const dlgRef = useRef<HTMLDivElement | null>(null);
+  const cancelRef = useRef(onCancel);
+
+  useEffect(() => {
+    cancelRef.current = onCancel;
+  }, [onCancel]);
+
+  useEffect(() => {
+    const dlg = dlgRef.current;
+    if (!dlg) return;
+    const btns = Array.from(dlg.querySelectorAll<HTMLButtonElement>("button"));
+    btns[0]?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        cancelRef.current();
+        return;
+      }
+      if (e.key !== "Tab" || btns.length === 0) return;
+      const first = btns[0];
+      const last = btns[btns.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    dlg.addEventListener("keydown", onKey);
+    return () => dlg.removeEventListener("keydown", onKey);
+  }, []);
+
+  return (
+    <div className="winxp-overlay" onMouseDown={(e) => e.stopPropagation()}>
+      <div ref={dlgRef} className="winxp-dialog" role="dialog" aria-modal="true" aria-label={title}>
+        <div className="winxp-dialog__title">
+          <span aria-hidden>
+            <WinXpIcon name={icon} size={16} />
+          </span>
+          {title}
+        </div>
+        <div className="winxp-dialog__body">
+          <div className="winxp-dialog__content">{children}</div>
+          <div className="winxp-dialog__actions">
+            <button type="button" className="winxp-btn" onClick={onOk}>
+              {okLabel}
+            </button>
+            <button type="button" className="winxp-btn" onClick={onCancel}>
+              Cancel
+            </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

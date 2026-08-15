@@ -50,5 +50,13 @@ export default function LoginPage() {
     }
   };
 
-  return <LoginGate onLogin={handleLogin} onSuccess={() => router.replace("/home")} initialMessage={initialMessage} alreadyIn={Boolean(loadMockSession())} />;
+  return (
+    <LoginGate
+      onLogin={handleLogin}
+      onSuccess={() => router.replace("/dashboard")}
+      onCancel={() => router.push("/")}
+      initialMessage={initialMessage}
+      alreadyIn={Boolean(loadMockSession())}
+    />
+  );
 }

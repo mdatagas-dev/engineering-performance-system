@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useSessionGuard } from "@/hooks/use-session-guard";
+import DemoBanner from "@/components/demo-banner";
 import {
+
   documents,
   DOCUMENT_TYPES,
   type DocumentType,
@@ -33,6 +35,8 @@ export default function DocumentCenterPage() {
 
   return (
     <main className="xps-page">
+
+      <DemoBanner note="Data berasal dari lib/mocks/support.ts." />
       <section className="xw-panel">
         <h2 className="xw-panel__title">Document Center</h2>
         <div className="xps-kpi-row">

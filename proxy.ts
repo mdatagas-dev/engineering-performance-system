@@ -108,6 +108,24 @@ const sessionGate: SessionGateDeps = {
   },
 };
 
+// Cache status aktif user (TTL 30s) — revoke sesi sudah menangani demosi/
+// deaktivasi; cache ini mencegah +1 query DB per request tanpa menunda efek
+// deaktivasi lebih dari 30 detik.
+const ACTIVE_USER_TTL_MS = 30_000;
+const activeUserCache = new Map<string, { active: boolean; at: number }>();
+
+async function isUserActive(userId: string): Promise<boolean> {
+  const cached = activeUserCache.get(userId);
+  if (cached && Date.now() - cached.at < ACTIVE_USER_TTL_MS) return cached.active;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isActive: true },
+  });
+  const active = user?.isActive !== false;
+  activeUserCache.set(userId, { active, at: Date.now() });
+  return active;
+}
+
 async function readSession(req: NextRequest): Promise<SessionPayload | null> {
   const token = req.cookies.get(AUTH_CONFIG.cookieName)?.value;
   if (!token) return null;
@@ -117,7 +135,11 @@ async function readSession(req: NextRequest): Promise<SessionPayload | null> {
     // gerbang revoke/expiry server-side: JWT masih valid tapi sesi di-revoke
     // atau kedaluwarsa (abs / idle) di tabel Session -> 401.
     const active = await isActiveSession(sessionGate, hashToken(token), undefined, AUTH_CONFIG.idleTimeoutMs);
-    return active ? payload : null;
+    if (!active) return null;
+    // Akun dinonaktifkan (isActive=false) tidak boleh lanjut pakai API —
+    // sesi lama di-revoke saat deaktivasi, cache ini lapisan kedua.
+    if (!(await isUserActive(payload.sub))) return null;
+    return payload;
   } catch {
     return null;
   }

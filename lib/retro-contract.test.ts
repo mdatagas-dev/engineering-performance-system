@@ -77,18 +77,22 @@ describe("world", () => {
     assert.match(src, /export default function Desktop/);
   });
 
-  it("apps/*.tsx: named export + props sesuai kontrak (10 file)", () => {
+  it("apps/*.tsx: named export + props sesuai kontrak (14 file)", () => {
     const apps: [string, string, string[]][] = [
       ["notepad", "export function NotepadApp", ["file"]],
       ["calculator", "export function CalculatorApp", []],
       ["minesweeper", "export function MinesweeperApp", []],
-      ["my-computer", "export function MyComputerApp", ["onOpenNotepad"]],
+      ["my-computer", "export function MyComputerApp", []],
       ["documents", "export function DocumentsApp", ["onOpenNotepad"]],
       ["system-properties", "export function SystemPropertiesApp", []],
       ["access-terminal", "export function AccessTerminalApp", ["onLogin"]],
       ["recycle-bin", "export function RecycleBinApp", []],
       ["about", "export function AboutApp", ["onClose"]],
       ["command-prompt", "export function CommandPromptApp", ["onLogin"]],
+      ["internet-explorer", "export function InternetExplorerApp", []],
+      ["control-panel", "export function ControlPanelApp", []],
+      ["network-places", "export function NetworkPlacesApp", []],
+      ["game-house", "export function GameHouseApp", []],
     ];
     for (const [file, exp, props] of apps) {
       const src = read(`components/world/apps/${file}.tsx`);
@@ -161,15 +165,19 @@ describe("pages", () => {
 });
 
 describe("css", () => {
-  it("4 css global ada: win95-window/win95-shell/win95-apps/win95-gate", () => {
-    for (const f of ["win95-window.css", "win95-shell.css", "win95-apps.css", "win95-gate.css"]) {
+  // win95-window.css / win95-shell.css / win95-inner.css dihapus sebagai
+  // dead code (audit: tidak ada class yang dipakai). Yang tersisa:
+  // win95-apps (command-prompt/calculator), win95-gate (forgot-password/
+  // not-found), win95-app (app95 suite /home).
+  it("css global yang dipakai ada: win95-apps/win95-gate/win95-app", () => {
+    for (const f of ["win95-apps.css", "win95-gate.css", "win95-app.css"]) {
       assert.ok(existsSync(`app/${f}`), `app/${f} harus ada`);
     }
   });
 
-  it("app/layout.tsx meng-import SEMUA 4 css", () => {
+  it("app/layout.tsx meng-import css yang dipakai", () => {
     const src = read("app/layout.tsx");
-    for (const f of ["win95-window.css", "win95-shell.css", "win95-apps.css", "win95-gate.css"]) {
+    for (const f of ["win95-apps.css", "win95-gate.css", "win95-app.css"]) {
       assert.ok(src.includes(`import "./${f}"`), `layout.tsx: import "./${f}" hilang`);
     }
   });

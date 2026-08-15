@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSessionGuard } from "@/hooks/use-session-guard";
+import DemoBanner from "@/components/demo-banner";
 import {
+
   addItem,
   drawingSeed,
   loadCollection,
@@ -108,6 +110,8 @@ export default function DrawingManagementPage() {
 
   return (
     <main className="xpe-page">
+
+      <DemoBanner note="Data berasal dari lib/mocks/engineering.ts." />
       <section className="xw-panel">
         <div className="xpe-titlebar">
           <h3 className="xw-panel__title">Drawing Management</h3>

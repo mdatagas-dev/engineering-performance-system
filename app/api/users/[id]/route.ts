@@ -139,6 +139,8 @@ export async function PATCH(req: Request, { params }: Params) {
   }
 
   const roleChanged = roleParam !== undefined && newRole !== currentRole.name;
+  // Deaktivasi akun harus memutus semua sesi aktif (JWT snapshot permission).
+  const deactivating = isActive === false && target.isActive !== false;
 
   if (email !== undefined && email !== target.email) {
     const dup = await prisma.user.findUnique({ where: { email }, select: { id: true } });
@@ -195,6 +197,10 @@ export async function PATCH(req: Request, { params }: Params) {
       if (roleChanged) {
         await tx.userRole.deleteMany({ where: { userId: target.id } });
         await tx.userRole.create({ data: { userId: target.id, roleId: role!.id } });
+      }
+      // Role berubah atau akun dinonaktifkan → sesi lama tidak boleh bertahan.
+      if (roleChanged || deactivating) {
+        await tx.session.deleteMany({ where: { userId: target.id } });
       }
       const u = await tx.user.update({
         where: { id: target.id },

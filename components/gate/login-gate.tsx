@@ -5,57 +5,99 @@ import type { FormEvent, ReactNode } from "react";
 import { t, loadLang, type Lang } from "@/lib/i18n";
 
 export type LoginGateProps = {
-  /** Kirim kredensial. Return null = sukses; string = pesan error (Access Denied). */
+  /** Kirim kredensial. Return null = sukses; string = pesan error (tidak dibocorkan detail). */
   onLogin: (email: string, password: string, rememberMe: boolean) => Promise<string | null>;
-  /** Dipanggil setelah sukses + animasi "System Ready" (page akan redirect ke /home). */
+  /** Dipanggil setelah sukses + animasi "Logging on" (page akan redirect ke /dashboard). */
   onSuccess: () => void;
+  /** Dipanggil saat Cancel / tombol close (kembali ke Windows XP Homepage/Desktop). */
+  onCancel?: () => void;
   /** Pesan awal opsional (mis. "Sesi Anda telah berakhir" saat ?expired=1). */
   initialMessage?: string;
   /** Kalau true (sudah ada sesi) → tampilkan "Sudah masuk" + tombol lanjut → onSuccess. */
   alreadyIn?: boolean;
 };
 
-type Phase = "boot" | "idle" | "checking" | "denied" | "success";
+type Phase = "idle" | "checking" | "success";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-const pad = (n: number) => String(n).padStart(2, "0");
 
-function GateClock() {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
+/** Logo Windows XP: empat panel (merah/hijau/biru/kuning) bergelombang. */
+function WinFlag({ size = 88 }: { size?: number }): ReactNode {
   return (
-    <time className="gate-clock" suppressHydrationWarning>
-      {pad(now.getHours())}:{pad(now.getMinutes())}
-    </time>
+    <svg width={size} height={(size * 56) / 88} viewBox="0 0 88 56" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="xf-red" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#f04e23" />
+          <stop offset="1" stopColor="#c42a0c" />
+        </linearGradient>
+        <linearGradient id="xf-grn" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#6cb52a" />
+          <stop offset="1" stopColor="#44800c" />
+        </linearGradient>
+        <linearGradient id="xf-blu" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#3f7fd4" />
+          <stop offset="1" stopColor="#1f4f9e" />
+        </linearGradient>
+        <linearGradient id="xf-ylw" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffc800" />
+          <stop offset="1" stopColor="#e09a00" />
+        </linearGradient>
+      </defs>
+      {/* outline */}
+      <rect x="1.5" y="1.5" width="85" height="53" rx="2" fill="none" stroke="#1a2f5a" strokeWidth="3" />
+      <rect x="3.5" y="3.5" width="81" height="49" rx="1" fill="none" stroke="#ffffff" strokeOpacity="0.55" strokeWidth="1" />
+      {/* 4 panel */}
+      <path d="M5 5h39v23H5z" fill="url(#xf-red)" />
+      <path d="M44 5h39v23H44z" fill="url(#xf-grn)" />
+      <path d="M5 28h39v23H5z" fill="url(#xf-blu)" />
+      <path d="M44 28h39v23H44z" fill="url(#xf-ylw)" />
+      {/* pemisah + kilau gelombang */}
+      <rect x="42" y="5" width="4" height="46" fill="#ffffff" opacity="0.85" />
+      <rect x="5" y="26" width="78" height="4" fill="#ffffff" opacity="0.85" />
+      <g stroke="#ffffff" strokeOpacity="0.28" fill="none" strokeWidth="1.5">
+        <path d="M5 11q5 2 10 0t10 0 10 0 9 0" />
+        <path d="M5 18q5 2 10 0t10 0 10 0 9 0" />
+        <path d="M44 11q5 2 10 0t10 0 9 0" />
+        <path d="M44 18q5 2 10 0t10 0 9 0" />
+        <path d="M5 34q5 2 10 0t10 0 10 0 9 0" />
+        <path d="M5 41q5 2 10 0t10 0 10 0 9 0" />
+        <path d="M44 34q5 2 10 0t10 0 9 0" />
+        <path d="M44 41q5 2 10 0t10 0 9 0" />
+      </g>
+    </svg>
   );
 }
 
-function GateAvatar({ size = 40 }: { size?: number }): ReactNode {
-  return <span className="gate-avatar" aria-hidden="true" style={{ width: size, height: size }} />;
+/** Ikon peringatan XP (segitiga kuning) untuk message box error. */
+function WarnIcon(): ReactNode {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" shapeRendering="crispEdges" aria-hidden="true" focusable="false">
+      <polygon points="16,3 30,28 2,28" fill="#ffd76b" stroke="#000000" strokeWidth="1.5" />
+      <rect x="15" y="10" width="2" height="10" fill="#000000" />
+      <rect x="15" y="22" width="2" height="2" fill="#000000" />
+    </svg>
+  );
 }
 
 export default function LoginGate({
   onLogin,
   onSuccess,
+  onCancel,
   initialMessage,
   alreadyIn,
 }: LoginGateProps): ReactNode {
   const [lang] = useState<Lang>(() => (typeof window === "undefined" ? "id" : loadLang(window.localStorage)));
-  const [phase, setPhase] = useState<Phase>(alreadyIn ? "idle" : "boot");
-  const [email, setEmail] = useState("");
+  const [phase, setPhase] = useState<Phase>("idle");
+  // Username default "user" (seperti logon Windows XP klasik).
+  const [username, setUsername] = useState("user");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
-  const [showPw, setShowPw] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [status, setStatus] = useState(() => t(lang, "gate.statusChecking"));
-  const [shaking, setShaking] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ username?: string; password?: string }>({});
+  const [errBox, setErrBox] = useState<string | null>(null);
 
-  const emailRef = useRef<HTMLInputElement>(null);
+  const userRef = useRef<HTMLInputElement>(null);
   const pwRef = useRef<HTMLInputElement>(null);
   const timers = useRef<number[]>([]);
   const alive = useRef(true);
@@ -77,59 +119,47 @@ export default function LoginGate({
   }, []);
 
   useEffect(() => {
-    if (phase !== "boot") return;
-    later(() => setPhase("idle"), 1200);
-  }, [phase, later]);
+    if (phase !== "idle") return;
+    if (fieldErrors.username) userRef.current?.focus();
+    else if (fieldErrors.password) pwRef.current?.focus();
+    else if (username) pwRef.current?.focus();
+    else userRef.current?.focus();
+  }, [phase, fieldErrors.username, fieldErrors.password, username]);
 
-  const resetToIdle = useCallback(() => {
-    setApiError(null);
-    setPassword("");
-    setShowPw(false);
-    setFieldErrors({});
-    setPhase("idle");
-  }, []);
+  const cancel = useCallback(() => {
+    if (onCancel) onCancel();
+  }, [onCancel]);
 
+  // Escape = Cancel (kebiasaan dialog Windows).
   useEffect(() => {
-    if (phase === "idle") {
-      if (fieldErrors.password) pwRef.current?.focus();
-      else emailRef.current?.focus();
-    }
-  }, [phase, fieldErrors.password]);
-
-  useEffect(() => {
-    if (phase !== "idle" && phase !== "denied") return;
+    if (phase !== "idle") return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        resetToIdle();
+        cancel();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [phase, resetToIdle]);
-
-  const shakeTitle = () => {
-    setShaking(true);
-    later(() => setShaking(false), 450);
-  };
+  }, [phase, cancel]);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
-    const errs: { email?: string; password?: string } = {};
-    if (!email.trim()) errs.email = t(lang, "gate.errRequired");
-    else if (!EMAIL_RE.test(email)) errs.email = t(lang, "gate.errEmail");
+    if (phase === "checking") return;
+    const errs: { username?: string; password?: string } = {};
+    if (!username.trim()) errs.username = t(lang, "gate.errRequired");
+    // Username XP klasik tidak wajib email; kalau berisi @ baru divalidasi format.
+    else if (username.includes("@") && !EMAIL_RE.test(username)) errs.username = t(lang, "gate.errEmail");
     if (!password) errs.password = t(lang, "gate.errRequired");
     setFieldErrors(errs);
-    if (errs.email || errs.password) return;
+    if (errs.username || errs.password) return;
 
-    setApiError(null);
+    setErrBox(null);
     setPhase("checking");
-    setStatus(t(lang, "gate.statusChecking"));
-    later(() => setStatus(t(lang, "gate.statusProfile")), 900);
 
     let error: string | null = null;
     try {
-      error = await Promise.all([onLogin(email.trim(), password, remember), sleep(1600)]).then(
+      error = await Promise.all([onLogin(username.trim(), password, remember), sleep(1800)]).then(
         ([r]) => r,
       );
     } catch (err) {
@@ -137,42 +167,30 @@ export default function LoginGate({
     }
     if (!alive.current) return;
     if (error) {
-      setApiError(error);
+      // Jangan bocorkan detail internal — selalu tampilkan pesan generik XP.
       setPassword("");
-      setShowPw(false);
       setFieldErrors({});
-      setPhase("denied");
+      setPhase("idle");
+      setErrBox(t(lang, "gate.errLogin"));
+      later(() => pwRef.current?.focus(), 0);
     } else {
       setPhase("success");
-      later(onSuccess, 1400);
+      later(onSuccess, 1300);
     }
   };
 
-  const dialogBody = (): ReactNode => {
-    if (phase === "checking") {
-      return (
-        <div className="gate-checking">
-          <div className="gate-status">
-            {status}
-            <span className="gate-blink">_</span>
-          </div>
-          <div className="gate-progress" role="progressbar" aria-label={status}>
-            <div className="gate-progress__bar" />
-          </div>
-        </div>
-      );
-    }
+  const errVisible = errBox !== null;
 
-    if (phase === "success") {
+  const formArea = (): ReactNode => {
+    if (phase === "checking" || phase === "success") {
       return (
-        <div className="gate-row">
-          <GateAvatar />
-          <div>
-            <div className="gate-msg gate-msg--ok">{t(lang, "gate.titleBack")}</div>
-            <div className="gate-msg">{t(lang, "gate.systemReady")}</div>
-            <div className="gate-msg">
-              {t(lang, "gate.loadingDesktop")}
-              <span className="gate-blink">_</span>
+        <div className="xl-logging">
+          <div className="xl-logging__row">
+            <div>
+              <div className="xl-logging__msg">{phase === "checking" ? t(lang, "gate.statusChecking") : t(lang, "gate.loadingDesktop")}</div>
+              <div className="xl-logging__bar" role="progressbar" aria-label={t(lang, "gate.statusChecking")}>
+                <div className="xl-logging__blocks" />
+              </div>
             </div>
           </div>
         </div>
@@ -182,165 +200,187 @@ export default function LoginGate({
     if (alreadyIn) {
       return (
         <>
-          <div className="gate-row">
-            <GateAvatar />
-            <div>
-              <div className="gate-msg gate-msg--ok">{t(lang, "gate.alreadyIn")}</div>
-              <div className="gate-msg">{t(lang, "gate.alreadyInDesc")}</div>
-            </div>
-          </div>
-          <div className="gate-actions">
-            <button type="button" className="gate-btn gate-btn--default" onClick={onSuccess} autoFocus>
+          <div className="xl-msg xl-msg--ok">{t(lang, "gate.alreadyIn")}</div>
+          <div className="xl-msg">{t(lang, "gate.alreadyInDesc")}</div>
+          <div className="xl-actions">
+            <button type="button" className="xl-btn xl-btn--default" onClick={onSuccess} autoFocus>
               {t(lang, "gate.continue")}
+            </button>
+            <button type="button" className="xl-btn" onClick={cancel}>
+              {t(lang, "gate.cancel")}
             </button>
           </div>
         </>
       );
     }
 
-    const denied = phase === "denied";
     return (
       <form onSubmit={handleLogin} noValidate>
-        {initialMessage && !denied && (
-          <div className="gate-msg gate-msg--info">⚠ {initialMessage}</div>
-        )}
-        {denied && (
-          <div className="gate-msg gate-msg--err" role="alert">
-            <div className="gate-msg__head">⚠ {t(lang, "gate.accessDenied")}</div>
-            <div>{apiError ?? t(lang, "gate.accessDeniedMsg")}</div>
-          </div>
-        )}
-        <div className="gate-row">
-          <GateAvatar />
-          <p className="gate-msg">{t(lang, "gate.prompt")}</p>
-        </div>
-        <label className="gate-field" htmlFor="gate-user">
-          {t(lang, "gate.userName")}
+        {initialMessage && <div className="xl-msg xl-msg--info">⚠ {initialMessage}</div>}
+        <div className="xl-fieldrow">
+          <label className="xl-fieldlabel" htmlFor="xl-user">
+            {t(lang, "gate.userName")}
+          </label>
           <input
-            ref={emailRef}
-            id="gate-user"
-            className="gate-input"
+            ref={userRef}
+            id="xl-user"
+            className={`xl-input${fieldErrors.username ? " xl-input--err" : ""}`}
             type="text"
-            value={email}
+            value={username}
             onChange={(e) => {
-              setEmail(e.target.value);
-              if (fieldErrors.email) setFieldErrors((f) => ({ ...f, email: undefined }));
+              setUsername(e.target.value);
+              if (fieldErrors.username) setFieldErrors((f) => ({ ...f, username: undefined }));
             }}
             autoComplete="username"
+            tabIndex={1}
           />
-          {fieldErrors.email && (
-            <span className="gate-field__error" role="alert">
-              {fieldErrors.email}
-            </span>
-          )}
-        </label>
-        <label className="gate-field" htmlFor="gate-pass">
-          {t(lang, "gate.password")}
-          <span className="gate-pwrow">
-            <input
-              ref={pwRef}
-              id="gate-pass"
-              className="gate-input"
-              type={showPw ? "text" : "password"}
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                if (fieldErrors.password) setFieldErrors((f) => ({ ...f, password: undefined }));
-              }}
-              autoComplete="current-password"
-            />
-            <button
-              type="button"
-              className="gate-btn gate-btn--small"
-              title={showPw ? t(lang, "gate.hideTitle") : t(lang, "gate.showTitle")}
-              onClick={() => setShowPw((v) => !v)}
-            >
-              {showPw ? t(lang, "gate.hide") : t(lang, "gate.show")}
-            </button>
-          </span>
-          {fieldErrors.password && (
-            <span className="gate-field__error" role="alert">
-              {fieldErrors.password}
-            </span>
-          )}
-        </label>
-        <label className="gate-check">
-          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-          {t(lang, "gate.remember")}
-        </label>
-        <div className="gate-actions">
-          {denied ? (
-            <button type="button" className="gate-btn gate-btn--default" onClick={resetToIdle} autoFocus title={t(lang, "gate.tryAgainTitle")}>
-              {t(lang, "gate.tryAgain")}
-            </button>
-          ) : (
-            <button type="submit" className="gate-btn gate-btn--default" title={t(lang, "gate.okTitle")}>
-              {t(lang, "gate.ok")}
-            </button>
-          )}
-          <button type="button" className="gate-btn" onClick={resetToIdle} title={t(lang, "gate.cancelTitle")}>
+        </div>
+        <div className="xl-fieldrow">
+          <label className="xl-fieldlabel" htmlFor="xl-pass">
+            {t(lang, "gate.password")}
+          </label>
+          <input
+            ref={pwRef}
+            id="xl-pass"
+            className={`xl-input${fieldErrors.password ? " xl-input--err" : ""}`}
+            type="password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (fieldErrors.password) setFieldErrors((f) => ({ ...f, password: undefined }));
+            }}
+            autoComplete="current-password"
+            tabIndex={2}
+          />
+        </div>
+
+        {showOptions && (
+          <div className="xl-options" id="xl-options">
+            <fieldset className="xl-groupbox">
+              <legend>{t(lang, "gate.logonTo")}</legend>
+              <span className="xl-combo">
+                <select id="xl-logon" className="xl-combo__select" defaultValue="pms" tabIndex={4}>
+                  <option value="pms">{t(lang, "gate.domain")}</option>
+                </select>
+              </span>
+              <label className="xl-check">
+                <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} tabIndex={5} />
+                <span>{t(lang, "gate.remember")}</span>
+              </label>
+            </fieldset>
+          </div>
+        )}
+
+        <div className="xl-actions">
+          <button type="button" className="xl-btn xl-btn--options" onClick={() => setShowOptions((v) => !v)} tabIndex={3} aria-expanded={showOptions} aria-controls="xl-options">
+            {showOptions ? t(lang, "gate.optionsClose") : t(lang, "gate.optionsOpen")}
+          </button>
+          <button type="button" className="xl-btn" onClick={cancel} title={t(lang, "gate.cancelTitle")} tabIndex={6}>
             {t(lang, "gate.cancel")}
+          </button>
+          <button type="submit" className="xl-btn xl-btn--default" title={t(lang, "gate.okTitle")} tabIndex={7}>
+            {t(lang, "gate.ok")}
           </button>
         </div>
       </form>
     );
   };
 
-  const dialogOpen = phase === "idle" || phase === "checking" || phase === "denied" || phase === "success";
-  const title = alreadyIn
-    ? t(lang, "gate.titleTheGate")
-    : phase === "success"
-      ? t(lang, "gate.titleBack")
-      : t(lang, "gate.titleWelcome");
-
   return (
-    <div className="gate-root">
-      <div className="gate-icons" aria-hidden="true">
-        <span className="gate-icon">
-          <span className="gate-icon__glyph">🖥</span>
-          <span className="gate-icon__label">{t(lang, "gate.myComputer")}</span>
-        </span>
-        <span className="gate-icon">
-          <span className="gate-icon__glyph">🗑</span>
-          <span className="gate-icon__label">{t(lang, "gate.recycleBin")}</span>
-        </span>
+    <div className={`xl-root${phase === "checking" || phase === "success" ? " xl-root--busy" : ""}`}>
+      {/* Wallpaper Bliss — sama dengan homepage (winxp-desktop) */}
+      <div className="winxp-wallpaper" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="winxp-wallpaper__img" src="/wallpaper-xp.jpg" alt="" draggable={false} />
       </div>
 
-      <div className="gate-taskbar">
-        <button type="button" className="gate-taskbar__start" title={t(lang, "gate.start")} onClick={() => {}}>
-          {t(lang, "gate.start")}
-        </button>
-        <div className="gate-taskbar__spacer" />
-        <div className="gate-tray">
-          <GateClock />
+      <div className="xl-window" role="dialog" aria-modal="true" aria-labelledby="xl-dlg-title">
+        {/* Title bar Luna */}
+        <div className="xl-titlebar">
+          <span id="xl-dlg-title" className="xl-titlebar__title">
+            {t(lang, "gate.titleWelcome")}
+          </span>
+          <button
+            type="button"
+            className="xl-titlebar__btn"
+            title={t(lang, "gate.cancelTitle")}
+            aria-label={t(lang, "gate.cancelTitle")}
+            onClick={cancel}
+          >
+            ✕
+          </button>
         </div>
+
+        {/* Header branding Windows XP Professional */}
+        <div className="xl-header">
+          <div className="xl-header__brand">
+            <WinFlag />
+            <div className="xl-header__text">
+              <div className="xl-header__ms">Microsoft</div>
+              <div className="xl-header__win">
+                Windows<span className="xl-header__xp">XP</span>
+              </div>
+              <div className="xl-header__pro">Professional</div>
+            </div>
+          </div>
+          <div className="xl-header__copy">
+            <span>Copyright © 1985-2001</span>
+            <span>Microsoft Corporation</span>
+          </div>
+          <span className="xl-header__ms2">Microsoft</span>
+        </div>
+
+        {/* Form area beige #ECE9D8 */}
+        <div className="xl-form">{formArea()}</div>
       </div>
 
-      {phase === "boot" && (
-        <div className="gate-boot" aria-label={t(lang, "gate.bootLabel")}>
-          <div className="gate-boot__logo">GAS ELECTRONIC OS</div>
-          <div className="gate-boot__status">
-            {t(lang, "gate.statusBoot")}
-            <span className="gate-blink">_</span>
+      {errVisible && (
+        <div className="xl-errbox" role="alertdialog" aria-modal="true" aria-labelledby="xl-err-title" aria-describedby="xl-err-msg">
+          <div className="xl-titlebar">
+            <span className="xl-titlebar__icon" aria-hidden="true">
+              <WarnIcon />
+            </span>
+            <span id="xl-err-title" className="xl-titlebar__title">
+              {t(lang, "gate.warnTitle")}
+            </span>
+            <button
+              type="button"
+              className="xl-titlebar__btn"
+              aria-label={t(lang, "gate.ok")}
+              onClick={() => setErrBox(null)}
+            >
+              ✕
+            </button>
+          </div>
+          <div className="xl-errbox__body">
+            <span className="xl-errbox__icon" aria-hidden="true">
+              <WarnIcon />
+            </span>
+            <p id="xl-err-msg" className="xl-errbox__msg">
+              {errBox}
+            </p>
+          </div>
+          <div className="xl-errbox__actions">
+            <button type="button" className="xl-btn xl-btn--default" onClick={() => setErrBox(null)} autoFocus>
+              {t(lang, "gate.ok")}
+            </button>
           </div>
         </div>
       )}
 
-      {dialogOpen && (
-        <div
-          key={`${phase}-${alreadyIn}`}
-          className={`gate-dialog gate-dialog--open${shaking ? " gate-dialog--shake" : ""}`}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="gate-dlg-title"
-        >
-          <div className="gate-titlebar" onDoubleClick={shakeTitle} title="GAS ELECTRONIC OS">
-            <span className="gate-titlebar__icon" aria-hidden="true">
-              ▣
-            </span>
-            <span id="gate-dlg-title">{title}</span>
+      {/* Loading penuh layar setelah autentikasi sukses — visual sama dengan homepage */}
+      {phase === "success" && (
+        <div className="xl-loading" role="status" aria-live="polite">
+          <div className="winxp-wallpaper" aria-hidden>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="winxp-wallpaper__img" src="/wallpaper-xp.jpg" alt="" draggable={false} />
           </div>
-          <div className="gate-dialog__body">{dialogBody()}</div>
+          <div className="xl-loading__box">
+            <div className="xl-loading__msg">{t(lang, "gate.loadingDesktop")}</div>
+            <div className="xl-logging__bar xl-loading__bar" role="progressbar" aria-label={t(lang, "gate.loadingDesktop")}>
+              <div className="xl-logging__blocks" />
+            </div>
+          </div>
         </div>
       )}
     </div>

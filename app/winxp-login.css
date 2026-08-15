@@ -1,0 +1,594 @@
+/* ============================================================
+   GE-XP - Windows XP Professional CLASSIC logon screen (xl-)
+   Background sama dengan homepage (Luna gradient + Bliss
+   wallpaper), centered 700x365 logon window, Luna title bar,
+   XP Professional branding header, beige form.
+   ============================================================ */
+
+.xl-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(180deg, #2e63b8 0%, #5b96d8 50%, #8ec0e8 100%);
+  font-family: Tahoma, Arial, sans-serif;
+  font-size: 11px;
+  color: #000;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+.xl-root .winxp-wallpaper {
+  z-index: 0;
+}
+
+.xl-root--busy {
+  cursor: wait;
+}
+
+/* ---- Logon window (700 x ~365, centered) ---- */
+
+.xl-window {
+  position: relative;
+  z-index: 2;
+  width: 700px;
+  min-height: 365px;
+  background: #ece9d8;
+  border: 1px solid #0831d9;
+  border-radius: 3px;
+  box-shadow:
+    0 0 0 1px #2b4fa0,
+    0 0 0 2px #cfe0f5,
+    1px 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* ---- Luna title bar ---- */
+
+.xl-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 6px 0 10px;
+  background: linear-gradient(180deg, #5ba3f0 0%, #3a7fe0 30%, #1a55c4 65%, #0a2f8f 100%);
+  border-bottom: 1px solid #0a246a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  border-radius: 3px 3px 0 0;
+}
+
+.xl-titlebar__icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.xl-titlebar__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: bold;
+  text-shadow: 0 1px 1px rgba(0, 10, 60, 0.7);
+}
+
+/* Close button merah/orange khas XP, X putih, bevel 3D */
+.xl-titlebar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 21px;
+  padding: 0 0 1px;
+  border: 1px solid #7a1200;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #ff8a5a 0%, #e84c1f 45%, #c92600 100%);
+  color: #fff;
+  font: bold 12px Tahoma, sans-serif;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 1px 1px rgba(0, 0, 0, 0.4);
+}
+
+.xl-titlebar__btn:hover {
+  background: linear-gradient(180deg, #ff9d73 0%, #f25c30 45%, #d92e02 100%);
+}
+
+.xl-titlebar__btn:active {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 -1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* ---- XP Professional header (biru/lavender, ~150px) ---- */
+
+.xl-header {
+  position: relative;
+  height: 150px;
+  background: linear-gradient(180deg, #dfe9fb 0%, #c6d8f2 30%, #9fbee8 60%, #86ade0 100%);
+  border-bottom: 1px solid #7d99c8;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -2px 3px rgba(40, 70, 140, 0.25);
+}
+
+.xl-header__brand {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding-top: 18px;
+}
+
+.xl-header__text {
+  text-align: left;
+}
+
+.xl-header__ms {
+  font-size: 12px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(10, 40, 110, 0.8);
+  letter-spacing: 0.5px;
+}
+
+.xl-header__win {
+  font-size: 38px;
+  font-weight: bold;
+  color: #ffffff;
+  line-height: 1.05;
+  text-shadow:
+    0 1px 1px rgba(10, 40, 110, 0.85),
+    0 2px 3px rgba(10, 40, 110, 0.45);
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+}
+
+.xl-header__xp {
+  color: #ffb100;
+  text-shadow: 0 1px 1px rgba(80, 40, 0, 0.7);
+}
+
+.xl-header__pro {
+  font-size: 16px;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(10, 40, 110, 0.8);
+  letter-spacing: 0.5px;
+}
+
+.xl-header__copy {
+  position: absolute;
+  left: 12px;
+  bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  font-size: 10px;
+  color: #2b4a8a;
+  line-height: 1.35;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.xl-header__ms2 {
+  position: absolute;
+  right: 14px;
+  bottom: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #2b4a8a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ---- Form area beige #ECE9D8 ---- */
+
+.xl-form {
+  padding: 18px 22px 16px;
+  background: #ece9d8;
+}
+
+/* ---- XP textbox ---- */
+
+.xl-fieldrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.xl-fieldlabel {
+  width: 96px;
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: normal;
+  color: #000;
+  text-align: right;
+}
+
+.xl-input {
+  flex: 1;
+  height: 24px;
+  padding: 2px 6px;
+  box-sizing: border-box;
+  border: 1px solid #7f9db9;
+  border-radius: 1px;
+  background: #ffffff;
+  color: #000;
+  font: 14px Tahoma, Arial, sans-serif;
+  box-shadow:
+    inset 1px 1px 1px #c8d4e4,
+    inset 0 -1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.xl-input:focus {
+  border-color: #316ac5;
+  outline: 1px dotted #000;
+  outline-offset: -1px;
+}
+
+.xl-input--err {
+  border-color: #b00020;
+}
+
+/* ---- XP classic button ---- */
+
+.xl-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.xl-btn {
+  min-width: 96px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid #003c74;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #ffffff 0%, #ece9d8 50%, #d4d0c8 100%);
+  color: #000;
+  font: 12px Tahoma, Arial, sans-serif;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4),
+    0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.xl-btn:hover {
+  border-color: #f8d46c;
+  box-shadow:
+    0 0 0 1px #fbe4a0,
+    0 0 0 2px #f8d46c,
+    inset 0 1px 0 #ffffff;
+}
+
+.xl-btn:active {
+  border-color: #003c74;
+  box-shadow:
+    0 0 0 1px #f8d46c,
+    0 0 0 2px #f8d46c,
+    inset 0 2px 3px rgba(0, 40, 110, 0.35),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.xl-btn:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}
+
+.xl-btn--default {
+  font-weight: bold;
+  border-width: 2px;
+}
+
+.xl-btn--options {
+  min-width: 108px;
+}
+
+/* ---- Options >> panel (XP groupbox) ---- */
+
+.xl-options {
+  margin: 4px 0 2px;
+}
+
+.xl-groupbox {
+  border: 1px solid #aca899;
+  border-radius: 3px;
+  padding: 12px 14px 10px;
+  margin: 0;
+  box-shadow: inset 1px 1px 1px rgba(160, 150, 130, 0.35);
+}
+
+.xl-groupbox legend {
+  padding: 0 4px;
+  font-size: 12px;
+  color: #000;
+}
+
+.xl-combo {
+  position: relative;
+  display: block;
+  height: 23px;
+  margin-bottom: 10px;
+}
+
+.xl-combo__select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 23px;
+  padding: 2px 26px 2px 6px;
+  border: 1px solid #7f9db9;
+  border-radius: 1px;
+  background: #ffffff;
+  color: #000;
+  font: 12px Tahoma, Arial, sans-serif;
+  cursor: pointer;
+  box-shadow: inset 1px 1px 1px #c8d4e4;
+}
+
+.xl-combo::after {
+  content: "";
+  position: absolute;
+  right: 2px;
+  top: 1px;
+  width: 19px;
+  height: 19px;
+  border: 1px solid #7f9db9;
+  border-radius: 1px;
+  background: linear-gradient(180deg, #ffffff 0%, #d4d0c8 100%);
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.xl-combo::before {
+  content: "";
+  position: absolute;
+  right: 9px;
+  top: 10px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid #000;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.xl-combo__select:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -1px;
+}
+
+/* ---- XP checkbox ---- */
+
+.xl-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.xl-check input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border: 1px solid #7f9db9;
+  border-radius: 1px;
+  background: #ffffff;
+  box-shadow: inset 1px 1px 1px #c8d4e4;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.xl-check input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 1px;
+  width: 9px;
+  height: 5px;
+  border-left: 2px solid #1d53a0;
+  border-bottom: 2px solid #1d53a0;
+  transform: rotate(-45deg);
+}
+
+.xl-check input[type="checkbox"]:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: 1px;
+}
+
+/* ---- Logging on (XP marquee progress) ---- */
+
+.xl-logging {
+  padding: 26px 0 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.xl-logging__row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.xl-logging__msg {
+  margin-bottom: 9px;
+  font-size: 13px;
+}
+
+.xl-logging__bar {
+  width: 240px;
+  height: 10px;
+  border: 1px solid #7f9db9;
+  border-radius: 1px;
+  background: #eaf2fb;
+  overflow: hidden;
+  box-shadow: inset 1px 1px 1px #c3d3ea;
+}
+
+.xl-logging__blocks {
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(
+    90deg,
+    #2a6fd6 0,
+    #2a6fd6 12%,
+    #4c8fe8 12%,
+    #4c8fe8 24%,
+    #6ba6f0 24%,
+    #6ba6f0 36%,
+    #4c8fe8 36%,
+    #4c8fe8 48%,
+    #2a6fd6 48%,
+    #2a6fd6 60%
+  );
+  background-size: 200% 100%;
+  animation: xl-marquee 1.1s linear infinite;
+}
+
+@keyframes xl-marquee {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ---- Loading penuh layar (login -> dashboard) ---- */
+
+.xl-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: linear-gradient(180deg, #2e63b8 0%, #5b96d8 50%, #8ec0e8 100%);
+}
+
+.xl-loading .winxp-wallpaper {
+  z-index: 0;
+}
+
+.xl-loading__box {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 9vh;
+  padding: 10px 18px;
+  background: rgba(236, 233, 216, 0.92);
+  border: 1px solid #0831d9;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px #2b4fa0, 0 0 0 2px #cfe0f5;
+}
+
+.xl-loading__msg {
+  font-size: 13px;
+  font-weight: bold;
+  color: #000;
+}
+
+.xl-loading__bar {
+  width: 260px;
+  height: 10px;
+}
+
+/* ---- XP error message box ---- */
+
+.xl-errbox {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 380px;
+  background: #ece9d8;
+  border: 1px solid #0831d9;
+  border-radius: 3px;
+  box-shadow:
+    0 0 0 1px #2b4fa0,
+    0 0 0 2px #cfe0f5,
+    4px 4px 10px rgba(0, 0, 0, 0.5);
+  z-index: 60;
+}
+
+.xl-errbox .xl-titlebar {
+  border-radius: 3px 3px 0 0;
+}
+
+.xl-errbox__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 16px 6px;
+}
+
+.xl-errbox__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.xl-errbox__msg {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.xl-errbox__actions {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 14px;
+}
+
+/* ---- In-dialog messages ---- */
+
+.xl-msg {
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.xl-msg--info {
+  color: #000;
+}
+
+.xl-msg--ok {
+  font-weight: bold;
+}
+
+/* ---- Responsive: pertahankan struktur, scale proporsional ---- */
+
+@media (max-width: 760px) {
+  .xl-window {
+    width: min(92vw, 700px);
+    transform: scale(0.92);
+    transform-origin: center center;
+  }
+  .xl-root {
+    align-items: flex-start;
+    padding-top: 4vh;
+  }
+}
+
+@media (max-width: 560px) {
+  .xl-window {
+    transform: scale(0.8);
+  }
+  .xl-root {
+    padding-top: 10vh;
+  }
+}

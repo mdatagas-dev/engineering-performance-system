@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useSessionGuard } from "@/hooks/use-session-guard";
 import { getDashboardData, type DashboardData } from "@/lib/mocks/dashboard";
 import { formatDecimal, formatNumber } from "@/lib/production-table/format";
+import DemoBanner from "@/components/demo-banner";
+
 
 function Kpi({ label, value }: { label: string; value: string }) {
   return (
@@ -38,6 +40,9 @@ export default function DefectReportPage() {
 
   const items = data.pareto;
   const total = items.reduce((a, it) => a + it.quantity, 0) || 1;
+  // KPI dihitung dari data dashboard (bukan angka hardcode 123/2.72).
+  const totalDefect = data.kpis.defect;
+  const defectRate = data.kpis.defectRatePct;
   const rows = items.reduce<Array<{ name: string; quantity: number; pct: number; cumPct: number }>>(
     (acc, it) => {
       const pct = (it.quantity / total) * 100;
@@ -50,11 +55,13 @@ export default function DefectReportPage() {
 
   return (
     <main className="xpp-page">
+
+      <DemoBanner note="Data berasal dari lib/mocks/dashboard.ts." />
       <section className="xw-panel">
         <h2 className="xw-panel__title">Defect Report</h2>
         <div className="xpp-kpi-row">
-          <Kpi label="Total Defect (PCS)" value="123" />
-          <Kpi label="Defect Rate (%)" value="2.72" />
+          <Kpi label="Total Defect (PCS)" value={formatNumber(totalDefect)} />
+          <Kpi label="Defect Rate (%)" value={formatDecimal(defectRate)} />
         </div>
       </section>
 

@@ -58,11 +58,16 @@ export type LoginResult =
     };
 
 const MESSAGES = {
+  // Satu pesan untuk SEMUA kegagalan login — tidak boleh membedakan
+  // email tak dikenal / password salah / terkunci / tidak aktif / tanpa role
+  // (anti-akun-enumeration). Status juga diseragamkan ke 401.
   invalid: "Email atau password salah.",
-  locked: "Terlalu banyak percobaan login. Akun dikunci sementara.",
-  inactive: "Akun ini tidak aktif.",
-  noRole: "Akun tidak memiliki peran yang valid.",
 } as const;
+
+// Hash argon2 dummy untuk menyamakan timing antara "email tak dikenal" dan
+// "email ada tapi password salah" — tanpa ini attacker bisa membedakan lewat
+// durasi respons (verify hanya dijalankan untuk user yang ada).
+const DUMMY_HASH = "$argon2id$v=19$m=19456,t=2,p=1$MDAwMDAwMDAwMDAwMDAwMDAw$ZGFtbXktc2VjcmV0LXZlcmlmeS1wYXlsb2Fk";
 
 export async function loginUser(
   { email, password }: { email: string; password: string },
@@ -74,12 +79,23 @@ export async function loginUser(
   // loadSecurityConfig() (fallback AUTH_CONFIG di lib/brute-force/config.ts).
   const cfg = deps.config ?? DEFAULT_BRUTE_FORCE_CONFIG;
 
-  if (!user) return { ok: false, status: 401, message: MESSAGES.invalid, userId: null, auditAction: "LOGIN_FAILED" };
-
-  if (user.lockedUntil && user.lockedUntil > now) {
-    return { ok: false, status: 403, message: MESSAGES.locked, userId: user.id, auditAction: "LOGIN_FAILED" };
+  // Email tak dikenal: jalankan dummy argon2 verify supaya durasi respons
+  // setara dengan user yang benar-benar ada (anti-enumeration via timing).
+  // Hasil verify sengaja dibuang — selalu gagal dengan pesan seragam.
+  if (!user) {
+    await deps.verifyPassword?.(DUMMY_HASH, password).catch(() => false);
+    return { ok: false, status: 401, message: MESSAGES.invalid, userId: null, auditAction: "LOGIN_FAILED" };
   }
-  if (!user.isActive) return { ok: false, status: 403, message: MESSAGES.inactive, userId: user.id, auditAction: "LOGIN_FAILED" };
+
+  // Terkunci / tidak aktif / tanpa role: respon seragam dengan kegagalan lain
+  // (401 + pesan sama) — status & pesan tidak boleh membocorkan keberadaan/
+  // keadaan akun. Audit internal tetap mencatat penyebab sebenarnya.
+  if (user.lockedUntil && user.lockedUntil > now) {
+    return { ok: false, status: 401, message: MESSAGES.invalid, userId: user.id, auditAction: "LOGIN_FAILED" };
+  }
+  if (!user.isActive) {
+    return { ok: false, status: 401, message: MESSAGES.invalid, userId: user.id, auditAction: "LOGIN_FAILED" };
+  }
 
   let passwordOk = false;
   try {
@@ -122,7 +138,11 @@ export async function loginUser(
   await deps.updateUser(user.id, { failedLoginAttempts: 0, lockoutCount: 0, lastLoginAt: now });
 
   const role = user.userRoles[0]?.role;
-  if (!role) return { ok: false, status: 403, message: MESSAGES.noRole, userId: user.id, auditAction: "LOGIN_FAILED" };
+  if (!role) {
+    // Tanpa role juga seragam 401 — tidak boleh mengindikasikan akun valid
+    // yang konfigurasinya rusak (tetap tercatat di audit via LOGIN_FAILED).
+    return { ok: false, status: 401, message: MESSAGES.invalid, userId: user.id, auditAction: "LOGIN_FAILED" };
+  }
 
   const permissions = Array.from(
     new Set(user.userRoles.flatMap((ur) => ur.role.permissions.map((p) => p.permission.key)))

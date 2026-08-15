@@ -1,0 +1,814 @@
+/* ============================================================
+   Windows XP application styles (prefix: xpa-)
+   IE6, Control Panel, My Network Places, Game House, My Computer.
+   Face #ece9d8, Luna blue accents, Tahoma 11px, dense bevels.
+   Dikonsumsi oleh components/world/apps/* (XP generation).
+   ============================================================ */
+
+.xpa-app {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ece9d8;
+  font-family: Tahoma, Verdana, sans-serif;
+  font-size: 11px;
+  color: #000;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+}
+
+.xpa-app button:focus-visible,
+.xpa-app input:focus-visible,
+.xpa-app select:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -1px;
+}
+
+.xpa-app button:disabled {
+  color: #a5a29a;
+  text-shadow: 1px 1px 0 #fff;
+}
+
+/* ---- Buttons (Luna bevel) ---- */
+
+.xpa-btn {
+  font-family: inherit;
+  font-size: 11px;
+  color: #000;
+  background: linear-gradient(180deg, #f2f0e7 0%, #ece9d8 48%, #d9d3c4 100%);
+  border: 1px solid #003c74;
+  box-shadow: inset 1px 1px #fff;
+  padding: 3px 12px;
+  cursor: default;
+}
+
+.xpa-btn:hover {
+  background: linear-gradient(180deg, #fdf6ee 0%, #f9e0a2 42%, #f0c664 92%, #ecb64b 100%);
+}
+
+.xpa-btn:active {
+  box-shadow: inset 1px 1px #b7b4a8;
+  padding: 4px 11px 2px 13px;
+}
+
+.xpa-btn:disabled {
+  border-color: #a5a29a;
+  background: #ece9d8;
+  box-shadow: inset 1px 1px #fff;
+}
+
+/* ---- Sunken field ---- */
+
+.xpa-field {
+  font-family: inherit;
+  font-size: 11px;
+  color: #000;
+  background: #fff;
+  border: 1px solid #7f9db9;
+  box-shadow: inset 1px 1px #b2c5db;
+  padding: 2px 4px;
+}
+
+/* ---- Toolbar ---- */
+
+.xpa-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 4px;
+  background: #ece9d8;
+  border-bottom: 1px solid #c7c3b6;
+  flex: none;
+}
+
+.xpa-toolbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+  font-size: 11px;
+  color: #000;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 2px 7px;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.xpa-toolbtn:hover:not(:disabled) {
+  border-color: #f1b55c;
+  background: linear-gradient(180deg, #fff8e7 0%, #ffe1a8 90%, #ffca66 100%);
+}
+
+.xpa-toolbtn:active:not(:disabled) {
+  border-color: #b8893c;
+}
+
+.xpa-toolbtn:disabled {
+  color: #a5a29a;
+}
+
+.xpa-toolbtn__label {
+  line-height: 1.1;
+}
+
+/* ---- Address bar ---- */
+
+.xpa-addr {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 5px;
+  background: #ece9d8;
+  border-bottom: 1px solid #c7c3b6;
+  flex: none;
+}
+
+.xpa-addr__label {
+  white-space: nowrap;
+  flex: none;
+}
+
+.xpa-addr__input {
+  flex: 1;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 11px;
+  color: #000;
+  background: #fff;
+  border: 1px solid #7f9db9;
+  box-shadow: inset 1px 1px #b2c5db;
+  padding: 2px 5px;
+}
+
+.xpa-addr__go {
+  font-family: inherit;
+  font-size: 11px;
+  padding: 2px 10px;
+}
+
+/* ---- Breadcrumb ---- */
+
+.xpa-crumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1px;
+  padding: 3px 5px;
+  background: #ece9d8;
+  border-bottom: 1px solid #c7c3b6;
+  flex: none;
+}
+
+.xpa-crumb__btn {
+  font: inherit;
+  color: #0a246a;
+  background: none;
+  border: none;
+  padding: 1px 4px;
+  cursor: pointer;
+}
+
+.xpa-crumb__btn:hover {
+  text-decoration: underline;
+}
+
+.xpa-crumb__current {
+  color: #000;
+  font-weight: 700;
+  padding: 1px 4px;
+}
+
+.xpa-crumb__sep {
+  color: #808080;
+}
+
+/* ---- Pane ---- */
+
+.xpa-pane {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #7f9db9;
+  box-shadow: inset 1px 1px #b2c5db;
+}
+
+/* ---- Status bar ---- */
+
+.xpa-status {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 2px 4px;
+  background: #ece9d8;
+  border-top: 1px solid #c7c3b6;
+  flex: none;
+}
+
+.xpa-status__cell {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid;
+  border-color: #b7b4a8 #fff #fff #b7b4a8;
+  padding: 1px 8px;
+}
+
+.xpa-status__cell--right {
+  flex: none;
+  max-width: 45%;
+}
+
+/* ---- Icon grid / items ---- */
+
+.xpa-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 3px;
+  padding: 6px;
+}
+
+.xpa-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 88px;
+  padding: 4px 2px;
+  border: 1px dotted transparent;
+  background: transparent;
+  color: #000;
+  font-family: inherit;
+  font-size: 11px;
+  text-align: center;
+  cursor: default;
+}
+
+.xpa-item:hover {
+  border-color: #9cc5f5;
+  background: #e9f1fb;
+}
+
+.xpa-item--selected,
+.xpa-item--selected:hover {
+  border: 1px solid #316ac5;
+  background: #c6e0f8;
+}
+
+.xpa-item__label {
+  line-height: 1.2;
+  word-break: break-word;
+  max-width: 86px;
+}
+
+/* ---- Dialog ---- */
+
+.xpa-dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.xpa-dialog__box {
+  width: 360px;
+  max-width: 92%;
+  max-height: 92%;
+  background: #ece9d8;
+  border: 1px solid #003c74;
+  box-shadow: inset 1px 1px #fff;
+}
+
+.xpa-dialog__title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 5px;
+  background: linear-gradient(180deg, #3f8ee8 0%, #245edb 45%, #0a246a 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.xpa-dialog__body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.xpa-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 4px;
+  flex: none;
+}
+
+/* ---- IE6 ---- */
+
+.xpa-ie__menu {
+  display: flex;
+  gap: 1px;
+  padding: 2px 3px 0;
+  background: #ece9d8;
+  border-bottom: 1px solid #c7c3b6;
+  flex: none;
+}
+
+.xpa-ie__menu-item {
+  font: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 2px 8px;
+  cursor: default;
+}
+
+.xpa-ie__menu-item:hover {
+  border-color: #9cc5f5;
+  background: #c6e0f8;
+}
+
+.xpa-ie__page {
+  padding: 14px 18px;
+}
+
+.xpa-ie__brand {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0a246a;
+}
+
+.xpa-ie__tagline {
+  color: #404040;
+  margin-top: 2px;
+}
+
+.xpa-ie__h1 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0a246a;
+  margin: 12px 0 6px;
+}
+
+.xpa-ie__p {
+  line-height: 1.5;
+  margin: 4px 0;
+}
+
+.xpa-ie__links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.xpa-ie__link {
+  font: inherit;
+  text-align: left;
+  color: #0a246a;
+  background: transparent;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 2px 0;
+  width: max-content;
+}
+
+.xpa-ie__link:hover {
+  color: #3f8ee8;
+}
+
+.xpa-ie__tick {
+  color: #0a246a;
+  font-weight: 700;
+  margin-right: 8px;
+}
+
+.xpa-ie__rule {
+  border: none;
+  border-top: 1px solid #c7c3b6;
+  margin: 12px 0;
+}
+
+/* ---- Control Panel ---- */
+
+.xpa-cp__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 4px;
+  padding: 8px;
+  align-content: start;
+}
+
+.xpa-cp__applet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 4px;
+  border: 1px dotted transparent;
+  background: transparent;
+  color: #000;
+  font-family: inherit;
+  font-size: 11px;
+  text-align: center;
+  cursor: default;
+}
+
+.xpa-cp__applet:hover {
+  border-color: #9cc5f5;
+  background: #e9f1fb;
+}
+
+.xpa-cp__applet--selected {
+  border: 1px solid #316ac5;
+  background: #c6e0f8;
+}
+
+.xpa-cp__clock {
+  font-family: Tahoma, Verdana, sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  text-align: center;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid #7f9db9;
+  box-shadow: inset 1px 1px #b2c5db;
+}
+
+.xpa-cp__date {
+  text-align: center;
+  color: #404040;
+}
+
+.xpa-cp__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 4px;
+  border: 1px solid #d0cbbd;
+  background: #fff;
+}
+
+.xpa-cp__form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.xpa-cp__ok {
+  color: #1e6b1e;
+  font-weight: 700;
+}
+
+.xpa-cp__muted {
+  color: #404040;
+}
+
+.xpa-cp__label {
+  width: 120px;
+  flex: none;
+}
+
+.xpa-cp__bar {
+  width: 180px;
+  height: 13px;
+  background: #fff;
+  border: 1px solid #7f9db9;
+  box-shadow: inset 1px 1px #b2c5db;
+}
+
+.xpa-cp__bar-fill {
+  height: 100%;
+  background: linear-gradient(180deg, #3f8ee8, #0a246a);
+}
+
+/* ---- My Network Places ---- */
+
+.xpa-np__list {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.xpa-np__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  border: 1px dotted transparent;
+  background: transparent;
+  color: #000;
+  font-family: inherit;
+  font-size: 11px;
+  text-align: left;
+  cursor: default;
+}
+
+.xpa-np__item:hover {
+  border-color: #9cc5f5;
+  background: #e9f1fb;
+}
+
+.xpa-np__item--selected {
+  border: 1px solid #316ac5;
+  background: #c6e0f8;
+}
+
+.xpa-np__name {
+  font-weight: 700;
+}
+
+.xpa-np__desc {
+  color: #404040;
+  margin-left: auto;
+  flex: none;
+}
+
+/* ---- Connected dialog ---- */
+
+.xpa-conn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.xpa-conn__status {
+  color: #1e6b1e;
+  font-weight: 700;
+}
+
+.xpa-conn__meta {
+  color: #404040;
+}
+
+/* ---- Game House ---- */
+
+.xpa-gh {
+  padding: 8px;
+  gap: 10px;
+}
+
+.xpa-gh__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: none;
+}
+
+.xpa-gh__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0a246a;
+}
+
+.xpa-gh__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 4px;
+}
+
+.xpa-gh__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 2px;
+  border: 1px dotted transparent;
+  background: transparent;
+  color: #000;
+  font-family: inherit;
+  font-size: 11px;
+  text-align: center;
+  cursor: default;
+}
+
+.xpa-gh__tile:hover {
+  border-color: #9cc5f5;
+  background: #e9f1fb;
+}
+
+.xpa-gh__tile--selected {
+  border: 1px solid #316ac5;
+  background: #c6e0f8;
+}
+
+.xpa-gh__sub {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0a246a;
+  margin: 8px 0 3px;
+  flex: none;
+}
+
+.xpa-gh__score {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.xpa-gh__score table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.xpa-gh__score th {
+  text-align: left;
+  background: #ece9d8;
+  border: 1px solid #c7c3b6;
+  padding: 2px 6px;
+  font-weight: 700;
+}
+
+.xpa-gh__score td {
+  border: 1px solid #d0cbbd;
+  padding: 2px 6px;
+  background: #fff;
+}
+
+.xpa-gh__panel {
+  width: 330px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #7f9db9;
+  box-shadow: inset 1px 1px #b2c5db;
+  background: #ece9d8;
+}
+
+.xpa-gh__panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px;
+  background: linear-gradient(180deg, #3f8ee8 0%, #245edb 45%, #0a246a 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  flex: none;
+}
+
+.xpa-gh__panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.xpa-gh__tile--locked {
+  opacity: 0.75;
+}
+
+/* ---- My Computer (XP Explorer) ---- */
+
+.xpa-mc__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 3px;
+  padding: 3px 4px 4px;
+}
+
+.xpa-mc__nav {
+  width: 155px;
+  flex: none;
+  background: #ece9d8;
+  border: 1px solid #c7c3b6;
+  box-shadow: inset 1px 1px #fff;
+  overflow: auto;
+  padding: 4px;
+}
+
+.xpa-mc__tree-label {
+  font-weight: 700;
+  padding: 2px 3px 1px;
+  color: #0a246a;
+}
+
+.xpa-mc__tree-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: 1px dotted transparent;
+  padding: 2px 3px;
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.xpa-mc__tree-item:hover {
+  border-color: #9cc5f5;
+  background: #e9f1fb;
+}
+
+.xpa-mc__tree-item--active {
+  border: 1px solid #316ac5;
+  background: #c6e0f8;
+}
+
+.xpa-mc__tree-indent {
+  width: 12px;
+  flex: none;
+}
+
+.xpa-mc__pane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.xpa-mc__notepad {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid #7f9db9;
+  box-shadow: inset 1px 1px #b2c5db;
+  background: #fff;
+}
+
+.xpa-mc__notepad .win95-notepad {
+  height: 100%;
+}
+
+/* ---- Classic scrollbars inside XP panes ---- */
+
+.xpa-pane::-webkit-scrollbar,
+.xpa-mc__nav::-webkit-scrollbar,
+.xpa-gh__score::-webkit-scrollbar,
+.xpa-gh__panel-body::-webkit-scrollbar {
+  width: 15px;
+  height: 15px;
+}
+
+.xpa-pane::-webkit-scrollbar-track,
+.xpa-mc__nav::-webkit-scrollbar-track,
+.xpa-gh__score::-webkit-scrollbar-track,
+.xpa-gh__panel-body::-webkit-scrollbar-track {
+  background: #ece9d8;
+  border: 1px solid #c7c3b6;
+}
+
+.xpa-pane::-webkit-scrollbar-thumb,
+.xpa-mc__nav::-webkit-scrollbar-thumb,
+.xpa-gh__score::-webkit-scrollbar-thumb,
+.xpa-gh__panel-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f2f0e7, #d9d3c4);
+  border: 1px solid #b7b4a8;
+}
+
+.xpa-pane::-webkit-scrollbar-button,
+.xpa-mc__nav::-webkit-scrollbar-button,
+.xpa-gh__score::-webkit-scrollbar-button,
+.xpa-gh__panel-body::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* ---- Reduced motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  .xpa-app * {
+    transition: none !important;
+  }
+}
+
+/* ---- Shared defaults ---- */
+
+.xpa-item__glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.xpa-conn__icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.xpa-ie {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+}
